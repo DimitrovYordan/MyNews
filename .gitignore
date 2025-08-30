@@ -1,0 +1,58 @@
+﻿# .NET / Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.swp
+*.bak
+*.ncb
+*.opendb
+*.log
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+*.dll
+*.exe
+*.app
+*.dbmdl
+*.cache
+*.pdb
+*.mdb
+*.jfm
+TestResult*/
+*.Publish.xml
+*.pubxml
+*.snupkg
+*.nupkg
+project.lock.json
+project.fragment.lock.json
+
+# Resharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# Rider
+.idea/
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# Visual Studio Code
+.vscode/
+
+# Node / Angular
+node_modules/
+dist/
+tmp/
+temp/
+out-tsc/
+package-lock.json
+yarn.lock
+.pnp.*
+coverage/
+.angular/cache/
+
+# Environment
+.env
