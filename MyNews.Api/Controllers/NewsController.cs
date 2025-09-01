@@ -23,7 +23,7 @@ namespace MyNews.Api.Controllers
         {
             // Fetch all news items ordered by date descending
             var news = await _context.NewsItems
-                                     .OrderByDescending(n => n.Date)
+                                     .OrderByDescending(n => n.PublishedAt)
                                      .ToListAsync();
 
             return Ok(news);
