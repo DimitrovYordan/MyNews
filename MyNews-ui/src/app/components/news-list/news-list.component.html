@@ -1,0 +1,10 @@
+<div class="news-list">
+  <ul>
+    <li *ngFor="let item of news">
+      <h3>{{ item.title }}</h3>
+      <p>{{ item.content }}</p>
+      <small>{{ item.publishedAt | date:'short' }}</small>
+    </li>
+  </ul>
+  <p *ngIf="news.length === 0">No news available</p>
+</div>
