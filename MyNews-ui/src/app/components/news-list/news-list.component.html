@@ -1,10 +1,15 @@
-<div class="news-list">
+@if (news.length > 0) {
   <ul>
-    <li *ngFor="let item of news">
-      <h3>{{ item.title }}</h3>
-      <p>{{ item.content }}</p>
-      <small>{{ item.publishedAt | date:'short' }}</small>
-    </li>
+    @for (item of news; track item.id) {
+      <li>
+        <h3>{{ item.title }}</h3>
+        <p>{{ item.content }}</p>
+        <small>
+          Section: {{ item.sectionName }} - {{ item.publishedAt | date:'short' }}
+        </small>
+      </li>
+    }
   </ul>
-  <p *ngIf="news.length === 0">No news available</p>
-</div>
+} @else {
+  <p>No news available.</p>
+}

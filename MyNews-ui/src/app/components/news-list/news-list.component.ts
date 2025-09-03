@@ -19,7 +19,7 @@ export class NewsListComponent implements OnInit{
     constructor(private newsService: NewsService){}
 
     ngOnInit(): void {
-        this.newsService.getNews().subscribe({
+        this.newsService.getAllNews().subscribe({
             next: (data) => {
                 console.log('News fetched from API:', data);
                 this.news = data;

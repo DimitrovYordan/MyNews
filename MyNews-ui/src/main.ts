@@ -1,13 +1,13 @@
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 
 import { appRoutes } from './app/app.routes';
-import { NewsListComponent } from './app/components/news-list/news-list.component';
+import { SectionSelectComponent } from './app/components/section-select/section-select.component';
 
-bootstrapApplication(NewsListComponent, {
+bootstrapApplication(SectionSelectComponent, {
   providers: [
     provideRouter(appRoutes),
-    provideHttpClient(withInterceptorsFromDi())
+    provideHttpClient()
   ]
 }).catch((err) => console.error(err));
