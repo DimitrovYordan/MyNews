@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MyNews.Api.Data;
 
@@ -11,9 +12,11 @@ using MyNews.Api.Data;
 namespace MyNews.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250903092051_ReplaceSectionWithEnum")]
+    partial class ReplaceSectionWithEnum
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -37,7 +40,7 @@ namespace MyNews.Api.Migrations
                     b.Property<DateTime>("PublishedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("Section")
+                    b.Property<int>("SectionType")
                         .HasColumnType("int");
 
                     b.Property<int>("SourceId")
@@ -59,7 +62,7 @@ namespace MyNews.Api.Migrations
                             Id = 1,
                             Content = "Example news content",
                             PublishedAt = new DateTime(2025, 8, 20, 12, 10, 0, 0, DateTimeKind.Unspecified),
-                            Section = 3,
+                            SectionType = 3,
                             SourceId = 1,
                             Title = "First News"
                         },
@@ -68,7 +71,7 @@ namespace MyNews.Api.Migrations
                             Id = 2,
                             Content = "Example news content 2",
                             PublishedAt = new DateTime(2025, 8, 10, 12, 10, 0, 0, DateTimeKind.Unspecified),
-                            Section = 5,
+                            SectionType = 5,
                             SourceId = 2,
                             Title = "First News 2"
                         });

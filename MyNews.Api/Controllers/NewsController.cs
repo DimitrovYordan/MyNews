@@ -19,12 +19,12 @@ namespace MyNews.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetNews()
+        public IActionResult GetNews([FromQuery] List<int> sectionsIds)
         {
             // Fetch all news items ordered by date descending
-            var news = await _context.NewsItems
-                                     .OrderByDescending(n => n.PublishedAt)
-                                     .ToListAsync();
+            var news = _context.NewsItems
+                .Where(n => sectionsIds.Count == 0 || sectionsIds.Contains((int)n.Section))
+                .ToList();
 
             return Ok(news);
         }
@@ -37,6 +37,16 @@ namespace MyNews.Api.Controllers
             await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetNews), new { id = newsItem.Id }, newsItem);
+        }
+
+        [HttpGet("bySections")]
+        public async Task<ActionResult<IEnumerable<NewsItem>>> GetNewsBySections([FromQuery] List<int> sectionIds)
+        {
+            var news = await _context.NewsItems
+                .Where(n => sectionIds.Contains((int)n.Section))
+                .ToListAsync();
+
+            return Ok(news);
         }
     }
 }
