@@ -1,4 +1,4 @@
-using System;
+using MyNews.Api.Enums;
 
 namespace MyNews.Api.Models
 {
@@ -13,10 +13,9 @@ namespace MyNews.Api.Models
 
         public DateTime PublishedAt { get; set; } = DateTime.UtcNow;
 
-        // Foreign keys
-        public int SectionId { get; set; }
-        public Section? Section { get; set; }
+        public SectionType Section { get; set; }
 
+        // Foreign keys
         public int SourceId { get; set; }
         public Source? Source { get; set; }
     }
