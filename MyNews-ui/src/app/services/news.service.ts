@@ -1,4 +1,4 @@
-import { HttpClient } from "@angular/common/http";
+import { HttpClient, HttpParams } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 
 import { Observable } from "rxjs";
@@ -13,7 +13,15 @@ export class NewsService {
 
     constructor(private http: HttpClient) {}
 
-    getNews(): Observable<NewsItem[]> {
+    getAllNews(): Observable<NewsItem[]> {
         return this.http.get<NewsItem[]>(this.apiUrl);
+    }
+
+    getNewsBySections(sectionIds: number[]): Observable<NewsItem[]> {
+        let params = new HttpParams();
+        sectionIds.forEach(id => {
+            params = params.append('sectionIds', id.toString());
+        });
+        return this.http.get<NewsItem[]>(this.apiUrl, { params });
     }
 }
