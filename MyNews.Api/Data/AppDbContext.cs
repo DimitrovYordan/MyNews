@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+
 using MyNews.Api.Enums;
 using MyNews.Api.Models;
 
@@ -30,8 +31,8 @@ namespace MyNews.Api.Data
 
             // Static seed data
             modelBuilder.Entity<NewsItem>().HasData(
-                new NewsItem { Id = 1, Title = "First News", Content = "Example news content", Section = SectionType.Sports, SourceId = 1, PublishedAt = new DateTime(2025, 8, 20, 12, 10, 0) },
-                new NewsItem { Id = 2, Title = "First News 2", Content = "Example news content 2", Section = SectionType.Movies, SourceId = 2, PublishedAt = new DateTime(2025, 8, 10, 12, 10, 0) }
+                new NewsItem { Id = new Guid("11111111-1111-1111-1111-111111111111"), Title = "First News", Content = "Example news content", Section = SectionType.Sports, SourceId = 1, PublishedAt = new DateTime(2025, 8, 20, 12, 10, 0) },
+                new NewsItem { Id = new Guid("22222222-2222-2222-2222-222222222222"), Title = "First News 2", Content = "Example news content 2", Section = SectionType.Movies, SourceId = 2, PublishedAt = new DateTime(2025, 8, 10, 12, 10, 0) }
             );
 
             modelBuilder.Entity<Source>().HasData(

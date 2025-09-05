@@ -2,7 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 using MyNews.Api.Data;
-using MyNews.Api.Models;
+using MyNews.Api.DTOs;
+using MyNews.Api.Enums;
 
 namespace MyNews.Api.Controllers
 {
@@ -12,7 +13,6 @@ namespace MyNews.Api.Controllers
     {
         private readonly AppDbContext _context;
 
-        // Constructor injects the database context
         public NewsController(AppDbContext context)
         {
             _context = context;
@@ -29,24 +29,37 @@ namespace MyNews.Api.Controllers
             return Ok(news);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> AddNews([FromBody] NewsItem newsItem)
+        [HttpPost("by-sections")]
+        public async Task<IActionResult> GetNewsBySections([FromBody] List<SectionType> sectionIds)
         {
-            // Add new news item to the database
-            _context.NewsItems.Add(newsItem);
-            await _context.SaveChangesAsync();
+            var selectedSections = sectionIds.Any()
+                ? sectionIds
+                : Enum.GetValues(typeof(SectionType)).Cast<SectionType>().ToList();
 
-            return CreatedAtAction(nameof(GetNews), new { id = newsItem.Id }, newsItem);
-        }
+            var result = new List<SectionWithNewsDto>();
 
-        [HttpGet("bySections")]
-        public async Task<ActionResult<IEnumerable<NewsItem>>> GetNewsBySections([FromQuery] List<int> sectionIds)
-        {
-            var news = await _context.NewsItems
-                .Where(n => sectionIds.Contains((int)n.Section))
-                .ToListAsync();
+            foreach (var section in selectedSections)
+            {
+                var news = await _context.NewsItems
+                    .Where(n => n.Section == section)
+                    .Select(n => new NewsItemDto
+                    {
+                        Id = n.Id,
+                        Title = n.Title,
+                        Content = n.Content,
+                        PublishedAt = n.PublishedAt
+                    })
+                    .ToListAsync();
 
-            return Ok(news);
+                result.Add(new SectionWithNewsDto
+                {
+                    SectionId = (int)section,
+                    SectionName = section.ToString(),
+                    News = news
+                });
+            }
+
+            return Ok(result);
         }
     }
 }
