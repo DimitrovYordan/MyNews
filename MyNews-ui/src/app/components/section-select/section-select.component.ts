@@ -1,35 +1,59 @@
 import { Component, OnInit } from "@angular/core";
-import { DatePipe } from "@angular/common";
+import { CommonModule } from "@angular/common";
 
 import { Section } from "../../interfaces/section";
 import { NewsItem } from "../../interfaces/news-item";
 import { SectionService } from "../../services/section.service";
 import { NewsService } from "../../services/news.service";
-import { NewsListComponent } from "../news-list/news-list.component";
+import { SectionWithNews } from "../../interfaces/section-with-news";
 
 @Component({
     selector: 'app-section-select',
     standalone: true,
-    imports: [DatePipe],
+    imports: [CommonModule],
     templateUrl: './section-select.component.html',
     styleUrls: ['section-select.component.scss'],
 })
 export class SectionSelectComponent implements OnInit {
     sections: Section[] = [];
     selectedSections: number[] = [];
-    news: NewsItem[] = [];
+    sectionWithNews: SectionWithNews[] = [];
     showSections = true;
+    isLoading = false;
 
     constructor(
-        private sectionService: SectionService, 
+        private sectionService: SectionService,
         private newsService: NewsService
-    ) {}
+    ) { }
 
     ngOnInit(): void {
         // load all sections
         this.sectionService.getSections().subscribe(data => {
             this.sections = data;
         });
+    }
+
+    toggleSelection(id: number): void {
+        if (this.selectedSections.includes(id)) {
+            this.selectedSections = this.selectedSections.filter(s => s !== id);
+        }
+        else {
+            this.selectedSections.push(id);
+        }
+    }
+
+    toggleAll(): void {
+        if (this.selectedSections.length === this.sections.length) {
+            this.selectedSections = [];
+        } else {
+            this.selectedSections = this.sections.map((s) => s.id);
+        }
+    }
+
+    saveSelection(): void {
+        this.showSections = false;
+
+        this.loadNews();
     }
 
     onCheckboxChange(section: Section, event: Event) {
@@ -47,44 +71,36 @@ export class SectionSelectComponent implements OnInit {
         this.selectedSections = this.sections.map(s => s.id);
     }
 
-    toggleSelection(id: number): void {
-        if (this.selectedSections.includes(id)) {
-            this.selectedSections = this.selectedSections.filter(s => s !== id);
-        }
-        else {
-            this.selectedSections.push(id);
-        }
-    }
-
-    toggleAll(): void {
-        if(this.selectedSections.length === this.sections.length) {
-            this.selectedSections = [];
-        } else {
-            this.selectedSections = this.sections.map(s => s.id);
-        }
-    }
-
-    saveSelection(): void {
-        this.showSections = false;
-
-        this.loadNews();
-    }
-
     get selectAllButtonText(): string {
         return this.selectedSections.length === this.sections.length ? 'Unselect All' : 'Select All';
     }
 
-    trackById(index: number, item: any): number {
-        return item.id;
-    }
-
     private loadNews(): void {
-        this.newsService.getNewsBySections(this.selectedSections).subscribe({
-            next: (data) => {
-                this.news = data ?? [];
-            }, error: () => {
-                this.news = [];
-            }
-        });
+        this.isLoading = true;
+        const sectionsToLoad = this.selectedSections.length ? this.selectedSections : this.sections.map(s => s.id);
+
+        if (this.selectedSections.length > 0) {
+            this.newsService.getNewsBySections(sectionsToLoad).subscribe({
+                next: (data) => {
+                    this.sectionWithNews = data.map(sw => ({
+                        sectionId: sw.sectionId,
+                        sectionName: sw.sectionName,
+                        news: sw.news ?? []
+                    }));
+                    this.isLoading = false;
+                },
+                error: () => {
+                    this.sectionWithNews = sectionsToLoad.map(id => ({
+                        sectionId: id,
+                        sectionName: this.sections.find(s => s.id === id)?.name ?? 'Unknown',
+                        news: []
+                    }));
+                    this.isLoading = false;
+                }
+            });
+        } else {
+            this.sectionWithNews.forEach((sw) => (sw.news = []));
+            this.isLoading = false;
+        }
     }
 }

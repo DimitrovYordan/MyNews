@@ -1,11 +1,17 @@
+@if (isLoading) {
+<div class="loading">
+    Loading news...
+</div>
+}
+
 @if (showSections) {
 <div class="section-selection">
-    <h2>Select News Sections</h2>
+    <h2>Choose sections</h2>
 
-    <!-- Select All button -->
-    <button type="button" (click)="toggleAll()">{{ selectAllButtonText }}</button>
+    <button type="button" (click)="toggleAll()">
+        {{ selectAllButtonText }}
+    </button>
 
-    <!-- Checkboxes for each section -->
     <form>
         @for (section of sections; track section.id) {
         <div>
@@ -18,29 +24,34 @@
         }
     </form>
 
-    <!-- Save button -->
     <button type="button" (click)="saveSelection()" [disabled]="selectedSections.length === 0">
         Save
     </button>
 </div>
 }
 
-<!-- Display news after selection -->
-@if (!showSections) {
+@if (!showSections && !isLoading) {
 <div class="news-list">
-    <h2>News</h2>
+    <h2>Новини по секции</h2>
 
-    @if (news.length === 0) {
-    <div class="no-news">No news available for the selected sections.</div>
-    } @else {
+    @for (item of sectionWithNews; track item.sectionId) {
+    <div class="section-block">
+        <h3>{{ item.sectionName }}</h3>
+
+        @if (item.news.length === 0) {
+        <p class="no-news">No news to show.</p>
+        } @else {
         <ul>
-        @for (item of news; track item.id) {
-        <li>
-            <h3>{{ item.title }}</h3>
-            <p>{{ item.content }}</p>
-            <small>Published at: {{ item.publishedAt | date:'medium' }}</small>
-        </li> }
-    </ul>
-    }    
+            @for (newsItem of item.news; track newsItem.id) {
+            <li>
+                <h4>{{ newsItem.title }}</h4>
+                <p>{{ newsItem.content }}</p>
+                <small>Published at: {{ newsItem.publishedAt | date:'medium' }}</small>
+            </li>
+            }
+        </ul>
+        }
+    </div>
+    }
 </div>
 }
