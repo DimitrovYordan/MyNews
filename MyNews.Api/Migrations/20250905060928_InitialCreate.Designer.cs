@@ -12,8 +12,8 @@ using MyNews.Api.Data;
 namespace MyNews.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250903092051_ReplaceSectionWithEnum")]
-    partial class ReplaceSectionWithEnum
+    [Migration("20250905060928_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -27,11 +27,9 @@ namespace MyNews.Api.Migrations
 
             modelBuilder.Entity("MyNews.Api.Models.NewsItem", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Content")
                         .IsRequired()
@@ -40,7 +38,7 @@ namespace MyNews.Api.Migrations
                     b.Property<DateTime>("PublishedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("SectionType")
+                    b.Property<int>("Section")
                         .HasColumnType("int");
 
                     b.Property<int>("SourceId")
@@ -59,19 +57,19 @@ namespace MyNews.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = 1,
+                            Id = new Guid("11111111-1111-1111-1111-111111111111"),
                             Content = "Example news content",
                             PublishedAt = new DateTime(2025, 8, 20, 12, 10, 0, 0, DateTimeKind.Unspecified),
-                            SectionType = 3,
+                            Section = 5,
                             SourceId = 1,
                             Title = "First News"
                         },
                         new
                         {
-                            Id = 2,
+                            Id = new Guid("22222222-2222-2222-2222-222222222222"),
                             Content = "Example news content 2",
                             PublishedAt = new DateTime(2025, 8, 10, 12, 10, 0, 0, DateTimeKind.Unspecified),
-                            SectionType = 5,
+                            Section = 12,
                             SourceId = 2,
                             Title = "First News 2"
                         });
