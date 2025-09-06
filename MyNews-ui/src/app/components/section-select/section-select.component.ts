@@ -20,6 +20,7 @@ export class SectionSelectComponent implements OnInit {
     sectionWithNews: SectionWithNews[] = [];
     showSections = true;
     isLoading = false;
+    isAllSelected = false;
 
     constructor(
         private sectionService: SectionService,
@@ -43,10 +44,12 @@ export class SectionSelectComponent implements OnInit {
     }
 
     toggleAll(): void {
-        if (this.selectedSections.length === this.sections.length) {
+        if (this.isAllSelected) {
             this.selectedSections = [];
+            this.isAllSelected = false;
         } else {
-            this.selectedSections = this.sections.map((s) => s.id);
+            this.selectedSections = this.sections.map(s => s.id);
+            this.isAllSelected = true;
         }
     }
 
