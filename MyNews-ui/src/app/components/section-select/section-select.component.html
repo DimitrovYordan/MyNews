@@ -6,25 +6,32 @@
 
 @if (showSections) {
 <div class="section-selection">
-    <h2>Choose sections</h2>
+    <h2 class="page-title">Choose sections</h2>
 
-    <button type="button" (click)="toggleAll()">
-        {{ selectAllButtonText }}
-    </button>
+    <div class="select-all-container">
+        <button type="button" 
+            class="select-all-btn" 
+            [class.select-mode]="!isAllSelected"
+            [class.unselect-mode]="isAllSelected" 
+            (click)="toggleAll()">
+            {{ isAllSelected ? 'Unselect all' : 'Select all' }}
+        </button>
+    </div>
+
 
     <form>
         @for (section of sections; track section.id) {
-        <div>
+        <div class="section-card" (click)="toggleSelection(section.id)">
             <label>
                 <input type="checkbox" [checked]="selectedSections.includes(section.id)"
-                    (change)="toggleSelection(section.id)" />
+                    (change)="toggleSelection(section.id)" (click)="$event.stopPropagation()" />
                 {{ section.name }}
             </label>
         </div>
         }
     </form>
 
-    <button type="button" (click)="saveSelection()" [disabled]="selectedSections.length === 0">
+    <button type="button" class="save-btn" (click)="saveSelection()" [disabled]="selectedSections.length === 0">
         Save
     </button>
 </div>
