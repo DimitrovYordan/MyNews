@@ -2,15 +2,17 @@ import { Component, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 
 import { Section } from "../../interfaces/section";
-import { NewsItem } from "../../interfaces/news-item";
 import { SectionService } from "../../services/section.service";
 import { NewsService } from "../../services/news.service";
 import { SectionWithNews } from "../../interfaces/section-with-news";
+import { SignupComponent } from "../../auth/signup/signup.component";
+import { LoginComponent } from "../../auth/login/login.component";
+import { ForgotPasswordComponent } from "../../auth/forgot-password/forgot-password.component";
 
 @Component({
     selector: 'app-section-select',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, LoginComponent, SignupComponent, ForgotPasswordComponent],
     templateUrl: './section-select.component.html',
     styleUrls: ['section-select.component.scss'],
 })
@@ -21,6 +23,9 @@ export class SectionSelectComponent implements OnInit {
     showSections = true;
     isLoading = false;
     isAllSelected = false;
+    showLogin = false;
+    showSignup = false;
+    showForgotPassword = false;
 
     constructor(
         private sectionService: SectionService,
@@ -68,6 +73,16 @@ export class SectionSelectComponent implements OnInit {
         } else {
             this.selectedSections = this.selectedSections.filter(s => s !== section.id)
         }
+    }
+
+    openForgotPassword() {
+        this.showSignup = false;
+        this.showForgotPassword = true;
+    }
+
+    backToSignup() {
+        this.showForgotPassword = false;
+        this.showSignup = true;
     }
 
     selectAll(): void {

@@ -4,16 +4,48 @@
 </div>
 }
 
+<div class="auth-buttons">
+    <button type="button" (click)="showLogin = true">Log in</button>
+    <button type="button" (click)="showSignup = true">Sign up</button>
+</div>
+
+@if (showLogin) {
+<div class="popup-overlay" (click)="showLogin = false">
+    <div class="popup-content" (click)="$event.stopPropagation()">
+        <form>
+            <app-login (close)="showLogin = false"></app-login>
+        </form>
+        <button type="button" (click)="showLogin = false">Close</button>
+    </div>
+</div>
+}
+
+@if (showSignup) {
+<div class="popup-overlay" (click)="showSignup = false">
+    <div class="popup-content" (click)="$event.stopPropagation()">
+        <app-signup (close)="showSignup = false" (forgotPassword)="showSignup = false; showForgotPassword = true">
+        </app-signup>
+        <button type="button" class="close-btn" (click)="showSignup = false">Close</button>
+    </div>
+</div>
+}
+
+@if (showForgotPassword) {
+<div class="popup-overlay" (click)="showForgotPassword = false">
+    <div class="popup-content" (click)="$event.stopPropagation()">
+        <app-forgot-password (close)="showForgotPassword = false" (backToSignup)="backToSignup()"></app-forgot-password>
+        <button type="button" class="close-btn" (click)="showForgotPassword = false">Close</button>
+    </div>
+</div>
+}
+
 @if (showSections) {
 <div class="section-selection">
     <h2 class="page-title">Choose sections</h2>
 
     <div class="select-all-container">
-        <button type="button" 
-            class="select-all-btn" 
-            [class.select-mode]="!isAllSelected"
-            [class.unselect-mode]="isAllSelected" 
-            (click)="toggleAll()">
+        <button type="button" class="select-all-btn" [class.select-mode]="!isAllSelected"
+            [class.unselect-mode]="isAllSelected" (click)="toggleAll()">
             {{ isAllSelected ? 'Unselect all' : 'Select all' }}
         </button>
     </div>
