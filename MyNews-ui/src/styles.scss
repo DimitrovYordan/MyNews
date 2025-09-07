@@ -39,31 +39,31 @@ body {
 
 /* Container for the button aligned to the right */
 .select-all-container {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 16px;
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 16px;
 }
 
 /* Base button styles */
 .select-all-btn {
-  padding: 12px 24px;
-  border: none;
-  border-radius: 6px;
-  font-size: 1.1rem;
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.1s ease;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease;
 }
 
 /* Blue when "Select all" */
 .select-all-btn.select-mode {
-  background-color: green;
-  color: white;
+    background-color: green;
+    color: white;
 }
 
 /* Red when "Unselect all" */
 .select-all-btn.unselect-mode {
-  background-color: #dc3545;
-  color: white;
+    background-color: #dc3545;
+    color: white;
 }
 
 /* Section checkboxes grid */
@@ -130,4 +130,183 @@ body {
 .no-news {
     color: #888;
     font-style: italic;
+}
+
+/* ---------- Popup container ---------- */
+.popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.popup-content {
+    background: #fff;
+    padding: 30px 40px;
+    border-radius: 12px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    position: relative;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.popup-content h2 {
+    text-align: center;
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #222;
+}
+
+/* ---------- Unified form style ---------- */
+.popup-content form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+}
+
+/* Labels */
+.popup-content form label {
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 4px;
+    display: block;
+}
+
+/* Inputs */
+.popup-content form input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
+}
+
+.popup-content form input:focus {
+    outline: none;
+    border-color: #1976d2;
+    box-shadow: 0 0 4px rgba(25, 118, 210, 0.4);
+}
+
+/* Error messages */
+.popup-content form .error {
+    color: #d32f2f;
+    font-size: 0.85rem;
+    margin-top: -8px;
+    margin-bottom: 4px;
+}
+
+/* Submit button */
+.popup-content form button[type="submit"] {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    background-color: #1976d2;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.popup-content form button[type="submit"]:hover {
+    background-color: #1565c0;
+}
+
+.popup-content form button[type="submit"]:active {
+    transform: scale(0.98);
+}
+
+/* Close button under the form */
+.popup-content>button {
+    width: 100%;
+    margin-top: 16px;
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    background-color: #d32f2f;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.popup-content>button:hover {
+    background-color: #b71c1c;
+}
+
+.popup-content>button:active {
+    transform: scale(0.98);
+}
+
+/* Forgotten password button */
+.popup-content .forgot-password-btn {
+    display: block;
+    margin: 16px auto 12px;
+    background: none;
+    border: none;
+    color: #1976d2;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.popup-content .forgot-password-btn:hover {
+    color: #1565c0;
+}
+
+.popup-content .forgot-password-btn:active {
+    color: #0d47a1;
+}
+
+.back-btn {
+    position: absolute;
+    top: 26px;
+    left: 40px;
+    padding: 8px 16px;
+    background-color: rgba(0, 0, 0, 0.05);
+    color: #333;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+
+    &:hover {
+        background-color: rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    &:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+}
+
+/* ---------- Animations ---------- */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }

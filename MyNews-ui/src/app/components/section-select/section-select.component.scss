@@ -15,3 +15,29 @@
   font-weight: bold;
   z-index: 1000;
 }
+
+.auth-buttons {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.page-title {
+  text-align: center;
+  margin-top: 60px;
+}
+
+.error {
+  color: red;
+  font-size: 0.9rem;
+}
+
+.forgot-password {
+  display: block;
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #007bff;
+  cursor: pointer;
+}
