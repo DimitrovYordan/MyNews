@@ -10,10 +10,11 @@
 </div>
 
 @if (showLogin) {
-<div class="popup-overlay" (click)="showLogin = false">
+<div class="popup-overlay">
     <div class="popup-content" (click)="$event.stopPropagation()">
         <form>
-            <app-login (close)="showLogin = false"></app-login>
+            <app-login (close)="showLogin = false"
+                (forgotPassword)="showLogin = false; showForgotPassword = true"></app-login>
         </form>
         <button type="button" (click)="showLogin = false">Close</button>
     </div>
@@ -21,9 +22,9 @@
 }
 
 @if (showSignup) {
-<div class="popup-overlay" (click)="showSignup = false">
+<div class="popup-overlay">
     <div class="popup-content" (click)="$event.stopPropagation()">
-        <app-signup (close)="showSignup = false" (forgotPassword)="showSignup = false; showForgotPassword = true">
+        <app-signup (close)="showSignup = false">
         </app-signup>
         <button type="button" class="close-btn" (click)="showSignup = false">Close</button>
     </div>
@@ -31,9 +32,9 @@
 }
 
 @if (showForgotPassword) {
-<div class="popup-overlay" (click)="showForgotPassword = false">
+<div class="popup-overlay">
     <div class="popup-content" (click)="$event.stopPropagation()">
-        <app-forgot-password (close)="showForgotPassword = false" (backToSignup)="backToSignup()"></app-forgot-password>
+        <app-forgot-password (close)="showForgotPassword = false" (backToLogin)="backToLogin()"></app-forgot-password>
         <button type="button" class="close-btn" (click)="showForgotPassword = false">Close</button>
     </div>
 </div>

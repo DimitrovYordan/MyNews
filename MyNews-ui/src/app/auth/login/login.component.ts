@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 
@@ -12,6 +12,8 @@ import { AuthService } from '../../services/auth.service';
   styleUrls: ['./login.component.scss']
 })
 export class LoginComponent {
+  @Output() forgotPassword = new EventEmitter<void>();
+  
   loginForm: FormGroup;
 
   constructor(private fb: FormBuilder, private authService: AuthService) {
@@ -24,7 +26,10 @@ export class LoginComponent {
   submitLogin() {
     if (this.loginForm.valid) {
       this.authService.login(this.loginForm.value).subscribe({
-        next: () => console.log('Logged in!'),
+        next: (res) => {
+          localStorage.setItem('token', res.token);
+          console.log('Logged in!');
+        },
         error: (err: any) => console.error(err)        
       });
     }

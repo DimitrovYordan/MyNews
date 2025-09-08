@@ -13,7 +13,7 @@ import { AuthService } from '../../services/auth.service';
 })
 export class ForgotPasswordComponent {
   @Output() close = new EventEmitter<void>();
-  @Output() backToSignup = new EventEmitter<void>();
+  @Output() backToLogin = new EventEmitter<void>();
 
   forgotPasswordForm: FormGroup;
 
@@ -35,6 +35,6 @@ export class ForgotPasswordComponent {
   }
 
   goBack() {
-    this.backToSignup.emit();
+    this.backToLogin.emit();
   }
 }
