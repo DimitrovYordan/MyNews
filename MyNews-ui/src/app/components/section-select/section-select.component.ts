@@ -76,13 +76,14 @@ export class SectionSelectComponent implements OnInit {
     }
 
     openForgotPassword() {
+        this.showLogin = false;
         this.showSignup = false;
         this.showForgotPassword = true;
     }
 
-    backToSignup() {
+    backToLogin() {
         this.showForgotPassword = false;
-        this.showSignup = true;
+        this.showLogin = true;
     }
 
     selectAll(): void {

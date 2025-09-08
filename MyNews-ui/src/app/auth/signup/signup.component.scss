@@ -1,0 +1,35 @@
+.password-wrapper {
+  position: relative;
+  width: 100%;
+
+  input {
+    width: 100%;
+    padding: 10px 40px 10px 12px; // вдясно има място за иконата
+    box-sizing: border-box;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+  }
+
+  i {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2rem;
+    color: #888;
+    cursor: pointer;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: #000;
+    }
+  }
+}
+
+
+.error {
+  color: red;
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
