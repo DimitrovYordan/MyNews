@@ -8,7 +8,7 @@ namespace MyNews.Api.Models
         public Guid Id { get; set; } = Guid.NewGuid();
 
         [Required, MaxLength(20)]
-        public string Name { get; set; } = string.Empty;
+        public string FirstName { get; set; } = string.Empty;
 
         [Required, MaxLength(20)]
         public string LastName { get; set; } = string.Empty;

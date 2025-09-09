@@ -14,7 +14,6 @@ namespace MyNews.Api.Data
 
         public DbSet<NewsItem> NewsItems { get; set; }
         public DbSet<Source> Sources { get; set; }
-
         public DbSet<User> Users { get; set; }
 
         // Seed initial data
