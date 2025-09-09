@@ -298,6 +298,26 @@ body {
     }
 }
 
+// Styles if not log in
+.section-selection-wrapper.disabled {
+  pointer-events: none;      // забранява кликове върху всички елементи вътре
+  opacity: 0.5;              // визуално изглежда неактивно
+}
+
+.section-selection-wrapper.disabled .section-card:hover {
+  background-color: inherit; // маха hover ефекта
+}
+
+.section-selection-wrapper.disabled .select-all-btn {
+  background-color: #ccc;    // правим бутона сив
+  cursor: not-allowed;       // курсорът показва, че не може да се кликне
+}
+
+.section-selection-wrapper.disabled input[type="checkbox"] {
+  cursor: not-allowed;
+}
+
+
 /* ---------- Animations ---------- */
 @keyframes fadeIn {
     from {

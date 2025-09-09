@@ -8,6 +8,7 @@ import { SectionWithNews } from "../../interfaces/section-with-news";
 import { SignupComponent } from "../../auth/signup/signup.component";
 import { LoginComponent } from "../../auth/login/login.component";
 import { ForgotPasswordComponent } from "../../auth/forgot-password/forgot-password.component";
+import { AuthService } from "../../services/auth.service";
 
 @Component({
     selector: 'app-section-select',
@@ -26,17 +27,34 @@ export class SectionSelectComponent implements OnInit {
     showLogin = false;
     showSignup = false;
     showForgotPassword = false;
+    isLoggedIn = false;
 
     constructor(
         private sectionService: SectionService,
-        private newsService: NewsService
+        private newsService: NewsService,
+        private authService: AuthService
     ) { }
 
     ngOnInit(): void {
         // load all sections
+        this.authService.isLoggedIn$.subscribe(status => {
+            this.isLoggedIn = status
+        })
+
         this.sectionService.getSections().subscribe(data => {
             this.sections = data;
         });
+    }
+
+    onLoginSuccess() {
+        this.isLoggedIn = true;
+        this.showLogin = false;
+        this.showSignup = false;
+    }
+
+    logout() {
+        this.isLoggedIn = false;
+        localStorage.removeItem('token');
     }
 
     toggleSelection(id: number): void {

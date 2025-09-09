@@ -13,10 +13,12 @@ import { AuthService } from '../../services/auth.service';
 })
 export class SignupComponent {
   @Output() close = new EventEmitter<void>();
+  @Output() signupSuccess = new EventEmitter<void>();
 
   signupForm: FormGroup;
   showPassword: boolean = false;
   showRepeatPassword: boolean = false;
+  loading = false;
 
   constructor(private fb: FormBuilder, private authService: AuthService) {
     this.signupForm = this.fb.group({
@@ -40,8 +42,17 @@ export class SignupComponent {
   submitSignup() {
     if (this.signupForm.valid) {
       this.authService.signup(this.signupForm.value).subscribe({
-        next: () => console.log('Signed up!'),
-        error: (err: any) => console.error(err)
+        next: (res) => {
+          console.log('Signed up!', res);
+
+          this.close.emit();
+          this.signupSuccess.emit();
+          this.loading = false;
+        },
+        error: (err) => {
+          console.error(err);
+          this.loading = false;
+        }
       });
     }
   }

@@ -1,0 +1,24 @@
+.error-message {
+  color: red;
+  text-align: center;
+  margin-top: 6px;
+  font-size: 1rem;
+}
+
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-wrapper input {
+  width: 100%;
+  padding-right: 2.5rem;
+}
+
+.password-wrapper i {
+  position: absolute;
+  right: 10px;
+  cursor: pointer;
+  color: #666;
+}
