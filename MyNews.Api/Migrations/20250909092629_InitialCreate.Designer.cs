@@ -12,7 +12,7 @@ using MyNews.Api.Data;
 namespace MyNews.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250905060928_InitialCreate")]
+    [Migration("20250909092629_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -108,6 +108,45 @@ namespace MyNews.Api.Migrations
                             Name = "IMDB",
                             Url = "imdb.com"
                         });
+                });
+
+            modelBuilder.Entity("MyNews.Api.Models.User", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Country")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("MyNews.Api.Models.NewsItem", b =>

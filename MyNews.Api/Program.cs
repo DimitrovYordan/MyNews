@@ -51,10 +51,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors("AllowAngular");
-
 app.UseHttpsRedirection();
 
+app.UseRouting();
+
+app.UseCors("AllowAngular");
+
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

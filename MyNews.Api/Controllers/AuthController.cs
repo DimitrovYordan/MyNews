@@ -41,7 +41,7 @@ namespace MyNews.Api.Controllers
 
             var user = new User
             {
-                Name = register.Name,
+                FirstName = register.FirstName,
                 LastName = register.LastName,
                 Country = register.Country,
                 City = register.City,
