@@ -5,15 +5,19 @@
 }
 
 <div class="auth-buttons">
+    @if (!isLoggedIn) {
     <button type="button" (click)="showLogin = true">Log in</button>
     <button type="button" (click)="showSignup = true">Sign up</button>
+    } @else {
+        <button type="button" (click)="logout()">Log out</button>
+    }
 </div>
 
 @if (showLogin) {
 <div class="popup-overlay">
     <div class="popup-content" (click)="$event.stopPropagation()">
         <form>
-            <app-login (close)="showLogin = false"
+            <app-login (close)="showLogin = false" (loginSuccess)="onLoginSuccess()"
                 (forgotPassword)="showLogin = false; showForgotPassword = true"></app-login>
         </form>
         <button type="button" (click)="showLogin = false">Close</button>
@@ -24,7 +28,7 @@
 @if (showSignup) {
 <div class="popup-overlay">
     <div class="popup-content" (click)="$event.stopPropagation()">
-        <app-signup (close)="showSignup = false">
+        <app-signup (close)="showSignup = false" (signupSuccess)="onLoginSuccess()">
         </app-signup>
         <button type="button" class="close-btn" (click)="showSignup = false">Close</button>
     </div>
@@ -40,33 +44,35 @@
 </div>
 }
 
-@if (showSections) {
-<div class="section-selection">
-    <h2 class="page-title">Choose sections</h2>
+@if (showSections && !isLoading) {
+<div class="section-selection-wrapper" [class.disabled]="!isLoggedIn">
+    <div class="section-selection">
+        <h2 class="page-title">Choose sections</h2>
 
-    <div class="select-all-container">
-        <button type="button" class="select-all-btn" [class.select-mode]="!isAllSelected"
-            [class.unselect-mode]="isAllSelected" (click)="toggleAll()">
-            {{ isAllSelected ? 'Unselect all' : 'Select all' }}
+        <div class="select-all-container">
+            <button type="button" class="select-all-btn" [class.select-mode]="!isAllSelected"
+                [class.unselect-mode]="isAllSelected" (click)="toggleAll()">
+                {{ isAllSelected ? 'Unselect all' : 'Select all' }}
+            </button>
+        </div>
+
+
+        <form>
+            @for (section of sections; track section.id) {
+            <div class="section-card" (click)="toggleSelection(section.id)">
+                <label>
+                    <input type="checkbox" [checked]="selectedSections.includes(section.id)"
+                        (change)="toggleSelection(section.id)" (click)="$event.stopPropagation()" />
+                    {{ section.name }}
+                </label>
+            </div>
+            }
+        </form>
+
+        <button type="button" class="save-btn" (click)="saveSelection()" [disabled]="selectedSections.length === 0">
+            Save
         </button>
     </div>
-
-
-    <form>
-        @for (section of sections; track section.id) {
-        <div class="section-card" (click)="toggleSelection(section.id)">
-            <label>
-                <input type="checkbox" [checked]="selectedSections.includes(section.id)"
-                    (change)="toggleSelection(section.id)" (click)="$event.stopPropagation()" />
-                {{ section.name }}
-            </label>
-        </div>
-        }
-    </form>
-
-    <button type="button" class="save-btn" (click)="saveSelection()" [disabled]="selectedSections.length === 0">
-        Save
-    </button>
 </div>
 }
 
