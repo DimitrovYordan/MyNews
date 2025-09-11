@@ -52,7 +52,15 @@ namespace MyNews.Api.Controllers
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "User registered successfully."});
+            var token = GenerateJwtToken(user);
+
+            return Ok(new AuthResponseDto
+            {
+                Token = token,
+                Email = user.Email,
+                FirstName = user.FirstName,
+                LastName = user.LastName
+            });
         }
 
         [HttpPost("login")]
@@ -71,7 +79,9 @@ namespace MyNews.Api.Controllers
             return Ok(new AuthResponseDto
             {
                 Token = token,
-                Email = user.Email
+                Email = user.Email,
+                FirstName = user.FirstName,
+                LastName = user.LastName
             });
         }
 
