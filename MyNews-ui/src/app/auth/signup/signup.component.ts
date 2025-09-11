@@ -3,6 +3,7 @@ import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validatio
 import { CommonModule } from '@angular/common';
 
 import { AuthService } from '../../services/auth.service';
+import { AuthResponse } from '../../interfaces/auth-response';
 
 @Component({
   selector: 'app-signup',
@@ -13,7 +14,7 @@ import { AuthService } from '../../services/auth.service';
 })
 export class SignupComponent {
   @Output() close = new EventEmitter<void>();
-  @Output() signupSuccess = new EventEmitter<void>();
+  @Output() signupSuccess = new EventEmitter<{ firstName: string; lastName: string }>();
 
   signupForm: FormGroup;
   showPassword: boolean = false;
@@ -44,10 +45,13 @@ export class SignupComponent {
       this.authService.signup(this.signupForm.value).subscribe({
         next: (res) => {
           console.log('Signed up!', res);
-
-          this.close.emit();
-          this.signupSuccess.emit();
+          localStorage.setItem('auth_token', res.token);
+          this.signupSuccess.emit({
+            firstName: res.firstName,
+            lastName: res.lastName
+          });
           this.loading = false;
+          this.close.emit();
         },
         error: (err) => {
           console.error(err);
