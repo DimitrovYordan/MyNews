@@ -1,19 +1,20 @@
-import { Component, OnInit } from "@angular/core";
+import { ChangeDetectorRef, Component, HostListener, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 
-import { Section } from "../../interfaces/section";
 import { SectionService } from "../../services/section.service";
 import { NewsService } from "../../services/news.service";
+import { AuthService } from "../../services/auth.service";
+import { Section } from "../../interfaces/section";
 import { SectionWithNews } from "../../interfaces/section-with-news";
 import { SignupComponent } from "../../auth/signup/signup.component";
 import { LoginComponent } from "../../auth/login/login.component";
 import { ForgotPasswordComponent } from "../../auth/forgot-password/forgot-password.component";
-import { AuthService } from "../../services/auth.service";
+import { SettingsComponent } from "../../auth/settings/settings.component";
 
 @Component({
     selector: 'app-section-select',
     standalone: true,
-    imports: [CommonModule, LoginComponent, SignupComponent, ForgotPasswordComponent],
+    imports: [CommonModule, LoginComponent, SignupComponent, ForgotPasswordComponent, SettingsComponent],
     templateUrl: './section-select.component.html',
     styleUrls: ['section-select.component.scss'],
 })
@@ -21,18 +22,23 @@ export class SectionSelectComponent implements OnInit {
     sections: Section[] = [];
     selectedSections: number[] = [];
     sectionWithNews: SectionWithNews[] = [];
-    showSections = true;
-    isLoading = false;
-    isAllSelected = false;
-    showLogin = false;
-    showSignup = false;
-    showForgotPassword = false;
-    isLoggedIn = false;
+    showSections: boolean = true;
+    isLoading: boolean = false;
+    isAllSelected: boolean = false;
+    showLogin: boolean = false;
+    showSignup: boolean = false;
+    showForgotPassword: boolean = false;
+    isLoggedIn: boolean = false;
+    menuOpen: boolean = false;
+    userFirstName: string = '';
+    userLastName: string = '';
+    showSettings: boolean = false;
 
     constructor(
         private sectionService: SectionService,
         private newsService: NewsService,
-        private authService: AuthService
+        private authService: AuthService,
+        private cd: ChangeDetectorRef
     ) { }
 
     ngOnInit(): void {
@@ -46,15 +52,47 @@ export class SectionSelectComponent implements OnInit {
         });
     }
 
-    onLoginSuccess() {
+    openSettings() {
+        this.showSettings = true;
+        this.menuOpen = false;
+    }
+
+    closeSettings() {
+        this.showSettings = false;
+    }
+
+    getInitials(): string {
+        if (!this.userFirstName || !this.userLastName)
+            return '';
+
+        return (
+            this.userFirstName.charAt(0).toUpperCase() +
+            this.userLastName.charAt(0).toUpperCase()
+        );
+    }
+
+    toggleMenu() {
+        this.menuOpen = !this.menuOpen;
+    }
+
+    openMenu() {
+        console.log('Settings clicked');
+        this.menuOpen = false;
+    }
+
+    onLoginSuccess(user: { firstName: string; lastName: string }) {
         this.isLoggedIn = true;
         this.showLogin = false;
         this.showSignup = false;
+        this.userFirstName = user.firstName;
+        this.userLastName = user.lastName;
+        this.cd.detectChanges();
     }
 
     logout() {
         this.isLoggedIn = false;
         localStorage.removeItem('token');
+        this.menuOpen = false;
     }
 
     toggleSelection(id: number): void {
@@ -138,6 +176,14 @@ export class SectionSelectComponent implements OnInit {
         } else {
             this.sectionWithNews.forEach((sw) => (sw.news = []));
             this.isLoading = false;
+        }
+    }
+
+    @HostListener('document:click', ['$event'])
+    onClickOutside(event: MouseEvent) {
+        const target = event.target as HTMLElement;
+        if (!target.closest('.user-menu')) {
+            this.menuOpen = false;
         }
     }
 }

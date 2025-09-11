@@ -4,20 +4,33 @@
 </div>
 }
 
-<div class="auth-buttons">
-    @if (!isLoggedIn) {
-    <button type="button" (click)="showLogin = true">Log in</button>
-    <button type="button" (click)="showSignup = true">Sign up</button>
-    } @else {
-        <button type="button" (click)="logout()">Log out</button>
-    }
+<div class="section-selection-wrapper">
+    <div class="auth-buttons">
+        @if (!isLoggedIn) {
+        <button type="button" (click)="showLogin = true">Log in</button>
+        <button type="button" (click)="showSignup = true">Sign up</button>
+        } @else {
+        <div class="user-menu">
+            <button class="user-avatar" (click)="toggleMenu()">
+                {{ getInitials() }}
+            </button>
+
+            @if (menuOpen) {
+            <div class="dropdown">
+                <button (click)="openSettings()">Settings</button>
+                <button (click)="logout()">Log out</button>
+            </div>
+            }
+        </div>
+        }
+    </div>
 </div>
 
 @if (showLogin) {
 <div class="popup-overlay">
     <div class="popup-content" (click)="$event.stopPropagation()">
         <form>
-            <app-login (close)="showLogin = false" (loginSuccess)="onLoginSuccess()"
+            <app-login (close)="showLogin = false" (loginSuccess)="onLoginSuccess($event)"
                 (forgotPassword)="showLogin = false; showForgotPassword = true"></app-login>
         </form>
         <button type="button" (click)="showLogin = false">Close</button>
@@ -28,7 +41,7 @@
 @if (showSignup) {
 <div class="popup-overlay">
     <div class="popup-content" (click)="$event.stopPropagation()">
-        <app-signup (close)="showSignup = false" (signupSuccess)="onLoginSuccess()">
+        <app-signup (close)="showSignup = false" (signupSuccess)="onLoginSuccess($event)">
         </app-signup>
         <button type="button" class="close-btn" (click)="showSignup = false">Close</button>
     </div>
@@ -40,6 +53,15 @@
     <div class="popup-content" (click)="$event.stopPropagation()">
         <app-forgot-password (close)="showForgotPassword = false" (backToLogin)="backToLogin()"></app-forgot-password>
         <button type="button" class="close-btn" (click)="showForgotPassword = false">Close</button>
+    </div>
+</div>
+}
+
+@if (showSettings) {
+<div class="popup-overlay">
+    <div class="popup-content" (click)="$event.stopPropagation()">
+        <app-settings (close)="showSettings = false"></app-settings>
+        <button type="button" class="close-btn" (click)="showSettings = false">Close</button>
     </div>
 </div>
 }

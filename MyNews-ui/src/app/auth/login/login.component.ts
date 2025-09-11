@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { CommonModule } from '@angular/common';
 
 import { AuthService } from '../../services/auth.service';
+import { AuthResponse } from '../../interfaces/auth-response';
 
 @Component({
   selector: 'app-login',
@@ -14,7 +15,7 @@ import { AuthService } from '../../services/auth.service';
 export class LoginComponent {
   @Output() forgotPassword = new EventEmitter<void>();
   @Output() close = new EventEmitter<void>();
-  @Output() loginSuccess = new EventEmitter<void>();
+  @Output() loginSuccess = new EventEmitter<{ firstName: string; lastName: string }>();
 
   loginForm: FormGroup;
 
@@ -35,9 +36,12 @@ export class LoginComponent {
         next: (res) => {
           localStorage.setItem('token', res.token);
           console.log('Logged in!');
-          this.close.emit();
-          this.loginSuccess.emit();
+          this.loginSuccess.emit({
+            firstName: res.firstName,
+            lastName: res.lastName
+          });
           this.loading = false;
+          this.close.emit();
         },
         error: (err: any) => {
           console.error(err);
