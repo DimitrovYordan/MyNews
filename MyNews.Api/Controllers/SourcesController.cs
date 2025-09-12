@@ -1,7 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-using MyNews.Api.Data;
+using MyNews.Api.Interfaces;
 using MyNews.Api.Models;
 
 namespace MyNews.Api.Controllers
@@ -10,51 +11,54 @@ namespace MyNews.Api.Controllers
     [ApiController]
     public class SourcesController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly ISourceService _sourceService;
 
-        public SourcesController(AppDbContext context)
+        public SourcesController(ISourceService sourceService)
         {
-            _context = context;
+            _sourceService = sourceService;
         }
 
         // GET: api/sources
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Source>>> GetSources()
         {
-            return await _context.Sources.ToListAsync();
+            var sources = await _sourceService.GetAllAsync();
+
+            return Ok(sources);
         }
 
         // GET: api/sources/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Source>> GetSource(int id)
         {
-            var source = await _context.Sources.FindAsync(id);
+            var source = await _sourceService.GetByIdAsync(id);
 
             if (source == null)
+            {
                 return NotFound();
+            }
 
-            return source;
+            return Ok(source);
         }
 
         // POST: api/sources
         [HttpPost]
         public async Task<ActionResult<Source>> PostSource(Source source)
         {
-            _context.Sources.Add(source);
-            await _context.SaveChangesAsync();
+            var createdSource = await _sourceService.CreateAsync(source);
 
-            return CreatedAtAction(nameof(GetSource), new { id = source.Id }, source);
+            return CreatedAtAction(nameof(GetSource), new { id = createdSource.Id }, createdSource);
         }
 
         // PUT: api/sources/5
         [HttpPut("{id}")]
         public async Task<IActionResult> PutSource(int id, Source source)
         {
-            if (id != source.Id)
+            var updated = await _sourceService.UpdateAsync(id, source);
+            if (!updated)
+            {
                 return BadRequest();
-
-            _context.Entry(source).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
+            }
 
             return NoContent();
         }
@@ -63,12 +67,11 @@ namespace MyNews.Api.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteSource(int id)
         {
-            var source = await _context.Sources.FindAsync(id);
-            if (source == null)
+            var deleted = await _sourceService.DeleteAsync(id);
+            if (!deleted)
+            {
                 return NotFound();
-
-            _context.Sources.Remove(source);
-            await _context.SaveChangesAsync();
+            }
 
             return NoContent();
         }
