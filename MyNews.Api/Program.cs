@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 using MyNews.Api.Data;
+using MyNews.Api.Interfaces;
+using MyNews.Api.Services;
 
 using System.Text;
 
@@ -16,6 +18,14 @@ builder.Services.AddSwaggerGen();
 // Configure SQL Server DbContext
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Register services (DI)
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserService, UsersService>();
+builder.Services.AddScoped<ISourceService, SourcesService>();
+builder.Services.AddScoped<INewsService, NewsService>();
+builder.Services.AddScoped<ISectionsService, SectionsService>();
+builder.Services.AddScoped<IJwtService, JwtService>();
 
 builder.Services.AddCors(options =>
 {

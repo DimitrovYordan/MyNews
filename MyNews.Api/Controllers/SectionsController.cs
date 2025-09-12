@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-using MyNews.Api.Enums;
+using MyNews.Api.Interfaces;
 
 namespace MyNews.Api.Controllers
 {
@@ -8,13 +8,17 @@ namespace MyNews.Api.Controllers
     [ApiController]
     public class SectionsController : ControllerBase
     {
+        private readonly ISectionsService _sectionsService;
+
+        public SectionsController(ISectionsService sectionsService)
+        {
+            _sectionsService = sectionsService;
+        }
+
         [HttpGet]
         public ActionResult<IEnumerable<object>> GetSections()
         {
-            var sections = Enum.GetValues(typeof(SectionType))
-                .Cast<SectionType>()
-                .Select(s => new { Id = (int)s, Name = s.ToString() })
-                .ToList();
+            var sections = _sectionsService.GetSections();
 
             return Ok(sections);
         }

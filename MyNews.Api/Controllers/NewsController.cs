@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
-using MyNews.Api.Data;
-using MyNews.Api.DTOs;
 using MyNews.Api.Enums;
+using MyNews.Api.Interfaces;
 
 namespace MyNews.Api.Controllers
 {
@@ -11,20 +9,18 @@ namespace MyNews.Api.Controllers
     [Route("api/[controller]")]
     public class NewsController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly INewsService _newsService;
 
-        public NewsController(AppDbContext context)
+        public NewsController(INewsService newsService)
         {
-            _context = context;
+            _newsService = newsService;
         }
 
         [HttpGet]
-        public IActionResult GetNews([FromQuery] List<int> sectionsIds)
+        public async Task<IActionResult> GetNews([FromQuery] List<int> sectionsIds)
         {
             // Fetch all news items ordered by date descending
-            var news = _context.NewsItems
-                .Where(n => sectionsIds.Count == 0 || sectionsIds.Contains((int)n.Section))
-                .ToList();
+            var news = await _newsService.GetNewsAsync(sectionsIds);
 
             return Ok(news);
         }
@@ -32,32 +28,7 @@ namespace MyNews.Api.Controllers
         [HttpPost("by-sections")]
         public async Task<IActionResult> GetNewsBySections([FromBody] List<SectionType> sectionIds)
         {
-            var selectedSections = sectionIds.Any()
-                ? sectionIds
-                : Enum.GetValues(typeof(SectionType)).Cast<SectionType>().ToList();
-
-            var result = new List<SectionWithNewsDto>();
-
-            foreach (var section in selectedSections)
-            {
-                var news = await _context.NewsItems
-                    .Where(n => n.Section == section)
-                    .Select(n => new NewsItemDto
-                    {
-                        Id = n.Id,
-                        Title = n.Title,
-                        Content = n.Content,
-                        PublishedAt = n.PublishedAt
-                    })
-                    .ToListAsync();
-
-                result.Add(new SectionWithNewsDto
-                {
-                    SectionId = (int)section,
-                    SectionName = section.ToString(),
-                    News = news
-                });
-            }
+            var result = await _newsService.GetNewsBySectionsAsync(sectionIds);
 
             return Ok(result);
         }
