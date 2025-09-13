@@ -21,15 +21,30 @@ namespace MyNews.Api.Controllers
         {
             var result = await _authService.LoginAsync(login);
 
+            if (result == null)
+            {
+                return Unauthorized(new { message = "Invalid credentials" });
+            }
+
             return Ok(result);
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto register)
         {
-            var result = await _authService.RegisterAsync(register);
-
-            return Ok(result);
+            try
+            {
+                var result = await _authService.RegisterAsync(register);
+                return Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Internal server error" });
+            }
         }
     }
 }
