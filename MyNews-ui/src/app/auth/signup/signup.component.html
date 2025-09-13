@@ -38,8 +38,8 @@
     <div class="form-group">
       <label>Email</label>
       <input type="email" formControlName="email" />
-      @if (signupForm.get('email')?.invalid && signupForm.get('email')?.touched) {
-      <small class="error">Please enter a valid email.</small>
+      @if (emailErrors) {
+      <small class="error">{{ emailErrors }}</small>
       }
     </div>
 
@@ -62,7 +62,8 @@
       <div class="password-wrapper">
         <input [type]="showRepeatPassword ? 'text' : 'password'" formControlName="repeatPassword"
           placeholder="Repeat your password" />
-        <i class="bi" [ngClass]="showRepeatPassword ? 'bi-eye-slash' : 'bi-eye'" (click)="showRepeatPassword = !showRepeatPassword">
+        <i class="bi" [ngClass]="showRepeatPassword ? 'bi-eye-slash' : 'bi-eye'"
+          (click)="showRepeatPassword = !showRepeatPassword">
         </i>
       </div>
 
