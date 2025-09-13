@@ -3,7 +3,6 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { CommonModule } from '@angular/common';
 
 import { AuthService } from '../../services/auth.service';
-import { AuthResponse } from '../../interfaces/auth-response';
 
 @Component({
   selector: 'app-login',
@@ -32,10 +31,10 @@ export class LoginComponent {
 
   submitLogin() {
     if (this.loginForm.valid) {
+      this.loading = true;
       this.authService.login(this.loginForm.value).subscribe({
         next: (res) => {
           localStorage.setItem('token', res.token);
-          console.log('Logged in!');
           this.loginSuccess.emit({
             firstName: res.firstName,
             lastName: res.lastName
@@ -44,9 +43,9 @@ export class LoginComponent {
           this.close.emit();
         },
         error: (err: any) => {
-          console.error(err);
+          this.errorMessage = err.error?.message || 'Invalid email or password.';
+
           this.loading = false;
-          this.errorMessage = err.error || 'Invalid email or password.';
         }
       });
     }

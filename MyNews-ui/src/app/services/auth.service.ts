@@ -44,7 +44,6 @@ export class AuthService {
         return this.http.post<AuthResponse>(`${this.apiUrl}/auth/register`, credentials).pipe(
             tap(res => {
                 localStorage.setItem(this.tokenKey, res.token);
-                // localStorage.setItem('current_user', JSON.stringify(res));
                 this.isLoggedIn$.next(true);
             })
         );
