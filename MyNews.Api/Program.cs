@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 
 using MyNews.Api.Data;
 using MyNews.Api.Interfaces;
+using MyNews.Api.Middlewares;
 using MyNews.Api.Services;
 
 using System.Text;
@@ -67,6 +68,9 @@ app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseCors("AllowAngular");
+
+// Global error handling
+app.UseMiddleware<ErrorHandlingMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();

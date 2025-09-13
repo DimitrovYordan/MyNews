@@ -25,7 +25,7 @@ namespace MyNews.Api.Services
 
             if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
             {
-                throw new UnauthorizedAccessException("Invalid credentials");
+                return null;
             }
 
             var token = _jwtService.GenerateToken(user.Id, user.Email);
@@ -45,7 +45,7 @@ namespace MyNews.Api.Services
 
             if (esists)
             {
-                throw new InvalidOperationException("User already exists.");
+                throw new InvalidOperationException("User with this email already exists.");
             }
 
             var user = new User
