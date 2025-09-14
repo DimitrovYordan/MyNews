@@ -1,0 +1,41 @@
+<div class="app-container">
+    <nav class="navbar">
+        <div class="nav-brand">My News</div>
+        <div class="nav-buttons">
+            @if(!isLoggedIn) {
+            <ng-container>
+                <button (click)="openLogin()">Log in</button>
+                <button (click)="openSignup()">Sign up</button>
+            </ng-container>
+            } @else {
+            <div class="user-menu" (click)="toggleUserMenu()" [class.open]="isUserMenuOpen">
+                <button class="user-avatar">{{ getInitials() }}</button>
+                @if(isUserMenuOpen) {
+                <div class="user-dropdown">
+                    <button (click)="goToProfile()">Profile</button>
+                    <button (click)="logout()">Log out</button>
+                </div>
+                }
+            </div>
+            }
+        </div>
+    </nav>
+
+    <main class="content">
+        <router-outlet></router-outlet>
+    </main>
+
+    @if(showLogin){
+    <app-login (close)="closeForms()" (loginSuccess)="onLoginSuccess($event)"></app-login>
+    }
+    @if(showSignup) {
+    <app-signup (close)="closeForms()" (signupSuccess)="onSignupSuccess($event)"></app-signup>
+    }
+    @if(showSettings){
+    <app-settings [hidden]="!showSettings" (close)="closeSettings()"></app-settings>
+    }
+
+    <footer class="footer">
+        <p>&copy; 2025 My News. All rights reserved.</p>
+    </footer>
+</div>

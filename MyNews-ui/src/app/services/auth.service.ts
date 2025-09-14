@@ -1,5 +1,6 @@
 import { HttpClient } from "@angular/common/http";
 import { Injectable } from "@angular/core";
+import { Router } from "@angular/router";
 
 import { BehaviorSubject, Observable, tap } from "rxjs";
 
@@ -15,9 +16,11 @@ export class AuthService {
     private tokenKey = 'auth_token';
     private currentUser: AuthResponse | null = null;
 
+    public showLogin$ = new BehaviorSubject<boolean>(false);
+    public showSignup$ = new BehaviorSubject<boolean>(false);
     public isLoggedIn$ = new BehaviorSubject<boolean>(false);
 
-    constructor(private http: HttpClient) {
+    constructor(private http: HttpClient, private router: Router) {
         const storedUser = localStorage.getItem('current_user');
         if (storedUser) {
             this.currentUser = JSON.parse(storedUser);
@@ -28,7 +31,6 @@ export class AuthService {
         return this.http.post<AuthResponse>(`${this.apiUrl}/auth/login`, credentials).pipe(
             tap(res => {
                 localStorage.setItem(this.tokenKey, res.token);
-                // localStorage.setItem('current_user', JSON.stringify(res));
                 this.isLoggedIn$.next(true);
                 this.currentUser = res;
             })
@@ -38,6 +40,7 @@ export class AuthService {
     logout() {
         localStorage.removeItem(this.tokenKey);
         this.isLoggedIn$.next(false);
+        this.router.navigate(['/'], { replaceUrl: true });
     }
 
     signup(credentials: SignupData): Observable<AuthResponse> {
@@ -66,5 +69,20 @@ export class AuthService {
         return this.http.put(`${this.apiUrl}/users/update-profile`, data, {
             headers: { Authorization: `Bearer ${token}` }
         });
+    }
+
+    openLogin() {
+        this.showLogin$.next(true);
+        this.showSignup$.next(false);
+    }
+
+    openSignup() {
+        this.showSignup$.next(true);
+        this.showLogin$.next(false);
+    }
+
+    closeForms() {
+        this.showLogin$.next(false);
+        this.showSignup$.next(false);
     }
 }
