@@ -2,10 +2,69 @@
    General Page Layout
    =========================== */
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f8f9fa;
+    height: 100%;
     margin: 0;
-    padding: 0;
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background-color: #007bff;
+    color: white;
+    width: 100%;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 10;
+}
+
+.nav-brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.nav-buttons button {
+    margin-left: 10px;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.nav-buttons button:first-child {
+    background: white;
+    color: #007bff;
+}
+
+.nav-buttons button:last-child {
+    background: #ffc107;
+    color: #222;
+}
+
+.nav-buttons button:hover {
+    opacity: 0.85;
+}
+
+.content {
+    flex: 1;
+    padding: 2rem;
+}
+
+.footer {
+    text-align: center;
+    padding: 1rem 0;
+    background-color: #f1f1f1;
+    font-size: 0.9rem;
+    color: #555;
 }
 
 /* ===========================
@@ -30,28 +89,19 @@ body {
     padding: 20px;
 }
 
-.page-title {
-    text-align: center;
-    margin: 30px 0 40px;
-    font-size: 2.2rem;
-    font-weight: bold;
-}
-
-/* Container for the button aligned to the right */
-.select-all-container {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 16px;
-}
-
-/* Base button styles */
 .select-all-btn {
-    padding: 12px 24px;
+    padding: 10px 20px;
     border: none;
     border-radius: 6px;
-    font-size: 1.1rem;
+    font-size: 1rem;
     cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.1s ease;
+    background-color: #007bff;
+    color: white;
+    transition: background 0.2s;
+}
+
+.select-all-btn:hover {
+    background-color: #0056b3;
 }
 
 /* Blue when "Select all" */
@@ -106,227 +156,174 @@ body {
     cursor: not-allowed;
 }
 
-/* ===========================
-   News List
-   =========================== */
-.news-list {
-    max-width: 1000px;
-    margin: 20px auto;
-    padding: 20px;
-}
+// /* ===========================
+//    News List
+//    =========================== */
+// .news-list {
+//     max-width: 1000px;
+//     margin: 20px auto;
+//     padding: 20px;
+// }
 
-.section-block {
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    padding: 15px;
-    margin-bottom: 20px;
-}
+// .section-block {
+//     background: #fff;
+//     border: 1px solid #ddd;
+//     border-radius: 10px;
+//     padding: 15px;
+//     margin-bottom: 20px;
+// }
 
-.section-block h3 {
-    margin-top: 0;
-}
+// .section-block h3 {
+//     margin-top: 0;
+// }
 
-.no-news {
-    color: #888;
-    font-style: italic;
-}
+// .no-news {
+//     color: #888;
+//     font-style: italic;
+// }
 
-/* ---------- Popup container ---------- */
-.popup-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
+// /* ---------- Unified form style ---------- */
+// .popup-content form {
+//     display: flex;
+//     flex-direction: column;
+//     gap: 16px;
+//     width: 100%;
+// }
 
-.popup-content {
-    background: #fff;
-    padding: 30px 40px;
-    border-radius: 12px;
-    max-width: 400px;
-    width: 90%;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-    position: relative;
-    animation: fadeIn 0.3s ease-in-out;
-}
+// /* Labels */
+// .popup-content form label {
+//     font-weight: 500;
+//     color: #333;
+//     margin-bottom: 4px;
+//     display: block;
+// }
 
-.popup-content h2 {
-    text-align: center;
-    font-size: 1.6rem;
-    font-weight: 600;
-    margin-bottom: 16px;
-    color: #222;
-}
+// /* Inputs */
+// .popup-content form input {
+//     width: 100%;
+//     padding: 12px;
+//     border: 1px solid #ccc;
+//     border-radius: 6px;
+//     font-size: 1rem;
+//     transition: border-color 0.2s ease, box-shadow 0.2s ease;
+//     box-sizing: border-box;
+// }
 
-/* ---------- Unified form style ---------- */
-.popup-content form {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    width: 100%;
-}
+// .popup-content form input:focus {
+//     outline: none;
+//     border-color: #1976d2;
+//     box-shadow: 0 0 4px rgba(25, 118, 210, 0.4);
+// }
 
-/* Labels */
-.popup-content form label {
-    font-weight: 500;
-    color: #333;
-    margin-bottom: 4px;
-    display: block;
-}
+// /* Error messages */
+// .popup-content form .error {
+//     color: #d32f2f;
+//     font-size: 0.85rem;
+//     margin-top: -8px;
+//     margin-bottom: 4px;
+// }
 
-/* Inputs */
-.popup-content form input {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font-size: 1rem;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    box-sizing: border-box;
-}
+// /* Submit button */
+// .popup-content form button[type="submit"] {
+//     width: 100%;
+//     padding: 12px;
+//     border: none;
+//     border-radius: 6px;
+//     background-color: #1976d2;
+//     color: #fff;
+//     font-size: 1rem;
+//     font-weight: 500;
+//     cursor: pointer;
+//     transition: background 0.2s ease, transform 0.1s ease;
+// }
 
-.popup-content form input:focus {
-    outline: none;
-    border-color: #1976d2;
-    box-shadow: 0 0 4px rgba(25, 118, 210, 0.4);
-}
+// .popup-content form button[type="submit"]:hover {
+//     background-color: #1565c0;
+// }
 
-/* Error messages */
-.popup-content form .error {
-    color: #d32f2f;
-    font-size: 0.85rem;
-    margin-top: -8px;
-    margin-bottom: 4px;
-}
+// .popup-content form button[type="submit"]:active {
+//     transform: scale(0.98);
+// }
 
-/* Submit button */
-.popup-content form button[type="submit"] {
-    width: 100%;
-    padding: 12px;
-    border: none;
-    border-radius: 6px;
-    background-color: #1976d2;
-    color: #fff;
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.2s ease, transform 0.1s ease;
-}
+// /* Close button under the form */
+// .popup-content>button {
+//     width: 100%;
+//     margin-top: 16px;
+//     padding: 12px;
+//     border: none;
+//     border-radius: 6px;
+//     background-color: #d32f2f;
+//     color: #fff;
+//     font-size: 1rem;
+//     font-weight: 500;
+//     cursor: pointer;
+//     transition: background 0.2s ease, transform 0.1s ease;
+// }
 
-.popup-content form button[type="submit"]:hover {
-    background-color: #1565c0;
-}
+// .popup-content>button:hover {
+//     background-color: #b71c1c;
+// }
 
-.popup-content form button[type="submit"]:active {
-    transform: scale(0.98);
-}
+// .popup-content>button:active {
+//     transform: scale(0.98);
+// }
 
-/* Close button under the form */
-.popup-content>button {
-    width: 100%;
-    margin-top: 16px;
-    padding: 12px;
-    border: none;
-    border-radius: 6px;
-    background-color: #d32f2f;
-    color: #fff;
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.2s ease, transform 0.1s ease;
-}
+// /* Forgotten password button */
+// .popup-content .forgot-password-btn {
+//     display: block;
+//     margin: 16px auto 12px;
+//     background: none;
+//     border: none;
+//     color: #1976d2;
+//     font-size: 0.95rem;
+//     cursor: pointer;
+//     transition: color 0.2s ease;
+// }
 
-.popup-content>button:hover {
-    background-color: #b71c1c;
-}
+// .popup-content .forgot-password-btn:hover {
+//     color: #1565c0;
+// }
 
-.popup-content>button:active {
-    transform: scale(0.98);
-}
+// .popup-content .forgot-password-btn:active {
+//     color: #0d47a1;
+// }
 
-/* Forgotten password button */
-.popup-content .forgot-password-btn {
-    display: block;
-    margin: 16px auto 12px;
-    background: none;
-    border: none;
-    color: #1976d2;
-    font-size: 0.95rem;
-    cursor: pointer;
-    transition: color 0.2s ease;
-}
+// .back-btn {
+//     position: absolute;
+//     top: 26px;
+//     left: 40px;
+//     padding: 8px 16px;
+//     background-color: rgba(0, 0, 0, 0.05);
+//     color: #333;
+//     border: none;
+//     border-radius: 8px;
+//     font-size: 0.95rem;
+//     font-weight: 500;
+//     cursor: pointer;
+//     transition: all 0.2s ease;
+//     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 
-.popup-content .forgot-password-btn:hover {
-    color: #1565c0;
-}
+//     &:hover {
+//         background-color: rgba(0, 0, 0, 0.1);
+//         transform: translateY(-2px);
+//         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+//     }
 
-.popup-content .forgot-password-btn:active {
-    color: #0d47a1;
-}
+//     &:active {
+//         transform: translateY(0);
+//         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+//     }
+// }
 
-.back-btn {
-    position: absolute;
-    top: 26px;
-    left: 40px;
-    padding: 8px 16px;
-    background-color: rgba(0, 0, 0, 0.05);
-    color: #333;
-    border: none;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+// /* ---------- Animations ---------- */
+// @keyframes fadeIn {
+//     from {
+//         opacity: 0;
+//         transform: translateY(-12px);
+//     }
 
-    &:hover {
-        background-color: rgba(0, 0, 0, 0.1);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-
-    &:active {
-        transform: translateY(0);
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    }
-}
-
-// Styles if not log in
-.section-selection-wrapper.disabled {
-  pointer-events: none;      // забранява кликове върху всички елементи вътре
-  opacity: 0.5;              // визуално изглежда неактивно
-}
-
-.section-selection-wrapper.disabled .section-card:hover {
-  background-color: inherit; // маха hover ефекта
-}
-
-.section-selection-wrapper.disabled .select-all-btn {
-  background-color: #ccc;    // правим бутона сив
-  cursor: not-allowed;       // курсорът показва, че не може да се кликне
-}
-
-.section-selection-wrapper.disabled input[type="checkbox"] {
-  cursor: not-allowed;
-}
-
-
-/* ---------- Animations ---------- */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-12px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
+//     to {
+//         opacity: 1;
+//         transform: translateY(0);
+//     }
+// }

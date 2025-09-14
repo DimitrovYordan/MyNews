@@ -19,8 +19,6 @@ export class SettingsComponent {
   showRepeatPassword: boolean = false;
 
   constructor(private fb: FormBuilder, private authService: AuthService) {
-    const user = this.authService.getCurrentUser();
-
     this.settingsForm = this.fb.group({
       firstName: [''],
       lastName: [''],
@@ -53,5 +51,10 @@ export class SettingsComponent {
         }
       });
     }
+  }
+
+  closeSettings(): void {
+    this.close.emit();
+    console.log('Close setting settings component.');
   }
 }

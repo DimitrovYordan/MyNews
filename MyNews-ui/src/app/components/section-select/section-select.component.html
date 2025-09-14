@@ -4,70 +4,8 @@
 </div>
 }
 
-<div class="section-selection-wrapper">
-    <div class="auth-buttons">
-        @if (!isLoggedIn) {
-        <button type="button" (click)="showLogin = true">Log in</button>
-        <button type="button" (click)="showSignup = true">Sign up</button>
-        } @else {
-        <div class="user-menu">
-            <button class="user-avatar" (click)="toggleMenu()">
-                {{ getInitials() }}
-            </button>
-
-            @if (menuOpen) {
-            <div class="dropdown">
-                <button (click)="openSettings()">Settings</button>
-                <button (click)="logout()">Log out</button>
-            </div>
-            }
-        </div>
-        }
-    </div>
-</div>
-
-@if (showLogin) {
-<div class="popup-overlay">
-    <div class="popup-content" (click)="$event.stopPropagation()">
-        <form>
-            <app-login (close)="showLogin = false" (loginSuccess)="onLoginSuccess($event)"
-                (forgotPassword)="showLogin = false; showForgotPassword = true"></app-login>
-        </form>
-        <button type="button" (click)="showLogin = false">Close</button>
-    </div>
-</div>
-}
-
-@if (showSignup) {
-<div class="popup-overlay">
-    <div class="popup-content" (click)="$event.stopPropagation()">
-        <app-signup (close)="showSignup = false" (signupSuccess)="onLoginSuccess($event)">
-        </app-signup>
-        <button type="button" class="close-btn" (click)="showSignup = false">Close</button>
-    </div>
-</div>
-}
-
-@if (showForgotPassword) {
-<div class="popup-overlay">
-    <div class="popup-content" (click)="$event.stopPropagation()">
-        <app-forgot-password (close)="showForgotPassword = false" (backToLogin)="backToLogin()"></app-forgot-password>
-        <button type="button" class="close-btn" (click)="showForgotPassword = false">Close</button>
-    </div>
-</div>
-}
-
-@if (showSettings) {
-<div class="popup-overlay">
-    <div class="popup-content" (click)="$event.stopPropagation()">
-        <app-settings (close)="showSettings = false"></app-settings>
-        <button type="button" class="close-btn" (click)="showSettings = false">Close</button>
-    </div>
-</div>
-}
-
 @if (showSections && !isLoading) {
-<div class="section-selection-wrapper" [class.disabled]="!isLoggedIn">
+<div class="section-selection-wrapper">
     <div class="section-selection">
         <h2 class="page-title">Choose sections</h2>
 
@@ -95,31 +33,5 @@
             Save
         </button>
     </div>
-</div>
-}
-
-@if (!showSections && !isLoading) {
-<div class="news-list">
-    <h2>Новини по секции</h2>
-
-    @for (item of sectionWithNews; track item.sectionId) {
-    <div class="section-block">
-        <h3>{{ item.sectionName }}</h3>
-
-        @if (item.news.length === 0) {
-        <p class="no-news">No news to show.</p>
-        } @else {
-        <ul>
-            @for (newsItem of item.news; track newsItem.id) {
-            <li>
-                <h4>{{ newsItem.title }}</h4>
-                <p>{{ newsItem.content }}</p>
-                <small>Published at: {{ newsItem.publishedAt | date:'medium' }}</small>
-            </li>
-            }
-        </ul>
-        }
-    </div>
-    }
 </div>
 }
