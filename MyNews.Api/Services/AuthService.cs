@@ -35,6 +35,8 @@ namespace MyNews.Api.Services
                 Token = token,
                 Email = loginDto.Email,
                 UserId = user.Id,
+                FirstName = user.FirstName,
+                LastName = user.LastName
             };
         }
 
