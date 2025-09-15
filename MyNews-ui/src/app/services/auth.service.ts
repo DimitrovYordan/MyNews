@@ -13,32 +13,28 @@ import { AuthResponse } from "../interfaces/auth-response";
 })
 export class AuthService {
     private apiUrl = 'http://localhost:5271/api';
-    private tokenKey = 'auth_token';
+    private token: string | null = null;
     private currentUser: AuthResponse | null = null;
 
     public showLogin$ = new BehaviorSubject<boolean>(false);
     public showSignup$ = new BehaviorSubject<boolean>(false);
     public isLoggedIn$ = new BehaviorSubject<boolean>(false);
 
-    constructor(private http: HttpClient, private router: Router) {
-        const storedUser = localStorage.getItem('current_user');
-        if (storedUser) {
-            this.currentUser = JSON.parse(storedUser);
-        }
-    }
+    constructor(private http: HttpClient, private router: Router) { }
 
     login(credentials: AuthRequest): Observable<AuthResponse> {
         return this.http.post<AuthResponse>(`${this.apiUrl}/auth/login`, credentials).pipe(
             tap(res => {
-                localStorage.setItem(this.tokenKey, res.token);
-                this.isLoggedIn$.next(true);
+                this.token = res.token;
                 this.currentUser = res;
+                this.isLoggedIn$.next(true);
             })
         );
     }
 
     logout() {
-        localStorage.removeItem(this.tokenKey);
+        this.token = null;
+        this.currentUser = null;
         this.isLoggedIn$.next(false);
         this.router.navigate(['/'], { replaceUrl: true });
     }
@@ -46,7 +42,7 @@ export class AuthService {
     signup(credentials: SignupData): Observable<AuthResponse> {
         return this.http.post<AuthResponse>(`${this.apiUrl}/auth/register`, credentials).pipe(
             tap(res => {
-                localStorage.setItem(this.tokenKey, res.token);
+                this.token = res.token;
                 this.isLoggedIn$.next(true);
             })
         );
@@ -61,13 +57,12 @@ export class AuthService {
     }
 
     updateProfile(data: any): Observable<any> {
-        const token = localStorage.getItem(this.tokenKey);
-        if (!token) {
+        if (!this.token) {
             throw new Error('User not logged in');
         }
 
         return this.http.put(`${this.apiUrl}/users/update-profile`, data, {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: { Authorization: `Bearer ${this.token}` }
         });
     }
 
@@ -84,5 +79,9 @@ export class AuthService {
     closeForms() {
         this.showLogin$.next(false);
         this.showSignup$.next(false);
+    }
+
+    isLoggedIn(): boolean {
+        return !!this.token;
     }
 }

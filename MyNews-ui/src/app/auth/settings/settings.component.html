@@ -1,68 +1,66 @@
-<div class="popup-overlay">
-    <div class="popup-content">
-        <h2>Edit Profile</h2>
+<div class="form-content">
+    <h2 class="form-title">Edit Profile</h2>
 
-        <form [formGroup]="settingsForm" (ngSubmit)="submitSettings()">
-            <div class="form-group">
-                <label>First Name</label>
-                <input type="text" formControlName="firstName" />
+    <form [formGroup]="settingsForm" (ngSubmit)="submitSettings()">
+        <div class="form-group">
+            <label>First Name</label>
+            <input type="text" formControlName="firstName" />
+        </div>
+
+        <div class="form-group">
+            <label>Last Name</label>
+            <input type="text" formControlName="lastName" />
+        </div>
+
+        <div class="form-group">
+            <label>Country</label>
+            <input type="text" formControlName="country" />
+        </div>
+
+        <div class="form-group">
+            <label>City</label>
+            <input type="text" formControlName="city" />
+        </div>
+
+        <div class="form-group">
+            <label>Email</label>
+            <input type="email" formControlName="email" />
+            @if (settingsForm.get('email')?.value && settingsForm.get('email')?.invalid) {
+            <small class="error">Please enter a valid email.</small>
+            }
+        </div>
+
+        <div class="form-group password-group">
+            <label>Password</label>
+            <div class="password-wrapper">
+                <input [type]="showPassword ? 'text' : 'password'" formControlName="password"
+                    placeholder="Enter your password" />
+                <i class="bi" [ngClass]="showPassword ? 'bi-eye-slash' : 'bi-eye'"
+                    (click)="showPassword = !showPassword">
+                </i>
             </div>
 
-            <div class="form-group">
-                <label>Last Name</label>
-                <input type="text" formControlName="lastName" />
+            @if (settingsForm.get('password')?.value && settingsForm.get('password')?.invalid) {
+            <small class="error">Password must have at least 6 chars, 1 number, 1 special character.</small>
+            }
+        </div>
+
+        <div class="form-group password-group">
+            <label>Repeat Password</label>
+            <div class="password-wrapper">
+                <input [type]="showRepeatPassword ? 'text' : 'password'" formControlName="repeatPassword"
+                    placeholder="Repeat your password" />
+                <i class="bi" [ngClass]="showRepeatPassword ? 'bi-eye-slash' : 'bi-eye'"
+                    (click)="showRepeatPassword = !showRepeatPassword">
+                </i>
             </div>
 
-            <div class="form-group">
-                <label>Country</label>
-                <input type="text" formControlName="country" />
-            </div>
+            @if (settingsForm.hasError('passwordsMismatch') && settingsForm.get('repeatPassword')?.touched) {
+            <small class="error">Passwords do not match.</small>
+            }
+        </div>
 
-            <div class="form-group">
-                <label>City</label>
-                <input type="text" formControlName="city" />
-            </div>
-
-            <div class="form-group">
-                <label>Email</label>
-                <input type="email" formControlName="email" />
-                @if (settingsForm.get('email')?.value && settingsForm.get('email')?.invalid) {
-                <small class="error">Please enter a valid email.</small>
-                }
-            </div>
-
-            <div class="form-group password-group">
-                <label>Password</label>
-                <div class="password-wrapper">
-                    <input [type]="showPassword ? 'text' : 'password'" formControlName="password"
-                        placeholder="Enter your password" />
-                    <i class="bi" [ngClass]="showPassword ? 'bi-eye-slash' : 'bi-eye'"
-                        (click)="showPassword = !showPassword">
-                    </i>
-                </div>
-
-                @if (settingsForm.get('password')?.value && settingsForm.get('password')?.invalid) {
-                <small class="error">Password must have at least 6 chars, 1 number, 1 special character.</small>
-                }
-            </div>
-
-            <div class="form-group password-group">
-                <label>Repeat Password</label>
-                <div class="password-wrapper">
-                    <input [type]="showRepeatPassword ? 'text' : 'password'" formControlName="repeatPassword"
-                        placeholder="Repeat your password" />
-                    <i class="bi" [ngClass]="showRepeatPassword ? 'bi-eye-slash' : 'bi-eye'"
-                        (click)="showRepeatPassword = !showRepeatPassword">
-                    </i>
-                </div>
-
-                @if (settingsForm.hasError('passwordsMismatch') && settingsForm.get('repeatPassword')?.touched) {
-                <small class="error">Passwords do not match.</small>
-                }
-            </div>
-
-            <button type="submit" [disabled]="settingsForm.invalid">Save</button>
-        </form>
-        <button type="button" class="close-btn" (click)="close.emit()">Close</button>
-    </div>
+        <button type="submit" [disabled]="settingsForm.invalid">Save</button>
+    </form>
+    <button type="button" class="close-btn" (click)="closeSettings()">Close</button>
 </div>

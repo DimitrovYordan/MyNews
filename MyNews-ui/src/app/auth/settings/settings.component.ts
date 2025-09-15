@@ -3,6 +3,7 @@ import { Component, EventEmitter, Output } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 
 import { AuthService } from '../../services/auth.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-settings',
@@ -12,13 +13,11 @@ import { AuthService } from '../../services/auth.service';
   styleUrls: ['./settings.component.scss']
 })
 export class SettingsComponent {
-  @Output() close = new EventEmitter<void>();
-
   settingsForm!: FormGroup;
   showPassword: boolean = false;
   showRepeatPassword: boolean = false;
 
-  constructor(private fb: FormBuilder, private authService: AuthService) {
+  constructor(private fb: FormBuilder, private authService: AuthService, private router: Router) {
     this.settingsForm = this.fb.group({
       firstName: [''],
       lastName: [''],
@@ -44,7 +43,7 @@ export class SettingsComponent {
       this.authService.updateProfile(this.settingsForm.value).subscribe({
         next: (res) => {
           console.log('Profile update', res);
-          this.close.emit();
+          this.router.navigate(['/']);
         },
         error: (err) => {
           console.error('Error updating profile', err);
@@ -54,7 +53,7 @@ export class SettingsComponent {
   }
 
   closeSettings(): void {
-    this.close.emit();
+    this.router.navigate(['/']);
     console.log('Close setting settings component.');
   }
 }
