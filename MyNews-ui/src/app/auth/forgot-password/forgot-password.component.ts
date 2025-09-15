@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 
 import { AuthService } from '../../services/auth.service';
 
@@ -12,12 +13,9 @@ import { AuthService } from '../../services/auth.service';
   styleUrls: ['./forgot-password.component.scss']
 })
 export class ForgotPasswordComponent {
-  @Output() close = new EventEmitter<void>();
-  @Output() backToLogin = new EventEmitter<void>();
-
   forgotPasswordForm: FormGroup;
 
-  constructor(private fb: FormBuilder, private authService: AuthService) {
+  constructor(private fb: FormBuilder, private authService: AuthService, private router: Router) {
     this.forgotPasswordForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
     });
@@ -35,6 +33,6 @@ export class ForgotPasswordComponent {
   }
 
   goBack() {
-    this.backToLogin.emit();
+    this.router.navigate(['/login']);
   }
 }

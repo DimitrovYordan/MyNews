@@ -3,6 +3,7 @@ import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validatio
 import { CommonModule } from '@angular/common';
 
 import { AuthService } from '../../services/auth.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-signup',
@@ -12,16 +13,13 @@ import { AuthService } from '../../services/auth.service';
   styleUrls: ['./signup.component.scss']
 })
 export class SignupComponent {
-  @Output() close = new EventEmitter<void>();
-  @Output() signupSuccess = new EventEmitter<{ firstName: string; lastName: string }>();
-
   signupForm: FormGroup;
   errorMessage: string | null = null;
   showPassword: boolean = false;
   showRepeatPassword: boolean = false;
   loading: boolean = false;
 
-  constructor(private fb: FormBuilder, private authService: AuthService) {
+  constructor(private fb: FormBuilder, private authService: AuthService, private router: Router) {
     this.signupForm = this.fb.group({
       firstName: ['', Validators.required],
       lastName: ['', Validators.required],
@@ -45,26 +43,25 @@ export class SignupComponent {
       this.authService.signup(this.signupForm.value).subscribe({
         next: (res) => {
           localStorage.setItem('auth_token', res.token);
-          this.signupSuccess.emit({
-            firstName: res.firstName,
-            lastName: res.lastName
-          });
+          this.router.navigate(['/sections']);
           this.loading = false;
-          this.close.emit();
         },
         error: (err) => {
           this.loading = false;
 
           if (err.status === 400 && err.error?.message?.includes('already exists')) {
             this.signupForm.get('email')?.setErrors({ emailTaken: true });
+            this.errorMessage = 'This email is already registered.';
+          } else {
+            this.errorMessage = 'Signup failed. Plase try again.';
           }
         }
       });
     }
   }
 
-  closePopup() {
-    this.close.emit();
+  closeSignup() {
+    this.router.navigate(['/']);
   }
 
   get emailErrors() {

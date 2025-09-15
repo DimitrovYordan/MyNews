@@ -1,6 +1,7 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 
 import { AuthService } from '../../services/auth.service';
 
@@ -11,43 +12,59 @@ import { AuthService } from '../../services/auth.service';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss']
 })
-export class LoginComponent {
-  @Output() forgotPassword = new EventEmitter<void>();
-  @Output() close = new EventEmitter<void>();
-  @Output() loginSuccess = new EventEmitter<{ firstName: string; lastName: string }>();
-
+export class LoginComponent implements OnInit {
   loginForm: FormGroup;
 
   errorMessage: string | null = null;
-  loading = false;
+  loading: boolean = false;
   showPassword: boolean = false;
 
-  constructor(private fb: FormBuilder, private authService: AuthService) {
+  constructor(private fb: FormBuilder, private authService: AuthService, private router: Router) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
   }
 
-  submitLogin() {
-    if (this.loginForm.valid) {
-      this.loading = true;
-      this.authService.login(this.loginForm.value).subscribe({
-        next: (res) => {
-          localStorage.setItem('token', res.token);
-          this.loginSuccess.emit({
-            firstName: res.firstName,
-            lastName: res.lastName
-          });
-          this.loading = false;
-          this.close.emit();
-        },
-        error: (err: any) => {
-          this.errorMessage = err.error?.message || 'Invalid email or password.';
+  ngOnInit() {
+    this.loginForm.valueChanges.subscribe(() => {
+      this.errorMessage = null;
+    });
+  }
 
-          this.loading = false;
-        }
-      });
+  submitLogin() {
+    if (this.loginForm.invalid) {
+      this.loginForm.markAllAsTouched();
+      this.errorMessage = null;
+      return;
     }
+
+    this.loading = true;
+    this.authService.login(this.loginForm.value).subscribe({
+      next: (res) => {
+        localStorage.setItem('token', res.token);
+
+        this.router.navigate(['/sections']);
+        this.loading = false;
+      },
+      error: (err: any) => {
+        if (err.status === 401) {
+          this.errorMessage = 'Invalid email or password.';
+        } else {
+          this.errorMessage = 'Login failed. Please try again.';
+        }
+        this.loading = false;
+      }
+    });
+
+  }
+
+  triggerForgotPassword() {
+    console.log('Forgot password clicked');
+    this.router.navigate(['/forgot-password']);
+  }
+
+  closeLogin() {
+    this.router.navigate(['/']);
   }
 }

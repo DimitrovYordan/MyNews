@@ -1,5 +1,5 @@
-<div class="signup-popup">
-  <h2 class="popup-title">Sign Up</h2>
+<div class="form-content">
+  <h2 class="form-title">Sign Up</h2>
 
   <form [formGroup]="signupForm" (ngSubmit)="submitSignup()">
 
@@ -77,5 +77,5 @@
     </button>
   </form>
 
-  <button type="button" class="close-btn" (click)="close.emit()">Close</button>
+  <button type="button" class="close-btn" (click)="closeSignup()">Close</button>
 </div>

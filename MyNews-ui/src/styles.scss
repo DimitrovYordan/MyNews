@@ -156,6 +156,109 @@ body {
     cursor: not-allowed;
 }
 
+/* ===========================
+   Forms
+   =========================== */
+.form-content {
+    position: relative;
+    max-width: 400px;
+    margin: 4.5rem auto;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    text-align: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.form-title {
+    font-size: 1.8rem;
+    color: #333;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    margin-bottom: 0.4rem;
+    font-weight: 500;
+    color: #444;
+    font-size: 1rem;
+}
+
+.form-content input {
+    padding: 0.6rem 0.8rem;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.form-content button[type="submit"] {
+    width: 100%;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 0.7rem;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.5s;
+}
+
+.form-content button[type="submit"]:hover {
+    background-color: #0056b3;
+}
+
+.password-wrapper {
+    position: relative;
+}
+
+.password-wrapper i {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #666;
+    transition: color 0.2s;
+}
+
+.password-wrapper i:hover {
+    color: #000;
+}
+
+.error {
+    color: red;
+    font-size: 0.9rem;
+    margin-top: 0.3rem;
+}
+
+.error-message {
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+
+.close-btn {
+    width: 100%;
+    background: #f44336;
+    color: white;
+    margin-top: 1rem;
+    border: none;
+    padding: 0.7rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background 0.5s;
+
+    &:hover {
+        background: #d32f2f;
+    }
+}
+
 // /* ===========================
 //    News List
 //    =========================== */
@@ -180,139 +283,6 @@ body {
 // .no-news {
 //     color: #888;
 //     font-style: italic;
-// }
-
-// /* ---------- Unified form style ---------- */
-// .popup-content form {
-//     display: flex;
-//     flex-direction: column;
-//     gap: 16px;
-//     width: 100%;
-// }
-
-// /* Labels */
-// .popup-content form label {
-//     font-weight: 500;
-//     color: #333;
-//     margin-bottom: 4px;
-//     display: block;
-// }
-
-// /* Inputs */
-// .popup-content form input {
-//     width: 100%;
-//     padding: 12px;
-//     border: 1px solid #ccc;
-//     border-radius: 6px;
-//     font-size: 1rem;
-//     transition: border-color 0.2s ease, box-shadow 0.2s ease;
-//     box-sizing: border-box;
-// }
-
-// .popup-content form input:focus {
-//     outline: none;
-//     border-color: #1976d2;
-//     box-shadow: 0 0 4px rgba(25, 118, 210, 0.4);
-// }
-
-// /* Error messages */
-// .popup-content form .error {
-//     color: #d32f2f;
-//     font-size: 0.85rem;
-//     margin-top: -8px;
-//     margin-bottom: 4px;
-// }
-
-// /* Submit button */
-// .popup-content form button[type="submit"] {
-//     width: 100%;
-//     padding: 12px;
-//     border: none;
-//     border-radius: 6px;
-//     background-color: #1976d2;
-//     color: #fff;
-//     font-size: 1rem;
-//     font-weight: 500;
-//     cursor: pointer;
-//     transition: background 0.2s ease, transform 0.1s ease;
-// }
-
-// .popup-content form button[type="submit"]:hover {
-//     background-color: #1565c0;
-// }
-
-// .popup-content form button[type="submit"]:active {
-//     transform: scale(0.98);
-// }
-
-// /* Close button under the form */
-// .popup-content>button {
-//     width: 100%;
-//     margin-top: 16px;
-//     padding: 12px;
-//     border: none;
-//     border-radius: 6px;
-//     background-color: #d32f2f;
-//     color: #fff;
-//     font-size: 1rem;
-//     font-weight: 500;
-//     cursor: pointer;
-//     transition: background 0.2s ease, transform 0.1s ease;
-// }
-
-// .popup-content>button:hover {
-//     background-color: #b71c1c;
-// }
-
-// .popup-content>button:active {
-//     transform: scale(0.98);
-// }
-
-// /* Forgotten password button */
-// .popup-content .forgot-password-btn {
-//     display: block;
-//     margin: 16px auto 12px;
-//     background: none;
-//     border: none;
-//     color: #1976d2;
-//     font-size: 0.95rem;
-//     cursor: pointer;
-//     transition: color 0.2s ease;
-// }
-
-// .popup-content .forgot-password-btn:hover {
-//     color: #1565c0;
-// }
-
-// .popup-content .forgot-password-btn:active {
-//     color: #0d47a1;
-// }
-
-// .back-btn {
-//     position: absolute;
-//     top: 26px;
-//     left: 40px;
-//     padding: 8px 16px;
-//     background-color: rgba(0, 0, 0, 0.05);
-//     color: #333;
-//     border: none;
-//     border-radius: 8px;
-//     font-size: 0.95rem;
-//     font-weight: 500;
-//     cursor: pointer;
-//     transition: all 0.2s ease;
-//     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-
-//     &:hover {
-//         background-color: rgba(0, 0, 0, 0.1);
-//         transform: translateY(-2px);
-//         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-//     }
-
-//     &:active {
-//         transform: translateY(0);
-//         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-//     }
 // }
 
 // /* ---------- Animations ---------- */

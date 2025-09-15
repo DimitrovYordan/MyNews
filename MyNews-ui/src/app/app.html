@@ -21,19 +21,14 @@
         </div>
     </nav>
 
+    <main class="welcome-text">
+        <h1>Welcome to My News!</h1>
+        <p>Stay updated with the latest news in different sections.</p>
+    </main>
+
     <main class="content">
         <router-outlet></router-outlet>
     </main>
-
-    @if(showLogin){
-    <app-login (close)="closeForms()" (loginSuccess)="onLoginSuccess($event)"></app-login>
-    }
-    @if(showSignup) {
-    <app-signup (close)="closeForms()" (signupSuccess)="onSignupSuccess($event)"></app-signup>
-    }
-    @if(showSettings){
-    <app-settings [hidden]="!showSettings" (close)="closeSettings()"></app-settings>
-    }
 
     <footer class="footer">
         <p>&copy; 2025 My News. All rights reserved.</p>
