@@ -1,9 +1,9 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 
 import { AuthService } from '../../services/auth.service';
-import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-signup',
@@ -39,12 +39,16 @@ export class SignupComponent {
   }
 
   submitSignup() {
+    this.signupForm.markAllAsTouched();
+
     if (this.signupForm.valid) {
+      this.loading = true;
+      this.errorMessage = null;
+
       this.authService.signup(this.signupForm.value).subscribe({
-        next: (res) => {
-          localStorage.setItem('auth_token', res.token);
-          this.router.navigate(['/sections']);
+        next: () => {
           this.loading = false;
+          this.router.navigate(['/sections']);
         },
         error: (err) => {
           this.loading = false;

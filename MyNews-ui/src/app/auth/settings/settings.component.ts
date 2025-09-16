@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 
 import { AuthService } from '../../services/auth.service';
-import { Router } from '@angular/router';
+import { AuthResponse } from '../../interfaces/auth-response';
 
 @Component({
   selector: 'app-settings',
@@ -41,9 +42,23 @@ export class SettingsComponent {
   submitSettings(): void {
     if (this.settingsForm.valid) {
       this.authService.updateProfile(this.settingsForm.value).subscribe({
-        next: (res) => {
-          console.log('Profile update', res);
-          this.router.navigate(['/']);
+        next: () => {
+          const currentUser = this.authService.getCurrentUser();
+          if (!currentUser) {
+            return;
+          }
+
+          const updatedUser: AuthResponse = {
+          ...currentUser,
+          firstName: this.settingsForm.value.firstName,
+          lastName: this.settingsForm.value.lastName,
+          country: this.settingsForm.value.country,
+          city: this.settingsForm.value.city,
+          token: currentUser.token
+        };
+
+          this.authService.setCurrentUser(updatedUser);
+          this.router.navigate(['/sections']);
         },
         error: (err) => {
           console.error('Error updating profile', err);
@@ -53,7 +68,6 @@ export class SettingsComponent {
   }
 
   closeSettings(): void {
-    this.router.navigate(['/']);
-    console.log('Close setting settings component.');
+    this.router.navigate(['/sections']);
   }
 }

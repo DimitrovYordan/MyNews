@@ -41,9 +41,7 @@ export class LoginComponent implements OnInit {
 
     this.loading = true;
     this.authService.login(this.loginForm.value).subscribe({
-      next: (res) => {
-        localStorage.setItem('token', res.token);
-
+      next: () => {
         this.router.navigate(['/sections']);
         this.loading = false;
       },
@@ -60,7 +58,6 @@ export class LoginComponent implements OnInit {
   }
 
   triggerForgotPassword() {
-    console.log('Forgot password clicked');
     this.router.navigate(['/forgot-password']);
   }
 

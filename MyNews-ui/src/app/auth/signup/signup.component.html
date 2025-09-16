@@ -72,6 +72,12 @@
       }
     </div>
 
+    @if (errorMessage) {
+    <div class="error-message error">
+      {{ errorMessage }}
+    </div>
+    }
+
     <button type="submit" [disabled]="signupForm.invalid" class="submit-btn">
       Sign Up
     </button>

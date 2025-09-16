@@ -6,12 +6,12 @@
       <label>Email</label>
       <input type="email" formControlName="email" />
       @if (loginForm.get('email')?.touched && loginForm.get('email')?.invalid) {
-      @if (loginForm.get('email')?.hasError('required')){
-      <small class="error">Email is required.</small>
-      }
-      @if (loginForm.get('email')?.hasError('email')) {
-      <small class="error">Enter a valid email.</small>
-      }
+        @if (loginForm.get('email')?.hasError('required')){
+          <small class="error">Email is required.</small>
+        }
+        @if (loginForm.get('email')?.hasError('email')) {
+          <small class="error">Enter a valid email.</small>
+        }
       }
     </div>
 
@@ -23,12 +23,12 @@
         </i>
       </div>
       @if (loginForm.get('password')?.touched && loginForm.get('password')?.invalid) {
-      @if (loginForm.get('password')?.hasError('required')) {
-      <small class="error">Password is required.</small>
-      }
-      @if (loginForm.get('password')?.hasError('minlength')) {
-      <small class="error">Password must be at least 6 characters.</small>
-      }
+        @if (loginForm.get('password')?.hasError('required')) {
+          <small class="error">Password is required.</small>
+        }
+        @if (loginForm.get('password')?.hasError('minlength')) {
+          <small class="error">Password must be at least 6 characters.</small>
+        }
       }
     </div>
 

@@ -1,5 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
-import { Router, RouterModule } from '@angular/router';
+import { NavigationEnd, Router, RouterModule } from '@angular/router';
+
+import { BehaviorSubject, filter } from 'rxjs';
 
 import { AuthService } from './services/auth.service';
 
@@ -14,9 +16,13 @@ export class App implements OnInit {
   protected readonly title = signal('My News');
 
   isLoggedIn: boolean = false;
-  isUserMenuOpen: boolean = false;
+  isMenuOpen: boolean = false;
+  hasSelectedSections: boolean = false;
+  showWelcomeText: boolean = true;
   userFirstName: string = '';
   userLastName: string = '';
+
+  public hasSelectedSections$ = new BehaviorSubject<boolean>(false);
 
   constructor(public authService: AuthService, private router: Router) {
     this.authService.isLoggedIn$.subscribe(status => {
@@ -26,7 +32,25 @@ export class App implements OnInit {
       if (currentUser) {
         this.userFirstName = currentUser.firstName;
         this.userLastName = currentUser.lastName;
+      } else {
+        this.userFirstName = '';
+        this.userLastName = '';
       }
+    });
+
+    this.authService.isMenuOpen$.subscribe(open => {
+      this.isMenuOpen = open;
+    });
+
+    this.authService.hasSelectedSections$.subscribe(selected => {
+      this.hasSelectedSections = selected;
+    });
+
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe((event: NavigationEnd) => {
+      const hiddenRoutes = ['/settings', '/news'];
+      this.showWelcomeText = !hiddenRoutes.includes(event.urlAfterRedirects);
     });
   }
 
@@ -37,6 +61,13 @@ export class App implements OnInit {
       this.userLastName = user.lastName;
       this.isLoggedIn = true;
     }
+
+    this.authService.currentUser$.subscribe(user => {
+      if (user) {
+        this.userFirstName = user.firstName;
+        this.userLastName = user.lastName;
+      }
+    });
 
     this.authService.isLoggedIn$.subscribe(status => this.isLoggedIn = status);
   }
@@ -58,24 +89,22 @@ export class App implements OnInit {
     this.isLoggedIn = false;
     this.userFirstName = '';
     this.userLastName = '';
-    this.isUserMenuOpen = false;
+    this.isMenuOpen = false;
     this.router.navigate(['/']);
   }
 
-  toggleUserMenu() {
-    this.isUserMenuOpen = !this.isUserMenuOpen;
+  toggleMenu() {
+    this.authService.toggleMenu();
   }
 
   goToProfile() {
     this.router.navigate(['/settings']);
-    this.isUserMenuOpen = false;
+    this.isMenuOpen = false;
   }
 
   getInitials(): string {
-    if (!this.userFirstName || !this.userLastName) {
-      return '';
-    }
-
-    return this.userFirstName[0].toUpperCase() + this.userLastName[0].toUpperCase();
+    const user = this.authService.getCurrentUser();
+    if (!user) return '';
+    return (user.firstName?.[0] || '') + (user.lastName?.[0] || '');
   }
 }

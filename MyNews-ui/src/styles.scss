@@ -259,41 +259,15 @@ body {
     }
 }
 
-// /* ===========================
-//    News List
-//    =========================== */
-// .news-list {
-//     max-width: 1000px;
-//     margin: 20px auto;
-//     padding: 20px;
-// }
+/* ---------- Animations ---------- */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-12px);
+    }
 
-// .section-block {
-//     background: #fff;
-//     border: 1px solid #ddd;
-//     border-radius: 10px;
-//     padding: 15px;
-//     margin-bottom: 20px;
-// }
-
-// .section-block h3 {
-//     margin-top: 0;
-// }
-
-// .no-news {
-//     color: #888;
-//     font-style: italic;
-// }
-
-// /* ---------- Animations ---------- */
-// @keyframes fadeIn {
-//     from {
-//         opacity: 0;
-//         transform: translateY(-12px);
-//     }
-
-//     to {
-//         opacity: 1;
-//         transform: translateY(0);
-//     }
-// }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

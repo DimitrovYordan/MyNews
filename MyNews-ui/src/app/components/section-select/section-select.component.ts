@@ -1,9 +1,10 @@
 import { Component, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
+import { Router } from "@angular/router";
 
 import { SectionService } from "../../services/section.service";
-import { NewsService } from "../../services/news.service";
 import { Section } from "../../interfaces/section";
+import { AuthService } from "../../services/auth.service";
 
 @Component({
     selector: 'app-section-select',
@@ -20,12 +21,13 @@ export class SectionSelectComponent implements OnInit {
     isAllSelected: boolean = false;
 
     constructor(
+        private authService: AuthService,
         private sectionService: SectionService,
-        private newsService: NewsService,
+        private router: Router
     ) { }
 
     ngOnInit(): void {
-         this.sectionService.getSections().subscribe(data => {
+        this.sectionService.getSections().subscribe(data => {
             this.sections = data;
         });
     }
@@ -50,9 +52,18 @@ export class SectionSelectComponent implements OnInit {
     }
 
     saveSelection(): void {
-        this.showSections = false;
+        if (this.selectedSections.length === 0) {
+            return;
+        }
 
-        this.loadNews();
+        if (this.selectedSections.length === this.sections.length) {
+            this.authService.setSelectedSections([]);
+        } else {
+            this.authService.setSelectedSections(this.selectedSections);
+        }
+
+        this.showSections = false;
+        this.router.navigate(['/news']);
     }
 
     onCheckboxChange(section: Section, event: Event) {
@@ -72,23 +83,5 @@ export class SectionSelectComponent implements OnInit {
 
     get selectAllButtonText(): string {
         return this.selectedSections.length === this.sections.length ? 'Unselect All' : 'Select All';
-    }
-
-    private loadNews(): void {
-        this.isLoading = true;
-        const sectionsToLoad = this.selectedSections.length ? this.selectedSections : this.sections.map(s => s.id);
-
-        if (this.selectedSections.length > 0) {
-            this.newsService.getNewsBySections(sectionsToLoad).subscribe({
-                next: () => {
-                    this.isLoading = false;
-                },
-                error: () => {
-                    this.isLoading = false;
-                }
-            });
-        } else {
-            this.isLoading = false;
-        }
     }
 }
