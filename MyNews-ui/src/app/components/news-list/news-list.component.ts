@@ -3,6 +3,7 @@ import { CommonModule } from "@angular/common";
 
 import { NewsItem } from "../../interfaces/news-item";
 import { NewsService } from "../../services/news.service";
+import { AuthService } from "../../services/auth.service";
 
 @Component({
     selector: 'app-news-list',
@@ -11,20 +12,42 @@ import { NewsService } from "../../services/news.service";
     templateUrl: './news-list.component.html',
     styleUrls: ['./news-list.component.scss'],
 })
-export class NewsListComponent implements OnInit{
+export class NewsListComponent implements OnInit {
 
     news: NewsItem[] = [];
-    errorMessage = '';
+    errorMessage: string = '';
+    isLoading: boolean = false;
 
-    constructor(private newsService: NewsService){}
+    selectedSections: number[] = [];
+
+    constructor(private newsService: NewsService, private authService: AuthService) { }
 
     ngOnInit(): void {
+        this.selectedSections = this.authService.getSelectedSections();
+
+        this.fetchNews();
+    }
+
+    private fetchNews(): void {
+        this.isLoading = true;
+
         this.newsService.getAllNews().subscribe({
-            next: (data) => {
-                console.log('News fetched from API:', data);
-                this.news = data;
+            next: (data: NewsItem[]) => {
+                console.log('All news fetched:', data);
+
+                if (this.selectedSections.length > 0) {
+                    this.news = data.filter(n => this.selectedSections.includes(n.sectionId));
+                } else {
+                    this.news = data;
+                }
+
+                this.isLoading = false;
             },
-            error: (err) => console.error('Error fetching news', err)
+            error: (err) => {
+                console.error('Error fetching news', err);
+                this.errorMessage = 'Failed to load news.';
+                this.isLoading = false;
+            }
         });
     }
 }

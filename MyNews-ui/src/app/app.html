@@ -8,9 +8,9 @@
                 <button (click)="openSignup()">Sign up</button>
             </ng-container>
             } @else {
-            <div class="user-menu" (click)="toggleUserMenu()" [class.open]="isUserMenuOpen">
+            <div class="user-menu" (click)="toggleMenu()" [class.open]="isMenuOpen">
                 <button class="user-avatar">{{ getInitials() }}</button>
-                @if(isUserMenuOpen) {
+                @if(isMenuOpen) {
                 <div class="user-dropdown">
                     <button (click)="goToProfile()">Profile</button>
                     <button (click)="logout()">Log out</button>
@@ -21,12 +21,19 @@
         </div>
     </nav>
 
-    <main class="welcome-text">
-        <h1>Welcome to My News!</h1>
-        <p>Stay updated with the latest news in different sections.</p>
-    </main>
-
     <main class="content">
+        @if (showWelcomeText) {
+        <div class="welcome-text">
+            @if (!isLoggedIn) {
+            <h1>Welcome to My News!</h1>
+            <p>Stay updated with the latest news in different sections.</p>
+            }
+            @if (isLoggedIn && !hasSelectedSections) {
+            <h1>Choose your favorite sections and see the news</h1>
+            }
+        </div>
+        }
+
         <router-outlet></router-outlet>
     </main>
 

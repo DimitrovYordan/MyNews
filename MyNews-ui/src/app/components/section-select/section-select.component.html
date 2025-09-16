@@ -7,8 +7,6 @@
 @if (showSections && !isLoading) {
 <div class="section-selection-wrapper">
     <div class="section-selection">
-        <h2 class="page-title">Choose sections</h2>
-
         <div class="select-all-container">
             <button type="button" class="select-all-btn" [class.select-mode]="!isAllSelected"
                 [class.unselect-mode]="isAllSelected" (click)="toggleAll()">

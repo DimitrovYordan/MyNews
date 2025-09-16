@@ -13,28 +13,45 @@ import { AuthResponse } from "../interfaces/auth-response";
 })
 export class AuthService {
     private apiUrl = 'http://localhost:5271/api';
-    private token: string | null = null;
+    private tokenKey: string = 'auth_token';
+    private userKey: string = 'user';
     private currentUser: AuthResponse | null = null;
+    private selectedSections: number[] = [];
+    private selectedSectionsKey = 'selected_sections';
 
     public showLogin$ = new BehaviorSubject<boolean>(false);
     public showSignup$ = new BehaviorSubject<boolean>(false);
     public isLoggedIn$ = new BehaviorSubject<boolean>(false);
+    public isMenuOpen$ = new BehaviorSubject<boolean>(false);
+    public hasSelectedSections$ = new BehaviorSubject<boolean>(false);
+    public currentUser$ = new BehaviorSubject<AuthResponse | null>(null);
 
-    constructor(private http: HttpClient, private router: Router) { }
+    constructor(private http: HttpClient, private router: Router) {
+        const userData = sessionStorage.getItem(this.userKey);
+        if (userData) {
+            this.currentUser = JSON.parse(userData);
+            this.currentUser$.next(this.currentUser);
+            this.isLoggedIn$.next(true);
+        }
+    }
 
     login(credentials: AuthRequest): Observable<AuthResponse> {
         return this.http.post<AuthResponse>(`${this.apiUrl}/auth/login`, credentials).pipe(
             tap(res => {
-                this.token = res.token;
+                sessionStorage.setItem(this.tokenKey, res.token);
+                sessionStorage.setItem(this.userKey, JSON.stringify(res));
                 this.currentUser = res;
                 this.isLoggedIn$.next(true);
+                this.currentUser$.next(res);
             })
         );
     }
 
     logout() {
-        this.token = null;
+        sessionStorage.removeItem(this.tokenKey);
+        sessionStorage.removeItem(this.userKey);
         this.currentUser = null;
+        this.currentUser$.next(null);
         this.isLoggedIn$.next(false);
         this.router.navigate(['/'], { replaceUrl: true });
     }
@@ -42,8 +59,11 @@ export class AuthService {
     signup(credentials: SignupData): Observable<AuthResponse> {
         return this.http.post<AuthResponse>(`${this.apiUrl}/auth/register`, credentials).pipe(
             tap(res => {
-                this.token = res.token;
+                sessionStorage.setItem(this.tokenKey, res.token);
+                sessionStorage.setItem(this.userKey, JSON.stringify(res));
+                this.currentUser = res;
                 this.isLoggedIn$.next(true);
+                this.currentUser$.next(res);
             })
         );
     }
@@ -52,18 +72,75 @@ export class AuthService {
         return this.http.post(`${this.apiUrl}/auth/forgot-password`, { email });
     }
 
+    setCurrentUser(user: AuthResponse | null) {
+        if (!user) {
+            this.currentUser = null;
+            this.currentUser$.next(null);
+            sessionStorage.removeItem(this.tokenKey);
+            return;
+        }
+
+        const token = user.token || sessionStorage.getItem(this.tokenKey) || '';
+        this.currentUser = { ...user, token };
+        this.currentUser$.next(this.currentUser);
+        sessionStorage.setItem(this.tokenKey, token);
+    }
+
+    setSelectedSections(selectedSections: number[]) {
+        sessionStorage.setItem(this.selectedSectionsKey, JSON.stringify(selectedSections));
+        this.hasSelectedSections$.next(true);
+    }
+
+    getSelectedSections(): number[] {
+        const stored = sessionStorage.getItem(this.selectedSectionsKey);
+        if (stored) {
+            try {
+                return JSON.parse(stored);
+            } catch {
+                return [];
+            }
+        }
+        return [];
+    }
+
     getCurrentUser(): AuthResponse | null {
+        if (!this.currentUser) {
+            const userData = sessionStorage.getItem(this.userKey);
+            if (userData) {
+                this.currentUser = JSON.parse(userData);
+                this.currentUser$.next(this.currentUser);
+            }
+        }
+
         return this.currentUser;
     }
 
-    updateProfile(data: any): Observable<any> {
-        if (!this.token) {
-            throw new Error('User not logged in');
+    getUserInitials(): string | null {
+        const user = this.getCurrentUser();
+        if (!user) {
+            return null;
         }
 
-        return this.http.put(`${this.apiUrl}/users/update-profile`, data, {
-            headers: { Authorization: `Bearer ${this.token}` }
-        });
+        const firstName = user.firstName?.charAt(0).toUpperCase() || '';
+        const lastName = user.lastName?.charAt(0).toUpperCase() || '';
+
+        return `${firstName}${lastName}` || null;
+    }
+
+    getToken(): string | null {
+        return sessionStorage.getItem(this.tokenKey);
+    }
+
+    updateProfile(data: any): Observable<any> {
+        return this.http.put(`${this.apiUrl}/users/update-profile`, data);
+    }
+
+    toggleMenu() {
+        this.isMenuOpen$.next(!this.isMenuOpen$.value);
+    }
+
+    closeMenu() {
+        this.isMenuOpen$.next(false);
     }
 
     openLogin() {
@@ -82,6 +159,6 @@ export class AuthService {
     }
 
     isLoggedIn(): boolean {
-        return !!this.token;
+        return !!this.getToken();
     }
 }
