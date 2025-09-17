@@ -27,6 +27,7 @@ builder.Services.AddScoped<ISourceService, SourcesService>();
 builder.Services.AddScoped<INewsService, NewsService>();
 builder.Services.AddScoped<ISectionsService, SectionsService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 builder.Services.AddCors(options =>
 {

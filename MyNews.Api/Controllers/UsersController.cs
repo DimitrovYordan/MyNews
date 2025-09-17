@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 using MyNews.Api.DTOs;
 using MyNews.Api.Interfaces;

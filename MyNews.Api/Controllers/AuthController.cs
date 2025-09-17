@@ -46,5 +46,31 @@ namespace MyNews.Api.Controllers
                 return StatusCode(500, new { message = "Internal server error" });
             }
         }
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto forgotPassword)
+        {
+            var result = await _authService.ForgotPasswordAsync(forgotPassword.Email);
+
+            if (!result)
+            {
+                return BadRequest(new { message = "Email not found." });
+            }
+
+            return Ok(new { message = "Password reset link sent." });
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPasswordAsync([FromBody] ResetPasswordDto resetPassword)
+        {
+            var result = await _authService.ResetPasswordAsync(resetPassword.Token, resetPassword.NewPassword);
+
+            if (!result)
+            {
+                return BadRequest(new { message = "Invalid or expired token." });
+            }
+
+            return Ok(new { message = "Password reset successfully." });
+        }
     }
 }

@@ -7,5 +7,9 @@ namespace MyNews.Api.Interfaces
         Task<AuthResponseDto> LoginAsync(LoginDto loginDto);
 
         Task<AuthResponseDto> RegisterAsync(RegisterDto registerDto);
+
+        Task<bool> ForgotPasswordAsync(string email);
+
+        Task<bool> ResetPasswordAsync(string token, string newPassword);
     }
 }

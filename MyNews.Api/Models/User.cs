@@ -24,5 +24,9 @@ namespace MyNews.Api.Models
 
         [Required]
         public string PasswordHash { get; set; } = string.Empty;
+
+        public string? PasswordResetToken {  get; set; }
+
+        public DateTime? PasswordResetTokenExpires { get; set; }
     }
 }
