@@ -11,11 +11,13 @@ namespace MyNews.Api.Services
     {
         private readonly AppDbContext _context;
         private readonly IJwtService _jwtService;
+        private readonly IEmailService _emailService;
 
-        public AuthService(AppDbContext context, IJwtService jwtService)
+        public AuthService(AppDbContext context, IJwtService jwtService, IEmailService emailService)
         {
             _context = context;
             _jwtService = jwtService;
+            _emailService = emailService;
         }
 
         public async Task<AuthResponseDto> LoginAsync(LoginDto loginDto)
@@ -74,6 +76,44 @@ namespace MyNews.Api.Services
                 FirstName = user.FirstName,
                 LastName = user.LastName
             };
+        }
+
+        public async Task<bool> ForgotPasswordAsync(string email)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null)
+            {
+                return false;
+            }
+
+            user.PasswordResetToken = Guid.NewGuid().ToString();
+            user.PasswordResetTokenExpires = DateTime.UtcNow.AddDays(15);
+
+            await _context.SaveChangesAsync();
+
+            await _emailService.SendPasswordResetEmailAsync(user.Email, user.FirstName, user.PasswordResetToken);
+
+            return true;
+        }
+
+        public async Task<bool> ResetPasswordAsync(string token, string newPassword)
+        {
+            Console.WriteLine($"[DEBUG] Token from request: {token}");
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.PasswordResetToken == token);
+
+            if (user == null || user.PasswordResetTokenExpires < DateTime.UtcNow)
+            {
+                return false;
+            }
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            user.PasswordResetToken = null;
+            user.PasswordResetTokenExpires = null;
+
+            await _context.SaveChangesAsync();
+
+            return true;
         }
     }
 }

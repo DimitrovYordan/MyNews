@@ -1,4 +1,4 @@
-﻿namespace MyNews.Api.Services
+﻿namespace MyNews.Api.Interfaces
 {
     public interface IJwtService
     {
