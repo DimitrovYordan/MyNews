@@ -72,6 +72,10 @@ export class AuthService {
         return this.http.post(`${this.apiUrl}/auth/forgot-password`, { email });
     }
 
+    resetPassword(data: { token: string; newPassword: string; }) {
+        return this.http.post(`${this.apiUrl}/auth/reset-password`, data);
+    }
+
     setCurrentUser(user: AuthResponse | null) {
         if (!user) {
             this.currentUser = null;

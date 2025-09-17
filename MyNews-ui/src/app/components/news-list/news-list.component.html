@@ -1,15 +1,21 @@
-@if (news.length > 0) {
+@for (section of sectionsWithNews; track section.sectionId) {
+<div class="section-bubble">
+  <h2>{{ formatSectionName(section.sectionName) }}</h2>
+
+  @if (section.news.length > 0) {
   <ul>
-    @for (item of news; track item.id) {
-      <li>
-        <h3>{{ item.title }}</h3>
-        <p>{{ item.content }}</p>
-        <small>
-          Section: {{ item.sectionName }} - {{ item.publishedAt | date:'short' }}
-        </small>
-      </li>
+    @for (item of section.news; track item.id) {
+    <li>
+      <h3>{{ item.title }}</h3>
+      <p>{{ item.content }}</p>
+      <small>{{ item.publishedAt | date:'short' }}</small>
+    </li>
     }
   </ul>
-} @else {
-  <p>No news available.</p>
+  } @else {
+  <p>No news available in this section.</p>
+  }
+</div>
 }
+
+<button type="button" class="back-btn" (click)="goBack()">Back</button>
