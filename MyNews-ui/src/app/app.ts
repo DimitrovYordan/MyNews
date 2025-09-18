@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, HostListener, OnInit, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
 
 import { BehaviorSubject, filter } from 'rxjs';
@@ -51,6 +51,8 @@ export class App implements OnInit {
     ).subscribe((event: NavigationEnd) => {
       const hiddenRoutes = ['/settings', '/news'];
       this.showWelcomeText = !hiddenRoutes.includes(event.urlAfterRedirects);
+
+      this.authService.closeMenu();
     });
   }
 
@@ -106,5 +108,11 @@ export class App implements OnInit {
     const user = this.authService.getCurrentUser();
     if (!user) return '';
     return (user.firstName?.[0] || '') + (user.lastName?.[0] || '');
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    if (!this.authService.isMenuOpen$.value) return;
+    this.authService.closeMenu();
   }
 }

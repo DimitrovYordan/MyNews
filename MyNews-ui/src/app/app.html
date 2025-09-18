@@ -8,10 +8,10 @@
                 <button (click)="openSignup()">Sign up</button>
             </ng-container>
             } @else {
-            <div class="user-menu" (click)="toggleMenu()" [class.open]="isMenuOpen">
+            <div class="user-menu" (click)="$event.stopPropagation(); toggleMenu()" [class.open]="isMenuOpen">
                 <button class="user-avatar">{{ getInitials() }}</button>
                 @if(isMenuOpen) {
-                <div class="user-dropdown">
+                <div class="user-dropdown" (click)="$event.stopPropagation()">
                     <button (click)="goToProfile()">Profile</button>
                     <button (click)="logout()">Log out</button>
                 </div>
