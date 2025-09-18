@@ -43,19 +43,22 @@ export class SettingsComponent {
     if (this.settingsForm.valid) {
       this.authService.updateProfile(this.settingsForm.value).subscribe({
         next: () => {
-          const currentUser = this.authService.getCurrentUser();
+          const updateUserNames = this.authService.updateUserNames(
+            this.settingsForm.value.firstName,
+            this.settingsForm.value.lastName
+          );
+
+          const currentUser = updateUserNames || this.authService.getCurrentUser();
           if (!currentUser) {
             return;
           }
 
           const updatedUser: AuthResponse = {
-          ...currentUser,
-          firstName: this.settingsForm.value.firstName,
-          lastName: this.settingsForm.value.lastName,
-          country: this.settingsForm.value.country,
-          city: this.settingsForm.value.city,
-          token: currentUser.token
-        };
+            ...currentUser,
+            country: this.settingsForm.value.country,
+            city: this.settingsForm.value.city,
+            token: currentUser.token
+          };
 
           this.authService.setCurrentUser(updatedUser);
           this.router.navigate(['/sections']);

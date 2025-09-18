@@ -16,7 +16,6 @@ export class AuthService {
     private tokenKey: string = 'auth_token';
     private userKey: string = 'user';
     private currentUser: AuthResponse | null = null;
-    private selectedSections: number[] = [];
     private selectedSectionsKey = 'selected_sections';
 
     public showLogin$ = new BehaviorSubject<boolean>(false);
@@ -137,6 +136,27 @@ export class AuthService {
 
     updateProfile(data: any): Observable<any> {
         return this.http.put(`${this.apiUrl}/users/update-profile`, data);
+    }
+
+    updateUserNames(firstName: string, lastName: string): AuthResponse | null {
+        if (!this.currentUser) {
+            return null;
+        }
+
+        const firstNameChanged = !!firstName && firstName !== this.currentUser.firstName;
+        const lastNameChanged = !!lastName && lastName !== this.currentUser.lastName;
+
+        if (firstNameChanged) {
+            this.currentUser.firstName = firstName;
+        }
+        if (lastNameChanged) {
+            this.currentUser.lastName = lastName;
+        }
+
+        sessionStorage.setItem(this.userKey, JSON.stringify(this.currentUser));
+        this.currentUser$.next(this.currentUser);
+
+        return this.currentUser;
     }
 
     toggleMenu() {
