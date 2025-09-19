@@ -4,18 +4,28 @@
   <div class="sections-list">
     @for (section of sectionsWithNews; track section.sectionId) {
     <div class="section-bubble">
-      <h2>{{ formatSectionName(section.sectionName) }}</h2>
+      <h2>{{ sectionName.formatSectionName(section.sectionName) }}</h2>
 
       @if (section.news.length > 0) {
-      <ul>
-        @for (item of section.news; track item.id) {
-        <li>
-          <h3>{{ item.title }}</h3>
-          <p>{{ item.content }}</p>
-          <small>{{ item.publishedAt | date:'short' }}</small>
-        </li>
+      <div class="source-container">
+        @for (source of section.news | groupBy: 'sourceUrl'; track source.key) {
+        <div class="source-buble" (click)="source.isOpen = !source.isOpen">
+          <span class="domain">{{ source.key }}</span>
+          <span class="count-news">{{ source.items.length }}</span>
+        </div>
+
+        @if (source.isOpen) {
+        <ul class="dropdown-news">
+          @for (item of source.items; track item.id) {
+          <li class="news-item">
+            <span class="news-title">{{ item.title }}</span>
+            <span class="news-date">{{ item.publishedAt | date: 'short' }}</span>
+          </li>
+          }
+        </ul>
         }
-      </ul>
+        }
+      </div>
       } @else {
       <p>No news available in this section.</p>
       }

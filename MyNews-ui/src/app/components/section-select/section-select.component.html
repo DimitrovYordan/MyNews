@@ -21,7 +21,7 @@
                 <label>
                     <input type="checkbox" [checked]="selectedSections.includes(section.id)"
                         (change)="toggleSelection(section.id)" (click)="$event.stopPropagation()" />
-                    {{ section.name }}
+                    {{ section.displayName ?? section.name }}
                 </label>
             </div>
             }

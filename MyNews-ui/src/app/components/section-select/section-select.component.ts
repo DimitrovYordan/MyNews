@@ -5,6 +5,7 @@ import { Router } from "@angular/router";
 import { SectionService } from "../../services/section.service";
 import { Section } from "../../interfaces/section";
 import { AuthService } from "../../services/auth.service";
+import { SectionsNamesUtilsService } from "../../shared/sections-names-utils.service";
 
 @Component({
     selector: 'app-section-select',
@@ -23,12 +24,15 @@ export class SectionSelectComponent implements OnInit {
     constructor(
         private authService: AuthService,
         private sectionService: SectionService,
-        private router: Router
+        private router: Router,
+        private sectionName: SectionsNamesUtilsService
     ) { }
 
     ngOnInit(): void {
         this.sectionService.getSections().subscribe(data => {
-            this.sections = data;
+            this.sections = data.map(s => ({
+                ...s, displayName: this.sectionName.formatSectionName(s.name)
+            }));
         });
     }
 

@@ -6,11 +6,13 @@ import { NewsItem } from "../../interfaces/news-item";
 import { NewsService } from "../../services/news.service";
 import { AuthService } from "../../services/auth.service";
 import { SectionWithNews } from "../../interfaces/section-with-news";
+import { SectionsNamesUtilsService } from "../../shared/sections-names-utils.service";
+import { GroupByPipe } from "../../shared/group-by-pipe.service";
 
 @Component({
     selector: 'app-news-list',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, GroupByPipe],
     templateUrl: './news-list.component.html',
     styleUrls: ['./news-list.component.scss'],
 })
@@ -22,8 +24,14 @@ export class NewsListComponent implements OnInit {
 
     selectedSections: number[] = [];
     sectionsWithNews: SectionWithNews[] = [];
+    openSources: Record<string, boolean> = {};
 
-    constructor(private newsService: NewsService, private authService: AuthService, private router: Router) { }
+    constructor(
+        private newsService: NewsService,
+        private authService: AuthService,
+        private router: Router,
+        public sectionName: SectionsNamesUtilsService
+    ) { }
 
     ngOnInit(): void {
         this.selectedSections = this.authService.getSelectedSections();
@@ -31,12 +39,12 @@ export class NewsListComponent implements OnInit {
         this.fetchNews();
     }
 
-    formatSectionName(name: string): string {
-        return name.replace(/_/g, ' ');
-    }
-
     goBack() {
         this.router.navigate(['/sections']);
+    }
+
+    toggleSourceDropdown(key: string) {
+        this.openSources[key] = !this.openSources[key];
     }
 
     private fetchNews(): void {
@@ -44,12 +52,10 @@ export class NewsListComponent implements OnInit {
 
         this.newsService.getNewsBySections(this.selectedSections).subscribe({
             next: (data: SectionWithNews[]) => {
-                console.log('All news fetched:', data);
                 this.sectionsWithNews = data;
                 this.isLoading = false;
             },
             error: (err) => {
-                console.error('Error fetching news', err);
                 this.errorMessage = 'Failed to load news.';
                 this.isLoading = false;
             }
