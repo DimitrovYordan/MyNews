@@ -37,10 +37,17 @@ namespace MyNews.Api.Data
             );
 
             modelBuilder.Entity<Source>().HasData(
-                new Source { Id = 1, Name = "Sportal", Url = "sportal.bg" },
-                new Source { Id = 2, Name = "IMDB", Url = "imdb.com"}
+                new Source { Id = 1, Name = "Nova", Url = "https://nova.bg/", Section = SectionType.Local_News },
+                new Source { Id = 2, Name = "BTV", Url = "https://btvnovinite.bg/", Section = SectionType.Local_News },
+                new Source { Id = 3, Name = "Dnevnik", Url = "https://www.dnevnik.bg/", Section = SectionType.Local_News },
+                new Source { Id = 4, Name = "Offnews", Url = "https://offnews.bg/", Section = SectionType.Local_News },
+                new Source { Id = 5, Name = "Sportal", Url = "https://www.sportal.bg/", Section = SectionType.Sports },
+                new Source { Id = 6, Name = "Gong", Url = "https://gong.bg/", Section = SectionType.Sports },
+                new Source { Id = 7, Name = "24Chasa", Url = "https://www.24chasa.bg/", Section = SectionType.Local_News },
+                new Source { Id = 8, Name = "Dir.bg", Url = "https://www.dir.bg/", Section = SectionType.Local_News },
+                new Source { Id = 9, Name = "Investor", Url = "https://www.investor.bg/", Section = SectionType.Business },
+                new Source { Id = 10, Name = "Vesti.bg", Url = "https://www.vesti.bg/", Section = SectionType.Local_News }
             );
         }
-
     }
 }

@@ -1,10 +1,11 @@
-﻿using MyNews.Api.Models;
+﻿using MyNews.Api.Enums;
+using MyNews.Api.Models;
 
 namespace MyNews.Api.Interfaces
 {
     public interface ISourceService
     {
-        Task<IEnumerable<Source>> GetAllAsync();
+        Task<IEnumerable<Source>> GetBySectionAsync(SectionType section);
 
         Task<Source?> GetByIdAsync(int id);
 

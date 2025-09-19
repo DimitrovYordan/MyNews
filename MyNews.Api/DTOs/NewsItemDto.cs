@@ -9,5 +9,9 @@
         public string Content { get; set; } = string.Empty;
 
         public DateTime PublishedAt { get; set; }
+
+        public string SourceName { get; set; } = string.Empty;
+
+        public string SourceUrl { get; set; } = string.Empty;
     }
 }

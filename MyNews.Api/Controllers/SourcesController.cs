@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-
+using MyNews.Api.Enums;
 using MyNews.Api.Interfaces;
 using MyNews.Api.Models;
 
@@ -16,15 +16,6 @@ namespace MyNews.Api.Controllers
             _sourceService = sourceService;
         }
 
-        // GET: api/sources
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Source>>> GetSources()
-        {
-            var sources = await _sourceService.GetAllAsync();
-
-            return Ok(sources);
-        }
-
         // GET: api/sources/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Source>> GetSource(int id)
@@ -37,6 +28,23 @@ namespace MyNews.Api.Controllers
             }
 
             return Ok(source);
+        }
+
+        [HttpGet("by-section/{section}")]
+        public async Task<ActionResult<IEnumerable<object>>> GetSourcesBySection(SectionType section)
+        {
+            var sources = await _sourceService.GetBySectionAsync(section);
+
+            var result = sources.Select(s => new
+            {
+                s.Id,
+                s.Name,
+                s.Url,
+                s.Section,
+                NewsCount = s.NewsItems.Count,
+            });
+
+            return Ok(result);
         }
 
         // POST: api/sources
