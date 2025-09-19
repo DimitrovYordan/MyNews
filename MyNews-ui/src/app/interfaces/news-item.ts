@@ -5,6 +5,6 @@ export interface NewsItem {
     publishedAt: string;
     sectionId: number;
     sectionName?: string;
-    sourceId: number;
+    sourceUrl: string;
     sourceName?: string;
 }
