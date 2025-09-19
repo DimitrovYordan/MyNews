@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
 using MyNews.Api.Data;
+using MyNews.Api.Enums;
 using MyNews.Api.Interfaces;
 using MyNews.Api.Models;
 
@@ -13,11 +14,6 @@ namespace MyNews.Api.Services
         public SourcesService(AppDbContext context)
         {
             _context = context;
-        }
-
-        public async Task<IEnumerable<Source>> GetAllAsync()
-        {
-            return await _context.Sources.ToListAsync();
         }
 
         public async Task<Source?> GetByIdAsync(int id)
@@ -58,6 +54,14 @@ namespace MyNews.Api.Services
             await _context.SaveChangesAsync();
 
             return true;
+        }
+
+        public async Task<IEnumerable<Source>> GetBySectionAsync(SectionType section)
+        {
+            return await _context.Sources
+                .Where(s => s.Section == section)
+                .Include(n => n.NewsItems)
+                .ToListAsync();
         }
     }
 }
