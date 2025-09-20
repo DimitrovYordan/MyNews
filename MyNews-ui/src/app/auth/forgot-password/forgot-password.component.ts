@@ -15,6 +15,10 @@ import { AuthService } from '../../services/auth.service';
 export class ForgotPasswordComponent {
   forgotPasswordForm: FormGroup;
 
+  showModal: boolean = false;
+  modalMessage: string = '';
+  modalType: 'success' | 'error' = 'success';
+
   constructor(private fb: FormBuilder, private authService: AuthService, private router: Router) {
     this.forgotPasswordForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -26,10 +30,23 @@ export class ForgotPasswordComponent {
       const email = this.forgotPasswordForm.value.email;
 
       this.authService.forgotPassword(email).subscribe({
-        next: () => alert('Password reset email sent.'),
-        error: () => alert('Failed to send password email.'),
+        next: () => {
+          this.showModal = true;
+          this.modalType = 'success';
+          this.modalMessage = 'Password reset email sent.';
+          this.forgotPasswordForm.reset();
+        },
+        error: () => {
+          this.showModal = true;
+          this.modalType = 'error';
+          this.modalMessage = 'Failed to send password email.';
+        },
       });
     }
+  }
+
+  closeModal() {
+    this.showModal = false;
   }
 
   goBack() {
