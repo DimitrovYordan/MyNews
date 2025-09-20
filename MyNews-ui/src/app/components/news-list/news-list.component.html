@@ -7,25 +7,30 @@
       <h2>{{ sectionName.formatSectionName(section.sectionName) }}</h2>
 
       @if (section.news.length > 0) {
+      @for (source of section.groupedNews; track source.key) {
       <div class="source-container">
-        @for (source of section.news | groupBy: 'sourceUrl'; track source.key) {
-        <div class="source-buble" (click)="source.isOpen = !source.isOpen">
-          <span class="domain">{{ source.key }}</span>
+        <div class="source-bubble" (click)="toggleSource(section.sectionId, source)">
+          <span class="domain">{{ sectionName.getDomain(source.key) }}</span>
           <span class="count-news">{{ source.items.length }}</span>
         </div>
 
         @if (source.isOpen) {
-        <ul class="dropdown-news">
+        <ul class="dropdown-news" (click)="$event.stopPropagation()">
           @for (item of source.items; track item.id) {
-          <li class="news-item">
-            <span class="news-title">{{ item.title }}</span>
-            <span class="news-date">{{ item.publishedAt | date: 'short' }}</span>
+          <li class="news-item" (click)="toggleNewsItem(source, item)">
+            <div class="news-header">
+              <span class="news-title">{{ item.title }}</span>
+              <span class="news-date">{{ item.publishedAt | date: 'short' }}</span>
+            </div>
+            @if (source.openItemId === item.id) {
+            <p class="news-content">{{ item.content }}</p>
+            }
           </li>
           }
         </ul>
         }
-        }
       </div>
+      }
       } @else {
       <p>No news available in this section.</p>
       }
