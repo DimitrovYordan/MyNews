@@ -33,30 +33,74 @@ namespace MyNews.Api.Services
 
             foreach (var section in selectedSections)
             {
-                var news = await _context.NewsItems
+                var newsItems = await _context.NewsItems
                     .Include(n => n.Source)
                     .Where(n => n.Section == section)
                     .OrderByDescending(n => n.PublishedAt)
-                    .Select(n => new NewsItemDto
-                    {
-                        Id = n.Id,
-                        Title = n.Title,
-                        Content = n.Content,
-                        PublishedAt = n.PublishedAt,
-                        SourceName = n.Source != null ? n.Source.Name : string.Empty,
-                        SourceUrl = n.Source != null ? n.Source.Url : string.Empty
-                    })
                     .ToListAsync();
+
+                var newsDtos = new List<NewsItemDto>();
+
+                foreach (var n in newsItems)
+                {
+                    newsDtos.Add(new NewsItemDto
+                    {
+                        Title = n.Title,
+                        PublishedAt = n.PublishedAt,
+                        SourceName = n.Source?.Name ?? string.Empty,
+                        SourceUrl = n.Source?.Url ?? string.Empty,
+                        Summary = string.Empty,
+                        Link = string.Empty,
+                        IsNew = false
+                    });
+                }
 
                 result.Add(new SectionWithNewsDto
                 {
                     SectionId = (int)section,
                     SectionName = section.ToString(),
-                    News = news
+                    News = newsDtos
                 });
             }
 
+
             return result;
+        }
+
+        public async Task<bool> ExistsByTitleAndSourceAsync(string title, int sourceId)
+        {
+            return await _context.NewsItems.AnyAsync(n => n.Title == title && n.SourceId == sourceId);
+        }
+
+        public async Task<NewsItem> AddNewsItemAsync(NewsItem newsItem)
+        {
+            _context.NewsItems.Add(newsItem);
+            await _context.SaveChangesAsync();
+
+            return newsItem;
+        }
+
+        public async Task MarkAsReadAsync(int userId, Guid newsItemId)
+        {
+            bool alreadyRead = await _context.UserNewsReads
+                .AnyAsync(r => r.UserId == userId && r.NewsItemId == newsItemId);
+
+            if (!alreadyRead)
+            {
+                _context.UserNewsReads.Add(new UserNewsRead
+                {
+                    UserId = userId,
+                    NewsItemId = newsItemId,
+                    ReadAt = DateTime.UtcNow
+                });
+
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task<bool> IsReadAsync(int userId, Guid newsItemId)
+        {
+            return await _context.UserNewsReads.AnyAsync(r => r.UserId == userId && r.NewsItemId == newsItemId);
         }
     }
 }

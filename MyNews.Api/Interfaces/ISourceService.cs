@@ -9,6 +9,8 @@ namespace MyNews.Api.Interfaces
 
         Task<Source?> GetByIdAsync(int id);
 
+        Task<Source?> GetByNameAsync(string name);
+
         Task<Source> CreateAsync(Source source);
 
         Task<bool> UpdateAsync(int id, Source source);

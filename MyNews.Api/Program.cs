@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-
+using MyNews.Api.Background;
 using MyNews.Api.Data;
 using MyNews.Api.Interfaces;
 using MyNews.Api.Middlewares;
@@ -28,6 +28,10 @@ builder.Services.AddScoped<INewsService, NewsService>();
 builder.Services.AddScoped<ISectionsService, SectionsService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddHttpClient<IChatGptService, ChatGptService>();
+
+builder.Services.AddHostedService<RssBackgroundService>();
+builder.Services.AddHostedService<CleanupBackgroundService>();
 
 builder.Services.AddCors(options =>
 {

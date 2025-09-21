@@ -10,10 +10,12 @@ namespace MyNews.Api.Controllers
     public class NewsController : ControllerBase
     {
         private readonly INewsService _newsService;
+        private readonly IRssService _rssService;
 
-        public NewsController(INewsService newsService)
+        public NewsController(INewsService newsService, IRssService rssService)
         {
             _newsService = newsService;
+            _rssService = rssService;
         }
 
         [HttpGet]
@@ -31,6 +33,14 @@ namespace MyNews.Api.Controllers
             var result = await _newsService.GetNewsBySectionsAsync(sectionIds);
 
             return Ok(result);
+        }
+
+        [HttpGet("rss")]
+        public async Task<IActionResult> GetRssNews()
+        {
+            var news = await _rssService.FetchAndProcessRssFeedAsync();
+
+            return Ok(news);
         }
     }
 }

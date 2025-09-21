@@ -15,6 +15,7 @@ namespace MyNews.Api.Data
         public DbSet<NewsItem> NewsItems { get; set; }
         public DbSet<Source> Sources { get; set; }
         public DbSet<User> Users { get; set; }
+        public DbSet<UserNewsRead> UserNewsReads { get; set; }
 
         // Seed initial data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -27,14 +28,18 @@ namespace MyNews.Api.Data
 
             // Relationships
             modelBuilder.Entity<NewsItem>()
+                .HasOne(n => n.Source)
+                .WithMany(s => s.NewsItems)
+                .HasForeignKey(n => n.SourceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<NewsItem>()
+                .HasIndex(n => new { n.Title, n.SourceId })
+                .IsUnique();
+
+            modelBuilder.Entity<NewsItem>()
                 .Property(n => n.Section)
                 .HasConversion<int>();
-
-            // Static seed data
-            modelBuilder.Entity<NewsItem>().HasData(
-                new NewsItem { Id = new Guid("11111111-1111-1111-1111-111111111111"), Title = "First News", Content = "Example news content", Section = SectionType.Sports, SourceId = 1, PublishedAt = new DateTime(2025, 8, 20, 12, 10, 0) },
-                new NewsItem { Id = new Guid("22222222-2222-2222-2222-222222222222"), Title = "First News 2", Content = "Example news content 2", Section = SectionType.Movies, SourceId = 2, PublishedAt = new DateTime(2025, 8, 10, 12, 10, 0) }
-            );
 
             modelBuilder.Entity<Source>().HasData(
                 new Source { Id = 1, Name = "Nova", Url = "https://nova.bg/", Section = SectionType.Local_News },

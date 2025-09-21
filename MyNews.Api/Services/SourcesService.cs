@@ -21,6 +21,11 @@ namespace MyNews.Api.Services
             return await _context.Sources.FindAsync(id);
         }
 
+        public async Task<Source?> GetByNameAsync(string name)
+        {
+            return await _context.Sources.FirstOrDefaultAsync(s => s.Name == name);
+        }
+
         public async Task<Source> CreateAsync(Source source)
         {
             _context.Sources.Add(source);
