@@ -1,4 +1,6 @@
-﻿# .NET / Visual Studio
+﻿# ========================
+# .NET / Visual Studio
+# ========================
 .vs/
 *.user
 *.suo
@@ -39,10 +41,19 @@ _ReSharper*/
 # ASP.NET Scaffolding
 ScaffoldingReadMe.txt
 
+# ========================
 # Visual Studio Code
+# ========================
 .vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
 
+# ========================
 # Node / Angular
+# ========================
 node_modules/
 dist/
 tmp/
@@ -54,5 +65,17 @@ yarn.lock
 coverage/
 .angular/cache/
 
-# Environment
+# ========================
+# Environment / Secrets
+# ========================
 .env
+MyNews.Api/appsettings.json
+MyNews.Api/appsettings.Development.json
+MyNews-ui/appsettings.json
+MyNews-ui/appsettings.Development.json
+
+# ========================
+# System files
+# ========================
+.DS_Store
+Thumbs.db
