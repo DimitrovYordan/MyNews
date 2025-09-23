@@ -12,7 +12,7 @@ import { AuthResponse } from "../interfaces/auth-response";
     providedIn: 'root'
 })
 export class AuthService {
-    private apiUrl = 'http://localhost:5271/api';
+    private apiUrl = 'http://localhost:5271/api/auth';
     private tokenKey: string = 'auth_token';
     private userKey: string = 'user';
     private currentUser: AuthResponse | null = null;
@@ -35,13 +35,9 @@ export class AuthService {
     }
 
     login(credentials: AuthRequest): Observable<AuthResponse> {
-        return this.http.post<AuthResponse>(`${this.apiUrl}/auth/login`, credentials).pipe(
+        return this.http.post<AuthResponse>(`${this.apiUrl}/login`, credentials).pipe(
             tap(res => {
-                sessionStorage.setItem(this.tokenKey, res.token);
-                sessionStorage.setItem(this.userKey, JSON.stringify(res));
-                this.currentUser = res;
-                this.isLoggedIn$.next(true);
-                this.currentUser$.next(res);
+                this.setSession(res);
             })
         );
     }
@@ -56,23 +52,19 @@ export class AuthService {
     }
 
     signup(credentials: SignupData): Observable<AuthResponse> {
-        return this.http.post<AuthResponse>(`${this.apiUrl}/auth/register`, credentials).pipe(
+        return this.http.post<AuthResponse>(`${this.apiUrl}/register`, credentials).pipe(
             tap(res => {
-                sessionStorage.setItem(this.tokenKey, res.token);
-                sessionStorage.setItem(this.userKey, JSON.stringify(res));
-                this.currentUser = res;
-                this.isLoggedIn$.next(true);
-                this.currentUser$.next(res);
+                this.setSession(res);
             })
         );
     }
 
     forgotPassword(email: string): Observable<any> {
-        return this.http.post(`${this.apiUrl}/auth/forgot-password`, { email });
+        return this.http.post(`${this.apiUrl}/forgot-password`, { email });
     }
 
     resetPassword(data: { token: string; newPassword: string; }) {
-        return this.http.post(`${this.apiUrl}/auth/reset-password`, data);
+        return this.http.post(`${this.apiUrl}/reset-password`, data);
     }
 
     setCurrentUser(user: AuthResponse | null) {
@@ -83,27 +75,9 @@ export class AuthService {
             return;
         }
 
-        const token = user.token || sessionStorage.getItem(this.tokenKey) || '';
-        this.currentUser = { ...user, token };
+        this.currentUser = user;
         this.currentUser$.next(this.currentUser);
-        sessionStorage.setItem(this.tokenKey, token);
-    }
-
-    setSelectedSections(selectedSections: number[]) {
-        sessionStorage.setItem(this.selectedSectionsKey, JSON.stringify(selectedSections));
-        this.hasSelectedSections$.next(true);
-    }
-
-    getSelectedSections(): number[] {
-        const stored = sessionStorage.getItem(this.selectedSectionsKey);
-        if (stored) {
-            try {
-                return JSON.parse(stored);
-            } catch {
-                return [];
-            }
-        }
-        return [];
+        sessionStorage.setItem(this.userKey, JSON.stringify(user));
     }
 
     getCurrentUser(): AuthResponse | null {
@@ -134,29 +108,21 @@ export class AuthService {
         return sessionStorage.getItem(this.tokenKey);
     }
 
-    updateProfile(data: any): Observable<any> {
-        return this.http.put(`${this.apiUrl}/users/update-profile`, data);
+    setSelectedSections(selectedSections: number[]) {
+        sessionStorage.setItem(this.selectedSectionsKey, JSON.stringify(selectedSections));
+        this.hasSelectedSections$.next(true);
     }
 
-    updateUserNames(firstName: string, lastName: string): AuthResponse | null {
-        if (!this.currentUser) {
-            return null;
+    getSelectedSections(): number[] {
+        const stored = sessionStorage.getItem(this.selectedSectionsKey);
+        if (stored) {
+            try {
+                return JSON.parse(stored);
+            } catch {
+                return [];
+            }
         }
-
-        const firstNameChanged = !!firstName && firstName !== this.currentUser.firstName;
-        const lastNameChanged = !!lastName && lastName !== this.currentUser.lastName;
-
-        if (firstNameChanged) {
-            this.currentUser.firstName = firstName;
-        }
-        if (lastNameChanged) {
-            this.currentUser.lastName = lastName;
-        }
-
-        sessionStorage.setItem(this.userKey, JSON.stringify(this.currentUser));
-        this.currentUser$.next(this.currentUser);
-
-        return this.currentUser;
+        return [];
     }
 
     toggleMenu() {
@@ -184,5 +150,13 @@ export class AuthService {
 
     isLoggedIn(): boolean {
         return !!this.getToken();
+    }
+
+    private setSession(user: AuthResponse) {
+        sessionStorage.setItem(this.tokenKey, user.token);
+        sessionStorage.setItem(this.userKey, JSON.stringify(user));
+        this.currentUser = user;
+        this.isLoggedIn$.next(true);
+        this.currentUser$.next(user);
     }
 }

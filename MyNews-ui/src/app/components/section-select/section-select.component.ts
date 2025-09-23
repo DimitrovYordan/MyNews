@@ -33,6 +33,9 @@ export class SectionSelectComponent implements OnInit {
             this.sections = data.map(s => ({
                 ...s, displayName: this.sectionName.formatSectionName(s.name)
             }));
+
+            this.selectedSections = this.authService.getSelectedSections();
+            this.isAllSelected = this.selectedSections.length === this.sections.length;
         });
     }
 
@@ -56,15 +59,9 @@ export class SectionSelectComponent implements OnInit {
     }
 
     saveSelection(): void {
-        if (this.selectedSections.length === 0) {
-            return;
-        }
+        this.authService.setSelectedSections(this.selectedSections);
 
-        if (this.selectedSections.length === this.sections.length) {
-            this.authService.setSelectedSections([]);
-        } else {
-            this.authService.setSelectedSections(this.selectedSections);
-        }
+        console.log('Saved selected sections:', this.selectedSections);
 
         this.showSections = false;
         this.router.navigate(['/news']);

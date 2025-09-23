@@ -7,4 +7,5 @@ export interface NewsItem {
     sectionName?: string;
     sourceUrl: string;
     sourceName?: string;
+    isRead?: boolean;
 }

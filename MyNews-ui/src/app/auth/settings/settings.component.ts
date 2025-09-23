@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 
 import { AuthService } from '../../services/auth.service';
 import { AuthResponse } from '../../interfaces/auth-response';
+import { UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-settings',
@@ -18,7 +19,11 @@ export class SettingsComponent {
   showPassword: boolean = false;
   showRepeatPassword: boolean = false;
 
-  constructor(private fb: FormBuilder, private authService: AuthService, private router: Router) {
+  constructor(
+    private fb: FormBuilder,
+    private authService: AuthService,
+    private userService: UserService,
+    private router: Router) {
     this.settingsForm = this.fb.group({
       firstName: [''],
       lastName: [''],
@@ -41,23 +46,19 @@ export class SettingsComponent {
 
   submitSettings(): void {
     if (this.settingsForm.valid) {
-      this.authService.updateProfile(this.settingsForm.value).subscribe({
-        next: () => {
-          const updateUserNames = this.authService.updateUserNames(
-            this.settingsForm.value.firstName,
-            this.settingsForm.value.lastName
-          );
-
-          const currentUser = updateUserNames || this.authService.getCurrentUser();
+      this.userService.updateProfile(this.settingsForm.value).subscribe({
+        next: (updatedFromServer) => {
+          const currentUser = this.authService.getCurrentUser();
           if (!currentUser) {
             return;
           }
 
-          const updatedUser: AuthResponse = {
+          const updatedUser = {
             ...currentUser,
-            country: this.settingsForm.value.country,
-            city: this.settingsForm.value.city,
-            token: currentUser.token
+            firstName: this.settingsForm.value.firstName || currentUser.firstName,
+            lastName: this.settingsForm.value.lastName || currentUser.lastName,
+            country: this.settingsForm.value.country || currentUser.country,
+            city: this.settingsForm.value.city || currentUser.city,
           };
 
           this.authService.setCurrentUser(updatedUser);

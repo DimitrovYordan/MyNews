@@ -1,6 +1,6 @@
 @if (isLoading) {
 <div class="loading">
-    Loading news...
+    Loading sections...
 </div>
 }
 
@@ -20,7 +20,7 @@
             <div class="section-card" (click)="toggleSelection(section.id)">
                 <label>
                     <input type="checkbox" [checked]="selectedSections.includes(section.id)"
-                        (change)="toggleSelection(section.id)" (click)="$event.stopPropagation()" />
+                        (click)="$event.stopPropagation()" />
                     {{ section.displayName ?? section.name }}
                 </label>
             </div>

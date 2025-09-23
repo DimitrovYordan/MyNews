@@ -8,6 +8,7 @@ import { NewsItem } from "../../interfaces/news-item";
 import { SectionWithNews } from "../../interfaces/section-with-news";
 import { GroupedNews } from "../../interfaces/grouped-news";
 import { SectionsNamesUtilsService } from "../../shared/sections-names-utils.service";
+import { UserNewsService } from "../../services/user-news.service";
 
 @Component({
     selector: 'app-news-list',
@@ -27,12 +28,20 @@ export class NewsListComponent implements OnInit {
     constructor(
         private newsService: NewsService,
         private authService: AuthService,
+        private userNewsService: UserNewsService,
         private router: Router,
         public sectionName: SectionsNamesUtilsService
     ) { }
 
     ngOnInit(): void {
         this.selectedSections = this.authService.getSelectedSections();
+
+        console.log('Selected sections in NewsList:', this.selectedSections);
+
+        if (this.selectedSections.length === 0) {
+            this.errorMessage = 'No sections selected. Please select sections first.';
+            return;
+        }
 
         this.fetchNews();
     }
@@ -67,7 +76,19 @@ export class NewsListComponent implements OnInit {
             });
 
             source.openItemId = item.id;
+            this.markNewsAsRead(item);
         }
+    }
+
+    private markNewsAsRead(item: NewsItem): void {
+        this.userNewsService.markAsRead(item.id.toString()).subscribe({
+            next: () => {
+                item.isRead = true;
+            },
+            error: (err) => {
+                console.log('Failed to mark news as read', err);
+            }
+        })
     }
 
     private fetchNews(): void {
@@ -75,6 +96,12 @@ export class NewsListComponent implements OnInit {
 
         this.newsService.getNewsBySections(this.selectedSections).subscribe({
             next: (data: SectionWithNews[]) => {
+                if (!data || data.length === 0) {
+                    this.errorMessage = 'No news available in the selected sections.';
+                    this.isLoading = false;
+                    return;
+                }
+
                 this.sectionsWithNews = data.map((section) => {
                     const groupedMap = section.news.reduce((acc, item) => {
                         if (!acc[item.sourceUrl]) {
@@ -96,7 +123,7 @@ export class NewsListComponent implements OnInit {
 
                     return { ...section, groupedNews };
                 });
-
+                console.log('Sections with news:', this.sectionsWithNews);
                 this.isLoading = false;
             },
             error: () => {
