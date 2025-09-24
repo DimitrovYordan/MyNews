@@ -1,9 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
+using System.Security.Claims;
+
 using MyNews.Api.DTOs;
 using MyNews.Api.Interfaces;
 
-using System.Security.Claims;
 
 namespace MyNews.Api.Controllers
 {

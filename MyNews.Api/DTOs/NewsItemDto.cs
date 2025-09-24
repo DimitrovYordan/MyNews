@@ -1,14 +1,16 @@
-﻿namespace MyNews.Api.DTOs
+﻿using MyNews.Api.Enums;
+
+namespace MyNews.Api.DTOs
 {
     public class NewsItemDto
     {
+        public SectionType Section { get; set; }
+
         public string Title { get; set; } = string.Empty;
 
         public string Summary { get; set; } = string.Empty;
 
         public DateTime PublishedAt { get; set; }
-
-        public bool IsPublishedDateEstimated { get; set; }
 
         public string Link { get; set; } = string.Empty;
 

@@ -1,7 +1,9 @@
-﻿namespace MyNews.Api.Interfaces
+﻿using MyNews.Api.Enums;
+
+namespace MyNews.Api.Interfaces
 {
     public interface IChatGptService
     {
-        Task<string> GenerateSummaryAsync(string text);
+        Task<(string Summary, SectionType Section)> EnrichNewsAsync(string text);
     }
 }

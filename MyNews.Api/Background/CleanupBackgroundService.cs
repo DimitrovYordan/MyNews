@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 using MyNews.Api.Data;
 
@@ -8,11 +9,13 @@ namespace MyNews.Api.Background
     {
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<CleanupBackgroundService> _logger;
+        private readonly int _cleanupIntervalDays;
 
-        public CleanupBackgroundService(IServiceScopeFactory scopeFactory, ILogger<CleanupBackgroundService> logger)
+        public CleanupBackgroundService(IServiceScopeFactory scopeFactory, ILogger<CleanupBackgroundService> logger, IOptions<BackgroundJobsOptions> options)
         {
             _scopeFactory = scopeFactory;
             _logger = logger;
+            _cleanupIntervalDays = options.Value.CleanupIntervalDays;
         }
 
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
@@ -44,7 +47,7 @@ namespace MyNews.Api.Background
                     _logger.LogError(ex, "Error while cleaning up old/read news items.");
                 }
 
-                await Task.Delay(TimeSpan.FromDays(2), cancellationToken);
+                await Task.Delay(TimeSpan.FromDays(_cleanupIntervalDays), cancellationToken);
             }
         }
     }

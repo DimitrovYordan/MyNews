@@ -28,5 +28,9 @@ namespace MyNews.Api.Models
         public string? PasswordResetToken {  get; set; }
 
         public DateTime? PasswordResetTokenExpires { get; set; }
+
+        public bool IsDeleted { get; set; } = false;
+
+        public ICollection<UserNewsRead> NewsReads { get; set; } = new List<UserNewsRead>();
     }
 }

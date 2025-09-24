@@ -1,108 +1,74 @@
-﻿using MyNews.Api.DTOs;
+﻿using System.ServiceModel.Syndication;
+using System.Xml;
+
+using MyNews.Api.DTOs;
 using MyNews.Api.Interfaces;
 using MyNews.Api.Models;
-
-using System.ServiceModel.Syndication;
-using System.Xml;
 
 namespace MyNews.Api.Services
 {
     public class RssService : IRssService
     {
         private readonly HttpClient _httpClient;
-        private readonly INewsService _newsService;
-        private readonly IChatGptService _chatGptService;
-        private readonly ISourceService _sourceService;
+        //private readonly INewsService _newsService;
         private readonly ILogger<RssService> _logger;
 
-        public RssService(HttpClient httpClient, INewsService newsService, IChatGptService chatGptService, ISourceService sourceService, ILogger<RssService> logger)
+        public RssService(HttpClient httpClient, ILogger<RssService> logger)
         {
             _httpClient = httpClient;
-            _newsService = newsService;
-            _chatGptService = chatGptService;
-            _sourceService = sourceService;
+            //_newsService = newsService;
             _logger = logger;
         }
 
-        public async Task<List<NewsItemDto>> FetchAndProcessRssFeedAsync()
+        public async Task<List<NewsItemDto>> FetchAndProcessRssFeedAsync(IEnumerable<Source> sources)
         {
             var result = new List<NewsItemDto>();
 
-            foreach (var item in _rssSources)
+            foreach (var source in sources)
             {
-                var sourceName = item.Key;
-                var url = item.Value;
-
                 try
                 {
-                    var source = await _sourceService.GetByNameAsync(sourceName);
-                    if (source == null)
+                    var response = await _httpClient.GetStringAsync(source.Url);
+
+                    var settings = new XmlReaderSettings
                     {
-                        Console.WriteLine($"Source {sourceName} not found in database, skipping.");
-                        continue;
-                    }
+                        DtdProcessing = DtdProcessing.Ignore
+                    };
 
-                    var response = await _httpClient.GetStringAsync(url);
-
-                    using var reader = XmlReader.Create(new StringReader(response));
+                    using var stringReader = new StringReader(response);
+                    using var reader = XmlReader.Create(stringReader, settings);
                     var feed = SyndicationFeed.Load(reader);
 
                     foreach (var feedItem in feed.Items)
                     {
-                        bool isNewsExists = await _newsService.ExistsByTitleAndSourceAsync(feedItem.Title.Text, source.Id);
-
-                        var hasValidDate = feedItem.PublishDate != DateTimeOffset.MinValue;
-
-                        var summaryText = feedItem.Summary?.Text ?? string.Empty;
-
                         var newsDto = new NewsItemDto
                         {
                             Title = feedItem.Title.Text,
-                            Link = feedItem.Links[0].Uri.ToString(),
+                            Link = feedItem.Links.FirstOrDefault()?.Uri.ToString() ?? string.Empty,
                             PublishedAt = feedItem.PublishDate.UtcDateTime,
                             SourceName = source.Name,
                             SourceUrl = source.Url,
-                            Summary = await _chatGptService.GenerateSummaryAsync(feedItem.Title.Text + " " + summaryText),
-                            IsNew = !isNewsExists
+                            Summary = string.Empty,
+                            Section = 0,
+                            IsNew = false
                         };
-
-                        if (!isNewsExists)
-                        {
-                            var newsItem = new NewsItem
-                            {
-                                Id = Guid.NewGuid(),
-                                Title = feedItem.Title.Text,
-                                PublishedAt = newsDto.PublishedAt,
-                                SourceId = source.Id,
-                                Source = source
-                            };
-
-                            await _newsService.AddNewsItemAsync(newsItem);
-                        }
 
                         result.Add(newsDto);
                     }
                 }
                 catch (HttpRequestException ex)
                 {
-                    _logger.LogError(ex, "HTTP error fetching RSS for {SourceName}", sourceName);
+                    _logger.LogError(ex, "HTTP error fetching RSS for {SourceName}", source.Name);
                     continue;
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Unexpected error processing RSS for {SourceName}", sourceName);
+                    _logger.LogError(ex, "Unexpected error processing RSS for {SourceName}", source.Name);
                     continue;
                 }
             }
 
             return result;
         }
-
-        private readonly Dictionary<string, string> _rssSources = new()
-        {
-            { "Dnevnik", "https://www.dnevnik.bg/rss/" },
-            { "Investor", "https://www.investor.bg/rss/" },
-            { "Vesti", "https://www.vesti.bg/rss-novini-3405031" }
-        };
     }
 }

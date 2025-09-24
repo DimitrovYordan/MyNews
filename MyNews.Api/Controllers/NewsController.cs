@@ -11,11 +11,13 @@ namespace MyNews.Api.Controllers
     {
         private readonly INewsService _newsService;
         private readonly IRssService _rssService;
+        private readonly ISourceService _sourceService;
 
-        public NewsController(INewsService newsService, IRssService rssService)
+        public NewsController(INewsService newsService, IRssService rssService, ISourceService sourceService)
         {
             _newsService = newsService;
             _rssService = rssService;
+            _sourceService = sourceService;
         }
 
         [HttpGet]
@@ -38,7 +40,9 @@ namespace MyNews.Api.Controllers
         [HttpGet("rss")]
         public async Task<IActionResult> GetRssNews()
         {
-            var news = await _rssService.FetchAndProcessRssFeedAsync();
+            var sources = await _sourceService.GetAllAsync();
+
+            var news = await _rssService.FetchAndProcessRssFeedAsync(sources);
 
             return Ok(news);
         }

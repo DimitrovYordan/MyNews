@@ -22,8 +22,8 @@ namespace MyNews.Api.Services
 
         public async Task<AuthResponseDto> LoginAsync(LoginDto loginDto)
         {
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Email == loginDto.Email);
+            var user = await _context.Users 
+                .FirstOrDefaultAsync(u => u.Email == loginDto.Email && !u.IsDeleted);
 
             if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
             {
@@ -45,7 +45,7 @@ namespace MyNews.Api.Services
         public async Task<AuthResponseDto> RegisterAsync(RegisterDto registerDto)
         {
             var esists = await _context.Users
-                .AnyAsync(u => u.Email == registerDto.Email);
+                .AnyAsync(u => u.Email == registerDto.Email && !u.IsDeleted);
 
             if (esists)
             {
@@ -80,7 +80,7 @@ namespace MyNews.Api.Services
 
         public async Task<bool> ForgotPasswordAsync(string email)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email && !u.IsDeleted);
             if (user == null)
             {
                 return false;
@@ -100,7 +100,7 @@ namespace MyNews.Api.Services
         {
             Console.WriteLine($"[DEBUG] Token from request: {token}");
 
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.PasswordResetToken == token);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.PasswordResetToken == token && !u.IsDeleted);
 
             if (user == null || user.PasswordResetTokenExpires < DateTime.UtcNow)
             {

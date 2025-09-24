@@ -1,8 +1,9 @@
-﻿using MyNews.Api.Interfaces;
-
-using System.Net.Http.Headers;
+﻿using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+
+using MyNews.Api.Enums;
+using MyNews.Api.Interfaces;
 
 namespace MyNews.Api.Services
 {
@@ -19,58 +20,71 @@ namespace MyNews.Api.Services
             _logger = logger;
         }
 
-        public async Task<string> GenerateSummaryAsync(string text)
+        public async Task<(string Summary, SectionType Section)> EnrichNewsAsync(string title)
         {
-            int maxRetries = 3;
-            int delayMs = 1000;
-
-            for (int attempt = 1; attempt <= maxRetries; attempt++)
+            try
             {
-                try
+                var sectionTypes = string.Join(", ", Enum.GetNames(typeof(SectionType)));
+                var systemMessage = $"You summarize news articles in 1-2 sentences and assign them to a section from the following options: {sectionTypes}. Return a valid JSON object like {{ \"Summary\": \"...\", \"Section\": \"...\" }}.";
+
+                var requestBody = new
                 {
-                    var requestBody = new
+                    model = "gpt-3.5-turbo",
+                    messages = new[]
                     {
-                        model = "gpt-3.5-turbo",
-                        messages = new[]
+                        new { role = "system", content = systemMessage },
+                        new { role = "user", content = $"News title: \"{title}\"" }
+                    },
+                    max_tokens = 150
+                };
+
+                var requestJson = JsonSerializer.Serialize(requestBody);
+                var requestContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
+
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
+                var response = await _httpClient.PostAsync("https://api.openai.com/v1/chat/completions", requestContent);
+                response.EnsureSuccessStatusCode();
+
+                var responseContent = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(responseContent);
+                var contentStr = doc.RootElement.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString();
+
+                if (!string.IsNullOrWhiteSpace(contentStr))
+                {
+                    try
+                    {
+                        var json = JsonDocument.Parse(contentStr);
+                        string summary = json.RootElement.GetProperty("Summary").GetString() ?? string.Empty;
+                        string sectionStr = json.RootElement.GetProperty("Section").GetString() ?? string.Empty;
+
+                        if (Enum.TryParse<SectionType>(sectionStr.Trim(), out var section))
+                            return (summary, section);
+                        else
                         {
-                            new { role = "system", content = "You summarize news articles in 1-2 sentences." },
-                            new { role = "user", content = text }
-                        },
-                        max_tokens = 100
-                    };
-
-                    var requestJson = JsonSerializer.Serialize(requestBody);
-                    var requestContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
-
-                    _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
-
-                    var response = await _httpClient.PostAsync("https://api.openai.com/v1/chat/completions", requestContent);
-
-                    if ((int)response.StatusCode == 429) // rate limit
-                    {
-                        _logger?.LogWarning("Rate limit hit, retrying attempt {Attempt}", attempt);
-                        await Task.Delay(delayMs * attempt);
-                        continue;
+                            _logger.LogWarning("GPT returned unknown section '{SectionStr}' for title: {Title}", sectionStr, title);
+                            return (summary, SectionType.General);
+                        }
                     }
-
-                    response.EnsureSuccessStatusCode();
-
-                    var responseContent = await response.Content.ReadAsStringAsync();
-                    using var doc = JsonDocument.Parse(responseContent);
-                    var summary = doc.RootElement.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString();
-
-                    return summary ?? string.Empty;
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to parse GPT JSON for title: {Title}", title);
+                    }
                 }
-                catch (HttpRequestException ex)
+                else
                 {
-                    _logger?.LogWarning(ex, "HTTP error on attempt {Attempt}, retrying...", attempt);
-                    await Task.Delay(delayMs * attempt);
+                    _logger.LogWarning("GPT returned empty content for title: {Title}", title);
                 }
             }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP error calling OpenAI API for title: {Title}", title);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error in EnrichNewsAsync for title: {Title}", title);
+            }
 
-            _logger?.LogError("Failed to generate summary after {MaxRetries} attempts", maxRetries);
-            return string.Empty;
+            return ("Summary unavailable", SectionType.General);
         }
-
     }
 }

@@ -29,21 +29,19 @@ namespace MyNews.Api.Services
         {
             var selectedSections = sectionIds.Any() ? sectionIds : Enum.GetValues(typeof(SectionType)).Cast<SectionType>().ToList();
 
-            var result = new List<SectionWithNewsDto>();
+            var newsItems = await _context.NewsItems
+                .Include(n => n.Source)
+                .Where(n => selectedSections.Contains(n.Section))
+                .OrderByDescending(n => n.PublishedAt)
+                .ToListAsync();
 
-            foreach (var section in selectedSections)
-            {
-                var newsItems = await _context.NewsItems
-                    .Include(n => n.Source)
-                    .Where(n => n.Section == section)
-                    .OrderByDescending(n => n.PublishedAt)
-                    .ToListAsync();
-
-                var newsDtos = new List<NewsItemDto>();
-
-                foreach (var n in newsItems)
+            var result = newsItems
+                .GroupBy(n => n.Section)
+                .Select(g => new SectionWithNewsDto
                 {
-                    newsDtos.Add(new NewsItemDto
+                    SectionId = (int)g.Key,
+                    SectionName = g.Key.ToString(),
+                    News = g.Select(n => new NewsItemDto
                     {
                         Title = n.Title,
                         PublishedAt = n.PublishedAt,
@@ -52,17 +50,9 @@ namespace MyNews.Api.Services
                         Summary = string.Empty,
                         Link = string.Empty,
                         IsNew = false
-                    });
-                }
-
-                result.Add(new SectionWithNewsDto
-                {
-                    SectionId = (int)section,
-                    SectionName = section.ToString(),
-                    News = newsDtos
-                });
-            }
-
+                    }).ToList()
+                })
+                .ToList();
 
             return result;
         }
@@ -80,7 +70,7 @@ namespace MyNews.Api.Services
             return newsItem;
         }
 
-        public async Task MarkAsReadAsync(int userId, Guid newsItemId)
+        public async Task MarkAsReadAsync(Guid userId, Guid newsItemId)
         {
             bool alreadyRead = await _context.UserNewsReads
                 .AnyAsync(r => r.UserId == userId && r.NewsItemId == newsItemId);
@@ -98,7 +88,7 @@ namespace MyNews.Api.Services
             }
         }
 
-        public async Task<bool> IsReadAsync(int userId, Guid newsItemId)
+        public async Task<bool> IsReadAsync(Guid userId, Guid newsItemId)
         {
             return await _context.UserNewsReads.AnyAsync(r => r.UserId == userId && r.NewsItemId == newsItemId);
         }

@@ -2,20 +2,59 @@
 {
     public enum SectionType
     {
+        General = 0,
+
+        // Politics & Society
         Politics = 1,
         World_News = 2,
         Local_News = 3,
-        Business = 4,
-        Sports = 5,
-        Technology = 6,
-        Science = 7,
-        Space = 8,
-        AI_Robotics = 9,
-        Health = 10,
-        Music = 11,
-        Movies = 12,
-        TV_Series = 13,
-        Travel = 14,
-        Events_In_The_City = 15,
+        Society = 4,
+        Law_And_Justice = 5,
+
+        // Business & Economics
+        Business = 10,
+        Markets = 11,
+        Finance = 12,
+        Economy = 13,
+        RealEstate = 14,
+
+        // Sports
+        Sports = 20,
+        Football = 21,
+        Basketball = 22,
+        Tennis = 23,
+        Esports = 24,
+
+        // Technology & Science
+        Technology = 30,
+        Gadgets = 31,
+        Internet = 32,
+        AI_Robotics = 33,
+        Science = 34,
+        Space_Astronomy = 35,
+        Environment = 36,
+
+        // Health & Lifestyle
+        Health = 40,
+        Medicine = 41,
+        Fitness = 42,
+        FoodNutrition = 43,
+        Lifestyle = 44,
+        Travel = 45,
+
+        // Culture & Entertainment
+        Entertainment = 50,
+        Movies = 51,
+        TV_Series = 52,
+        Music = 53,
+        Theatre = 54,
+        Books = 55,
+        Gaming = 56,
+
+        // Events
+        Events = 60,
+        CityLife = 61,
+        Festivals = 62,
+        Conferences = 63
     }
 }

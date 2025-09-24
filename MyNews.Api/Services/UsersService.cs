@@ -17,8 +17,13 @@ namespace MyNews.Api.Services
 
         public async Task<object?> GetProfileAsync(Guid userId)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-            if (user == null) return null;
+            var user = await _context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == userId && !u.IsDeleted);
+            if (user == null)
+            {
+                return null;
+            }
 
             return new
             {
@@ -32,8 +37,9 @@ namespace MyNews.Api.Services
 
         public async Task<string?> UpdateProfileAsync(Guid userId, UpdateUserDto updateUserDto)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-            if (user == null) return null;
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId && !u.IsDeleted);
+            if (user == null) 
+                return null;
 
             if (!string.IsNullOrWhiteSpace(updateUserDto.FirstName))
                 user.FirstName = updateUserDto.FirstName;
@@ -48,7 +54,17 @@ namespace MyNews.Api.Services
                 user.City = updateUserDto.City;
 
             if (!string.IsNullOrWhiteSpace(updateUserDto.Email))
+            {
+                bool emailExists = await _context.Users
+                    .AnyAsync(u => u.Email == updateUserDto.Email && u.Id != userId && !u.IsDeleted);
+                if (emailExists)
+                {
+                    return "Email is already in use.";
+                }
+
                 user.Email = updateUserDto.Email;
+            }
+                
 
             if (!string.IsNullOrWhiteSpace(updateUserDto.Password))
             {
@@ -69,9 +85,12 @@ namespace MyNews.Api.Services
         public async Task<string?> DeleteUserAsync(Guid userId)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-            if (user != null) return null;
+            if (user == null || user.IsDeleted)
+            {
+                return null;
+            }
 
-            _context.Users.Remove(user);
+            user.IsDeleted = true;
             await _context.SaveChangesAsync();
 
             return "User deleted successfully.";

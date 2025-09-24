@@ -16,6 +16,11 @@ namespace MyNews.Api.Services
             _context = context;
         }
 
+        public async Task<List<Source>> GetAllAsync()
+        {
+            return await _context.Sources.ToListAsync();
+        }
+
         public async Task<Source?> GetByIdAsync(int id)
         {
             return await _context.Sources.FindAsync(id);

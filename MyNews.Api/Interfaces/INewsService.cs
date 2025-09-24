@@ -14,8 +14,8 @@ namespace MyNews.Api.Interfaces
 
         Task<NewsItem> AddNewsItemAsync(NewsItem newsItem);
 
-        Task MarkAsReadAsync(int userId, Guid newsItemId);
+        Task MarkAsReadAsync(Guid userId, Guid newsItemId);
 
-        Task<bool> IsReadAsync(int userId, Guid newsItemId);
+        Task<bool> IsReadAsync(Guid userId, Guid newsItemId);
     }
 }
