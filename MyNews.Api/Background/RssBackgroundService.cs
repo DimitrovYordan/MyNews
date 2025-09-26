@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Options;
 
 using MyNews.Api.Data;
+using MyNews.Api.DTOs;
 using MyNews.Api.Interfaces;
 using MyNews.Api.Models;
 
@@ -32,24 +33,46 @@ namespace MyNews.Api.Background
 
                 try
                 {
-                    var sources = await dbContext.Sources.ToListAsync(cancellationToken);
+                    var sources = await dbContext.Sources.Where(s => s.Id == 25).ToListAsync(cancellationToken);
 
                     foreach (var source in sources)
                     {
                         var rssItems = await rssService.FetchAndProcessRssFeedAsync(new[] { source });
-                        var newsToAdd = new List<NewsItem>();
 
+                        var freshItems = new List<NewsItemDto>();
                         foreach (var rssItem in rssItems)
                         {
-                            if (rssItem.PublishedAt < DateTime.UtcNow.AddDays(-7))
+                            if (rssItem.PublishedAt < DateTime.UtcNow.AddDays(-5))
+                            {
                                 continue;
+                            }
 
-                            bool exists = await dbContext.NewsItems
+                            bool existsInDb = await dbContext.NewsItems
                                 .AnyAsync(n => n.Title == rssItem.Title && n.SourceId == source.Id, cancellationToken);
 
-                            if (exists) continue;
+                            bool existsInBatch = freshItems.Any(n => n.Title == rssItem.Title && n.SourceUrl == source.Url);
 
-                            var (summary, section) = await chatGptService.EnrichNewsAsync(rssItem.Title);
+                            if (!existsInDb && !existsInBatch)
+                            {
+                                freshItems.Add(rssItem);
+                            }
+                        }
+
+                        if (!freshItems.Any())
+                        {
+                            continue;
+                        }
+
+                        var titles = freshItems.Select(r => r.Title).ToList();
+                        var enriched = await chatGptService.EnrichNewsBatchAsync(titles, cancellationToken);
+
+                        var newsToAdd = new List<NewsItem>();
+                        for (int i = 0; i < freshItems.Count; i++)
+                        {
+                            var rssItem = freshItems[i];
+                            var (summary, section) = i < enriched.Count
+                                ? enriched[i]
+                                : ("Summary unavailable", Enums.SectionType.General);
 
                             var newsItem = new NewsItem
                             {
@@ -71,15 +94,9 @@ namespace MyNews.Api.Background
                             dbContext.NewsItems.AddRange(newsToAdd);
                             await dbContext.SaveChangesAsync(cancellationToken);
 
-                            //_logger.LogInformation(
-                            //    "Added {Count} new news items from source '{SourceName}' at {Time}",
-                            //    newsToAdd.Count, source.Name, DateTime.UtcNow);
-                        }
-                        else
-                        {
-                            //_logger.LogInformation(
-                            //    "No new items found for source '{SourceName}' at {Time}",
-                            //    source.Name, DateTime.UtcNow);
+                            _logger.LogInformation(
+                                "Added {Count} new news items from source '{SourceName}' at {Time}",
+                                newsToAdd.Count, source.Name, DateTime.UtcNow);
                         }
                     }
                 }

@@ -10,13 +10,11 @@ namespace MyNews.Api.Services
     public class RssService : IRssService
     {
         private readonly HttpClient _httpClient;
-        //private readonly INewsService _newsService;
         private readonly ILogger<RssService> _logger;
 
         public RssService(HttpClient httpClient, ILogger<RssService> logger)
         {
             _httpClient = httpClient;
-            //_newsService = newsService;
             _logger = logger;
         }
 
