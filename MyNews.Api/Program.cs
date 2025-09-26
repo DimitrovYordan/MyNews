@@ -31,6 +31,7 @@ builder.Services.AddScoped<INewsService, NewsService>();
 builder.Services.AddScoped<ISectionsService, SectionsService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IUserPreferencesService, UserPreferencesService>();
 builder.Services.AddHttpClient<IRssService, RssService>();
 builder.Services.AddHttpClient<IChatGptService, ChatGptService>();
 

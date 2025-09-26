@@ -43,13 +43,15 @@ namespace MyNews.Api.Services
                     SectionName = g.Key.ToString(),
                     News = g.Select(n => new NewsItemDto
                     {
+                        Id = n.Id,
+                        Section = n.Section,
                         Title = n.Title,
                         PublishedAt = n.PublishedAt,
                         SourceName = n.Source?.Name ?? string.Empty,
                         SourceUrl = n.Source?.Url ?? string.Empty,
-                        Summary = string.Empty,
-                        Link = string.Empty,
-                        IsNew = false
+                        Summary = n.Summary,
+                        Link = n.Link,
+                        IsNew = true
                     }).ToList()
                 })
                 .ToList();
@@ -70,22 +72,30 @@ namespace MyNews.Api.Services
             return newsItem;
         }
 
-        public async Task MarkAsReadAsync(Guid userId, Guid newsItemId)
+        public async Task MarkTitleClickedAsync(Guid userId, Guid newsItemId)
         {
-            bool alreadyRead = await _context.UserNewsReads
-                .AnyAsync(r => r.UserId == userId && r.NewsItemId == newsItemId);
-
-            if (!alreadyRead)
+            var read = await _context.UserNewsReads
+                .FirstOrDefaultAsync(r => r.UserId == userId && r.NewsItemId == newsItemId);
+            if (read == null)
             {
-                _context.UserNewsReads.Add(new UserNewsRead
+                read = new UserNewsRead
                 {
                     UserId = userId,
                     NewsItemId = newsItemId,
-                    ReadAt = DateTime.UtcNow
-                });
+                    ReadAt = DateTime.UtcNow,
+                    HasClickedTitle = true
+                };
 
-                await _context.SaveChangesAsync();
+                _context.UserNewsReads.Add(read);
             }
+            else
+            {
+                read.HasClickedTitle = true;
+                read.ReadAt = DateTime.UtcNow;
+                _context.UserNewsReads.Update(read);
+            }
+
+            await _context.SaveChangesAsync();
         }
 
         public async Task<bool> IsReadAsync(Guid userId, Guid newsItemId)

@@ -4,6 +4,8 @@ namespace MyNews.Api.DTOs
 {
     public class NewsItemDto
     {
+        public Guid Id { get; set; }
+
         public SectionType Section { get; set; }
 
         public string Title { get; set; } = string.Empty;
@@ -19,5 +21,7 @@ namespace MyNews.Api.DTOs
         public string SourceUrl { get; set; } = string.Empty;
 
         public bool IsNew { get; set; }
+
+        public bool IsRead { get; set; }
     }
 }

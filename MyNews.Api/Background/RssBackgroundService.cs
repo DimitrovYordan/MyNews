@@ -33,7 +33,7 @@ namespace MyNews.Api.Background
 
                 try
                 {
-                    var sources = await dbContext.Sources.Where(s => s.Id == 25).ToListAsync(cancellationToken);
+                    var sources = await dbContext.Sources.Where(s => s.Id == 29).ToListAsync(cancellationToken);
 
                     foreach (var source in sources)
                     {
