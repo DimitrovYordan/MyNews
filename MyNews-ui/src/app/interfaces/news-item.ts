@@ -1,11 +1,13 @@
 export interface NewsItem {
-    id: number;
+    id: string;
     title: string;
-    content: string;
+    summary: string;
+    link: string;
     publishedAt: string;
     sectionId: number;
     sectionName?: string;
     sourceUrl: string;
     sourceName?: string;
+    isNew: boolean;
     isRead?: boolean;
 }

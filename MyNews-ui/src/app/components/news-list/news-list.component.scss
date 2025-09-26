@@ -110,6 +110,11 @@
   color: #555;
 }
 
+.news-item.clicked .news-title {
+  color: #888;
+  text-decoration: line-through;
+}
+
 /* ---------- Hover effects ---------- */
 .news-item:hover {
   background-color: #f0f0f0;

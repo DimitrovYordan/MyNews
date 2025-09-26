@@ -17,13 +17,16 @@
         @if (source.isOpen) {
         <ul class="dropdown-news" (click)="$event.stopPropagation()">
           @for (item of source.items; track item.id) {
-          <li class="news-item" (click)="toggleNewsItem(source, item)">
+          <li class="news-item" 
+              [class.clicked]="item.isRead" 
+              (click)="toggleNewsItem(source, item)">
             <div class="news-header">
               <span class="news-title">{{ item.title }}</span>
               <span class="news-date">{{ item.publishedAt | date: 'short' }}</span>
             </div>
             @if (source.openItemId === item.id) {
-            <p class="news-content">{{ item.content }}</p>
+            <p class="news-content">{{ item.summary }}</p>
+            <a [href]="item.link" target="_blank">Read full article here</a>
             }
           </li>
           }

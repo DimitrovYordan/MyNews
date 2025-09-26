@@ -6,6 +6,7 @@ import { SectionService } from "../../services/section.service";
 import { Section } from "../../interfaces/section";
 import { AuthService } from "../../services/auth.service";
 import { SectionsNamesUtilsService } from "../../shared/sections-names-utils.service";
+import { UserSectionService } from "../../services/user-section.service";
 
 @Component({
     selector: 'app-section-select',
@@ -24,6 +25,7 @@ export class SectionSelectComponent implements OnInit {
     constructor(
         private authService: AuthService,
         private sectionService: SectionService,
+        private userSectionService: UserSectionService,
         private router: Router,
         private sectionName: SectionsNamesUtilsService
     ) { }
@@ -34,8 +36,10 @@ export class SectionSelectComponent implements OnInit {
                 ...s, displayName: this.sectionName.formatSectionName(s.name)
             }));
 
-            this.selectedSections = this.authService.getSelectedSections();
-            this.isAllSelected = this.selectedSections.length === this.sections.length;
+            this.userSectionService.getUserSections().subscribe(userSections => {
+                this.selectedSections = userSections;
+                this.isAllSelected = this.selectedSections.length === this.sections.length;
+            });
         });
     }
 
@@ -59,12 +63,16 @@ export class SectionSelectComponent implements OnInit {
     }
 
     saveSelection(): void {
-        this.authService.setSelectedSections(this.selectedSections);
+        this.userSectionService.saveUserSections(this.selectedSections).subscribe({
+            next: () => {
+                this.router.navigate(['/news']);
+            },
+            error: (err) => {
+                console.error('Failed to save sections', err);
+            }
+        });
 
-        console.log('Saved selected sections:', this.selectedSections);
-
-        this.showSections = false;
-        this.router.navigate(['/news']);
+        // this.showSections = false;
     }
 
     onCheckboxChange(section: Section, event: Event) {

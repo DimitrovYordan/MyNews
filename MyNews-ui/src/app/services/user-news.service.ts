@@ -1,5 +1,6 @@
 import { HttpClient } from "@angular/common/http";
 import { Injectable } from "@angular/core";
+
 import { Observable } from "rxjs";
 
 @Injectable({
@@ -12,6 +13,10 @@ export class UserNewsService {
 
     markAsRead(newsId: string): Observable<void> {
         return this.http.post<void>(`${this.apiUrl}/mark-as-read`, { newsId });
+    }
+
+    markAsClicked(newsId: string): Observable<void> {
+        return this.http.post<void>(`${this.apiUrl}/mark-clicked`, { newsId });
     }
 
     getReadNewsIds(): Observable<string[]> {

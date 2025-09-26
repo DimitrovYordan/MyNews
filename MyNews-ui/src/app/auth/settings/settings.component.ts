@@ -4,7 +4,6 @@ import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validatio
 import { Router } from '@angular/router';
 
 import { AuthService } from '../../services/auth.service';
-import { AuthResponse } from '../../interfaces/auth-response';
 import { UserService } from '../../services/user.service';
 
 @Component({
@@ -69,6 +68,23 @@ export class SettingsComponent {
         }
       });
     }
+  }
+
+  deleteAccount(): void {
+    if (!confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+      return;
+    }
+
+    this.userService.deleteAccount().subscribe({
+      next: (res) => {
+        sessionStorage.clear();
+        this.router.navigate(['/login']);
+      },
+      error: (err) => {
+        console.error('Error deleting account', err);
+        alert('An error occurred while deleting your account.');
+      }
+    });
   }
 
   closeSettings(): void {

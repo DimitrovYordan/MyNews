@@ -9,6 +9,7 @@ import { SectionWithNews } from "../../interfaces/section-with-news";
 import { GroupedNews } from "../../interfaces/grouped-news";
 import { SectionsNamesUtilsService } from "../../shared/sections-names-utils.service";
 import { UserNewsService } from "../../services/user-news.service";
+import { UserSectionService } from "../../services/user-section.service";
 
 @Component({
     selector: 'app-news-list',
@@ -29,21 +30,22 @@ export class NewsListComponent implements OnInit {
         private newsService: NewsService,
         private authService: AuthService,
         private userNewsService: UserNewsService,
+        private userSectionService: UserSectionService,
         private router: Router,
         public sectionName: SectionsNamesUtilsService
     ) { }
 
     ngOnInit(): void {
-        this.selectedSections = this.authService.getSelectedSections();
+        this.userSectionService.getUserSections().subscribe(userSections => {
+            this.selectedSections = userSections;
 
-        console.log('Selected sections in NewsList:', this.selectedSections);
+            if (this.selectedSections.length === 0) {
+                this.errorMessage = 'No sections selected. Please select sections first.';
+                return;
+            }
 
-        if (this.selectedSections.length === 0) {
-            this.errorMessage = 'No sections selected. Please select sections first.';
-            return;
-        }
-
-        this.fetchNews();
+            this.fetchNews();
+        });
     }
 
     goBack() {
@@ -69,15 +71,11 @@ export class NewsListComponent implements OnInit {
         if (source.openItemId === item.id) {
             source.openItemId = null;
         } else {
-            this.sectionsWithNews.forEach((section) => {
-                section.groupedNews.forEach((s) => {
-                    s.openItemId = null;
-                });
-            });
-
             source.openItemId = item.id;
             this.markNewsAsRead(item);
         }
+
+        this.userNewsService.markAsClicked(item.id).subscribe();
     }
 
     private markNewsAsRead(item: NewsItem): void {

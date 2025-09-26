@@ -108,11 +108,6 @@ export class AuthService {
         return sessionStorage.getItem(this.tokenKey);
     }
 
-    setSelectedSections(selectedSections: number[]) {
-        sessionStorage.setItem(this.selectedSectionsKey, JSON.stringify(selectedSections));
-        this.hasSelectedSections$.next(true);
-    }
-
     getSelectedSections(): number[] {
         const stored = sessionStorage.getItem(this.selectedSectionsKey);
         if (stored) {

@@ -25,7 +25,7 @@ export class UserService {
         return this.http.post<void>(`${this.apiUrl}/change-password`, { oldPassword, newPassword });
     }
 
-    deleteAccount(): Observable<void> {
-        return this.http.delete<void>(`${this.apiUrl}/delete`);
+    deleteAccount(): Observable<{ message: string }> {
+        return this.http.delete<{ message: string }>(`${this.apiUrl}/delete-profile`);
     }
 }
