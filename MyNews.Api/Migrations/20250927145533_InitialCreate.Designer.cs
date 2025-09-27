@@ -12,7 +12,7 @@ using MyNews.Api.Data;
 namespace MyNews.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250924182756_InitialCreate")]
+    [Migration("20250927145533_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -91,168 +91,6 @@ namespace MyNews.Api.Migrations
                     b.ToTable("Sources", (string)null);
 
                     b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Name = "Dnevnik",
-                            Url = "https://www.dnevnik.bg/rss/"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Name = "Novinite",
-                            Url = "https://www.novinite.com/rss/news"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Name = "Capital",
-                            Url = "https://www.capital.bg/rss/"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Name = "Mediapool",
-                            Url = "https://www.mediapool.bg/rss"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            Name = "Actualno",
-                            Url = "https://www.actualno.com/rss"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            Name = "24 Chasa",
-                            Url = "https://www.24chasa.bg/rss_category/2/novini.html"
-                        },
-                        new
-                        {
-                            Id = 7,
-                            Name = "BTA",
-                            Url = "https://www.bta.bg/bg/rss/free"
-                        },
-                        new
-                        {
-                            Id = 8,
-                            Name = "BNR",
-                            Url = "https://bnr.bg/rss/"
-                        },
-                        new
-                        {
-                            Id = 9,
-                            Name = "SofiaGlobe",
-                            Url = "http://feeds.feedburner.com/TheSofiaGlobe"
-                        },
-                        new
-                        {
-                            Id = 10,
-                            Name = "Pogled",
-                            Url = "https://pogled.info/rss"
-                        },
-                        new
-                        {
-                            Id = 11,
-                            Name = "BurgasNews",
-                            Url = "https://www.burgasnews.com/feed"
-                        },
-                        new
-                        {
-                            Id = 12,
-                            Name = "Gong",
-                            Url = "https://gong.bg/rss"
-                        },
-                        new
-                        {
-                            Id = 13,
-                            Name = "Investor",
-                            Url = "https://www.investor.bg/rss/news"
-                        },
-                        new
-                        {
-                            Id = 14,
-                            Name = "Vesti",
-                            Url = "https://www.vesti.bg/rss"
-                        },
-                        new
-                        {
-                            Id = 15,
-                            Name = "Dnes",
-                            Url = "https://www.dnes.bg/rss/news"
-                        },
-                        new
-                        {
-                            Id = 16,
-                            Name = "Blitz",
-                            Url = "https://www.blitz.bg/rss"
-                        },
-                        new
-                        {
-                            Id = 17,
-                            Name = "Standart",
-                            Url = "https://www.standartnews.com/rss"
-                        },
-                        new
-                        {
-                            Id = 18,
-                            Name = "Banker",
-                            Url = "https://banker.bg/feed/"
-                        },
-                        new
-                        {
-                            Id = 1001,
-                            Name = "Offnews - Политика",
-                            Url = "https://feed.offnews.bg/rss/%D0%9F%D0%BE%D0%BB%D0%B8%D1%82%D0%B8%D0%BA%D0%B0_8"
-                        },
-                        new
-                        {
-                            Id = 1002,
-                            Name = "Offnews - Общество",
-                            Url = "https://feed.offnews.bg/rss/%D0%9E%D0%B1%D1%89%D0%B5%D1%81%D1%82%D0%B2%D0%BE_4"
-                        },
-                        new
-                        {
-                            Id = 1003,
-                            Name = "Offnews - Икономика",
-                            Url = "https://feed.offnews.bg/rss/%D0%98%D0%BA%D0%BE%D0%BD%D0%BE%D0%BC%D0%B8%D0%BA%D0%B0_59"
-                        },
-                        new
-                        {
-                            Id = 1004,
-                            Name = "Offnews - Темида",
-                            Url = "https://feed.offnews.bg/rss/%D0%A2%D0%B5%D0%BC%D0%B8%D0%B4%D0%B0_18762"
-                        },
-                        new
-                        {
-                            Id = 1005,
-                            Name = "Offnews - Инциденти",
-                            Url = "https://feed.offnews.bg/rss/%D0%98%D0%BD%D1%86%D0%B8%D0%B4%D0%B5%D0%BD%D1%82%D0%B8_6"
-                        },
-                        new
-                        {
-                            Id = 1006,
-                            Name = "Offnews - Медии",
-                            Url = "https://feed.offnews.bg/rss/%D0%9C%D0%B5%D0%B4%D0%B8%D0%B8_73"
-                        },
-                        new
-                        {
-                            Id = 1007,
-                            Name = "Offnews - Свят",
-                            Url = "https://feed.offnews.bg/rss/%D0%A1%D0%B2%D1%8F%D1%82%20_12"
-                        },
-                        new
-                        {
-                            Id = 1008,
-                            Name = "Offnews - Туризъм",
-                            Url = "https://feed.offnews.bg/rss/%D0%A2%D1%83%D1%80%D0%B8%D0%B7%D1%8A%D0%BC_75"
-                        },
-                        new
-                        {
-                            Id = 1009,
-                            Name = "Offnews - Здраве",
-                            Url = "https://feed.offnews.bg/rss/%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D0%B5_18753"
-                        },
                         new
                         {
                             Id = 25,
@@ -803,6 +641,9 @@ namespace MyNews.Api.Migrations
                     b.Property<bool>("HasClickedTitle")
                         .HasColumnType("bit");
 
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime>("ReadAt")
                         .HasColumnType("datetime2");
 
@@ -811,6 +652,25 @@ namespace MyNews.Api.Migrations
                     b.HasIndex("NewsItemId");
 
                     b.ToTable("UserNewsReads");
+                });
+
+            modelBuilder.Entity("MyNews.Api.Models.UserSectionPreference", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("SectionType")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsSelected")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("UserId", "SectionType");
+
+                    b.ToTable("UserSectionPreferences");
                 });
 
             modelBuilder.Entity("MyNews.Api.Models.NewsItem", b =>
@@ -843,6 +703,17 @@ namespace MyNews.Api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("MyNews.Api.Models.UserSectionPreference", b =>
+                {
+                    b.HasOne("MyNews.Api.Models.User", "User")
+                        .WithMany("SectionPreferences")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("MyNews.Api.Models.NewsItem", b =>
                 {
                     b.Navigation("UserReads");
@@ -856,6 +727,8 @@ namespace MyNews.Api.Migrations
             modelBuilder.Entity("MyNews.Api.Models.User", b =>
                 {
                     b.Navigation("NewsReads");
+
+                    b.Navigation("SectionPreferences");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 
+using System.Security.Claims;
+
 using MyNews.Api.Enums;
 using MyNews.Api.Interfaces;
 
@@ -32,7 +34,12 @@ namespace MyNews.Api.Controllers
         [HttpPost("by-sections")]
         public async Task<IActionResult> GetNewsBySections([FromBody] List<SectionType> sectionIds)
         {
-            var result = await _newsService.GetNewsBySectionsAsync(sectionIds);
+            var claim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(claim, out var userId)) {
+                return Unauthorized();
+            }
+
+            var result = await _newsService.GetNewsBySectionsAsync(sectionIds, userId);
 
             return Ok(result);
         }
@@ -45,6 +52,17 @@ namespace MyNews.Api.Controllers
             var news = await _rssService.FetchAndProcessRssFeedAsync(sources);
 
             return Ok(news);
+        }
+
+        [HttpPost("mark-interaction/{newsItemId}")]
+        public async Task<IActionResult> MarkInteraction(Guid newsItemId, [FromQuery] bool clickedLink = false)
+        {
+            var claim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(claim, out var userId))
+                return Unauthorized();
+
+            await _newsService.MarkNewsInteractionAsync(userId, newsItemId, clickedLink);
+            return Ok();
         }
     }
 }

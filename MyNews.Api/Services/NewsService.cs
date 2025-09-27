@@ -25,14 +25,21 @@ namespace MyNews.Api.Services
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<SectionWithNewsDto>> GetNewsBySectionsAsync(List<SectionType> sectionIds)
+        public async Task<IEnumerable<SectionWithNewsDto>> GetNewsBySectionsAsync(List<SectionType> sectionIds, Guid userId)
         {
-            var selectedSections = sectionIds.Any() ? sectionIds : Enum.GetValues(typeof(SectionType)).Cast<SectionType>().ToList();
+            var selectedSections = sectionIds.Any() 
+                ? sectionIds 
+                : Enum.GetValues(typeof(SectionType)).Cast<SectionType>().ToList();
 
             var newsItems = await _context.NewsItems
                 .Include(n => n.Source)
                 .Where(n => selectedSections.Contains(n.Section))
                 .OrderByDescending(n => n.PublishedAt)
+                .ToListAsync();
+
+            var readNewsIds = await _context.UserNewsReads
+                .Where(r => r.UserId == userId)
+                .Select(r => r.NewsItemId)
                 .ToListAsync();
 
             var result = newsItems
@@ -51,7 +58,8 @@ namespace MyNews.Api.Services
                         SourceUrl = n.Source?.Url ?? string.Empty,
                         Summary = n.Summary,
                         Link = n.Link,
-                        IsNew = true
+                        IsNew = !readNewsIds.Contains(n.Id),
+                        IsRead = readNewsIds.Contains(n.Id),
                     }).ToList()
                 })
                 .ToList();
@@ -72,10 +80,11 @@ namespace MyNews.Api.Services
             return newsItem;
         }
 
-        public async Task MarkTitleClickedAsync(Guid userId, Guid newsItemId)
+        public async Task MarkNewsInteractionAsync(Guid userId, Guid newsItemId, bool clickedLink = false)
         {
             var read = await _context.UserNewsReads
                 .FirstOrDefaultAsync(r => r.UserId == userId && r.NewsItemId == newsItemId);
+
             if (read == null)
             {
                 read = new UserNewsRead
@@ -83,24 +92,22 @@ namespace MyNews.Api.Services
                     UserId = userId,
                     NewsItemId = newsItemId,
                     ReadAt = DateTime.UtcNow,
-                    HasClickedTitle = true
+                    HasClickedTitle = true,
+                    HasClickedLink = clickedLink
                 };
-
                 _context.UserNewsReads.Add(read);
             }
             else
             {
                 read.HasClickedTitle = true;
+                if (clickedLink)
+                    read.HasClickedLink = true;
+
                 read.ReadAt = DateTime.UtcNow;
                 _context.UserNewsReads.Update(read);
             }
 
             await _context.SaveChangesAsync();
-        }
-
-        public async Task<bool> IsReadAsync(Guid userId, Guid newsItemId)
-        {
-            return await _context.UserNewsReads.AnyAsync(r => r.UserId == userId && r.NewsItemId == newsItemId);
         }
     }
 }

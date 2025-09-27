@@ -12,8 +12,8 @@ using MyNews.Api.Data;
 namespace MyNews.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250926091905_AddLogicForSaveSections")]
-    partial class AddLogicForSaveSections
+    [Migration("20250927184316_RemoveIdFromUserNewsRead")]
+    partial class RemoveIdFromUserNewsRead
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

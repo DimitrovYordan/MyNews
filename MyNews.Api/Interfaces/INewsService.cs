@@ -8,14 +8,12 @@ namespace MyNews.Api.Interfaces
     {
         Task<IEnumerable<NewsItem>> GetNewsAsync(List<int> sectionsIds);
 
-        Task<IEnumerable<SectionWithNewsDto>> GetNewsBySectionsAsync(List<SectionType> sectionIds);
+        Task<IEnumerable<SectionWithNewsDto>> GetNewsBySectionsAsync(List<SectionType> sectionIds, Guid userId);
 
         Task<bool> ExistsByTitleAndSourceAsync(string title, int sourceId);
 
         Task<NewsItem> AddNewsItemAsync(NewsItem newsItem);
 
-        Task MarkTitleClickedAsync(Guid userId, Guid newsItemId);
-
-        Task<bool> IsReadAsync(Guid userId, Guid newsItemId);
+        Task MarkNewsInteractionAsync(Guid userId, Guid newsItemId, bool clickedLink = false);
     }
 }

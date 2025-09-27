@@ -73,11 +73,32 @@ namespace MyNews.Api.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "UserSectionPreferences",
+                columns: table => new
+                {
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    SectionType = table.Column<int>(type: "int", nullable: false),
+                    IsSelected = table.Column<bool>(type: "bit", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserSectionPreferences", x => new { x.UserId, x.SectionType });
+                    table.ForeignKey(
+                        name: "FK_UserSectionPreferences_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "UserNewsReads",
                 columns: table => new
                 {
                     NewsItemId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ReadAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     HasClickedTitle = table.Column<bool>(type: "bit", nullable: false),
                     HasClickedLink = table.Column<bool>(type: "bit", nullable: false)
@@ -104,24 +125,6 @@ namespace MyNews.Api.Migrations
                 columns: new[] { "Id", "Name", "Section", "Url" },
                 values: new object[,]
                 {
-                    { 1, "Dnevnik", null, "https://www.dnevnik.bg/rss/" },
-                    { 2, "Novinite", null, "https://www.novinite.com/rss/news" },
-                    { 3, "Capital", null, "https://www.capital.bg/rss/" },
-                    { 4, "Mediapool", null, "https://www.mediapool.bg/rss" },
-                    { 5, "Actualno", null, "https://www.actualno.com/rss" },
-                    { 6, "24 Chasa", null, "https://www.24chasa.bg/rss_category/2/novini.html" },
-                    { 7, "BTA", null, "https://www.bta.bg/bg/rss/free" },
-                    { 8, "BNR", null, "https://bnr.bg/rss/" },
-                    { 9, "SofiaGlobe", null, "http://feeds.feedburner.com/TheSofiaGlobe" },
-                    { 10, "Pogled", null, "https://pogled.info/rss" },
-                    { 11, "BurgasNews", null, "https://www.burgasnews.com/feed" },
-                    { 12, "Gong", null, "https://gong.bg/rss" },
-                    { 13, "Investor", null, "https://www.investor.bg/rss/news" },
-                    { 14, "Vesti", null, "https://www.vesti.bg/rss" },
-                    { 15, "Dnes", null, "https://www.dnes.bg/rss/news" },
-                    { 16, "Blitz", null, "https://www.blitz.bg/rss" },
-                    { 17, "Standart", null, "https://www.standartnews.com/rss" },
-                    { 18, "Banker", null, "https://banker.bg/feed/" },
                     { 25, "BBC News", null, "http://feeds.bbci.co.uk/news/rss.xml" },
                     { 26, "CNN", null, "http://rss.cnn.com/rss/cnn_topstories.rss" },
                     { 27, "Reuters", null, "http://feeds.reuters.com/reuters/topNews" },
@@ -202,16 +205,7 @@ namespace MyNews.Api.Migrations
                     { 102, "Goal.com", null, "https://www.goal.com/feeds/en/news" },
                     { 103, "Bleacher Report", null, "https://bleacherreport.com/articles/feed" },
                     { 104, "FIFA News", null, "https://www.fifa.com/rss/index.xml" },
-                    { 105, "UEFA News", null, "https://www.uefa.com/rssfeed" },
-                    { 1001, "Offnews - Политика", null, "https://feed.offnews.bg/rss/%D0%9F%D0%BE%D0%BB%D0%B8%D1%82%D0%B8%D0%BA%D0%B0_8" },
-                    { 1002, "Offnews - Общество", null, "https://feed.offnews.bg/rss/%D0%9E%D0%B1%D1%89%D0%B5%D1%81%D1%82%D0%B2%D0%BE_4" },
-                    { 1003, "Offnews - Икономика", null, "https://feed.offnews.bg/rss/%D0%98%D0%BA%D0%BE%D0%BD%D0%BE%D0%BC%D0%B8%D0%BA%D0%B0_59" },
-                    { 1004, "Offnews - Темида", null, "https://feed.offnews.bg/rss/%D0%A2%D0%B5%D0%BC%D0%B8%D0%B4%D0%B0_18762" },
-                    { 1005, "Offnews - Инциденти", null, "https://feed.offnews.bg/rss/%D0%98%D0%BD%D1%86%D0%B8%D0%B4%D0%B5%D0%BD%D1%82%D0%B8_6" },
-                    { 1006, "Offnews - Медии", null, "https://feed.offnews.bg/rss/%D0%9C%D0%B5%D0%B4%D0%B8%D0%B8_73" },
-                    { 1007, "Offnews - Свят", null, "https://feed.offnews.bg/rss/%D0%A1%D0%B2%D1%8F%D1%82%20_12" },
-                    { 1008, "Offnews - Туризъм", null, "https://feed.offnews.bg/rss/%D0%A2%D1%83%D1%80%D0%B8%D0%B7%D1%8A%D0%BC_75" },
-                    { 1009, "Offnews - Здраве", null, "https://feed.offnews.bg/rss/%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D0%B5_18753" }
+                    { 105, "UEFA News", null, "https://www.uefa.com/rssfeed" }
                 });
 
             migrationBuilder.CreateIndex(
@@ -236,6 +230,9 @@ namespace MyNews.Api.Migrations
         {
             migrationBuilder.DropTable(
                 name: "UserNewsReads");
+
+            migrationBuilder.DropTable(
+                name: "UserSectionPreferences");
 
             migrationBuilder.DropTable(
                 name: "NewsItems");
