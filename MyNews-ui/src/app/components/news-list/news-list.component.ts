@@ -3,13 +3,12 @@ import { CommonModule } from "@angular/common";
 import { Router } from "@angular/router";
 
 import { NewsService } from "../../services/news.service";
-import { AuthService } from "../../services/auth.service";
+import { UserNewsService } from "../../services/user-news.service";
+import { UserSectionService } from "../../services/user-section.service";
 import { NewsItem } from "../../interfaces/news-item";
 import { SectionWithNews } from "../../interfaces/section-with-news";
 import { GroupedNews } from "../../interfaces/grouped-news";
 import { SectionsNamesUtilsService } from "../../shared/sections-names-utils.service";
-import { UserNewsService } from "../../services/user-news.service";
-import { UserSectionService } from "../../services/user-section.service";
 
 @Component({
     selector: 'app-news-list',
@@ -28,7 +27,6 @@ export class NewsListComponent implements OnInit {
 
     constructor(
         private newsService: NewsService,
-        private authService: AuthService,
         private userNewsService: UserNewsService,
         private userSectionService: UserSectionService,
         private router: Router,
@@ -57,8 +55,18 @@ export class NewsListComponent implements OnInit {
 
         this.sectionsWithNews.forEach((section) => {
             section.groupedNews.forEach((s) => {
+                if (s.openItemId) {
+                    const openItem = [...s.unread, ...s.read].find(x => x.id === s.openItemId);
+                    if (openItem && !openItem.isRead) {
+                        openItem.isRead = true;
+                        s.unread = s.unread.filter(x => x.id !== openItem.id);
+                        s.read = [openItem, ...s.read];
+
+                        this.userNewsService.markInteraction(openItem.id).subscribe();
+                    }
+                    s.openItemId = null;
+                }
                 s.isOpen = false;
-                s.openItemId = null;
             });
         });
 
@@ -70,23 +78,34 @@ export class NewsListComponent implements OnInit {
     toggleNewsItem(source: GroupedNews, item: NewsItem) {
         if (source.openItemId === item.id) {
             source.openItemId = null;
-        } else {
-            source.openItemId = item.id;
-            this.markNewsAsRead(item);
-        }
 
-        this.userNewsService.markAsClicked(item.id).subscribe();
+            if (!item.isRead) {
+                item.isRead = true;
+                source.unread = source.unread.filter(x => x.id !== item.id);
+                source.read = [item, ...source.read];
+
+                this.userNewsService.markInteraction(item.id).subscribe();
+            }
+        } else {
+            if (source.openItemId) {
+                const prevItem = [...source.unread, ...source.read].find(x => x.id === source.openItemId);
+                if (prevItem && !prevItem.isRead) {
+                    prevItem.isRead = true;
+                    source.unread = source.unread.filter(x => x.id !== prevItem.id);
+                    source.read = [prevItem, ...source.read];
+
+                    this.userNewsService.markInteraction(prevItem.id).subscribe();
+                }
+            }
+
+            source.openItemId = item.id;
+        }
     }
 
-    private markNewsAsRead(item: NewsItem): void {
-        this.userNewsService.markAsRead(item.id.toString()).subscribe({
-            next: () => {
-                item.isRead = true;
-            },
-            error: (err) => {
-                console.log('Failed to mark news as read', err);
-            }
-        })
+    onArticleLinkClick(event: MouseEvent, item: NewsItem, clickedLink: boolean = false) {
+        event.preventDefault();
+        this.userNewsService.markInteraction(item.id, clickedLink).subscribe();
+        window.open(item.link, '_blank');
     }
 
     private fetchNews(): void {
@@ -105,22 +124,26 @@ export class NewsListComponent implements OnInit {
                         if (!acc[item.sourceUrl]) {
                             acc[item.sourceUrl] = [];
                         }
-
                         acc[item.sourceUrl].push(item);
                         return acc;
                     }, {} as Record<string, NewsItem[]>);
 
-                    const groupedNews: GroupedNews[] = Object.entries(groupedMap).map(
-                        ([key, items]) => ({
+                    const groupedNews: GroupedNews[] = Object.entries(groupedMap).map(([key, items]) => {
+                        const unread = items.filter(i => !i.isRead);
+                        const read = items.filter(i => i.isRead);
+
+                        return {
                             key,
-                            items,
+                            unread,
+                            read,
                             isOpen: false,
                             openItemId: null
-                        })
-                    );
+                        };
+                    });
 
                     return { ...section, groupedNews };
                 });
+
                 console.log('Sections with news:', this.sectionsWithNews);
                 this.isLoading = false;
             },

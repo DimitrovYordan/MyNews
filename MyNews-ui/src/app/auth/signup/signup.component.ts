@@ -55,7 +55,6 @@ export class SignupComponent {
 
           if (err.status === 400 && err.error?.message?.includes('already exists')) {
             this.signupForm.get('email')?.setErrors({ emailTaken: true });
-            this.errorMessage = 'This email is already registered.';
           } else {
             this.errorMessage = 'Signup failed. Plase try again.';
           }

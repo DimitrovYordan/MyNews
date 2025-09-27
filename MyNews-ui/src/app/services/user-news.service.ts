@@ -7,16 +7,15 @@ import { Observable } from "rxjs";
     providedIn: 'root'
 })
 export class UserNewsService {
-    private apiUrl = 'http://localhost:5271/api/users';
+    private apiUrl = 'http://localhost:5271/api/news';
 
     constructor(private http: HttpClient) { }
 
-    markAsRead(newsId: string): Observable<void> {
-        return this.http.post<void>(`${this.apiUrl}/mark-as-read`, { newsId });
-    }
-
-    markAsClicked(newsId: string): Observable<void> {
-        return this.http.post<void>(`${this.apiUrl}/mark-clicked`, { newsId });
+    markInteraction(newsItemId: string, clickedLink: boolean = false): Observable<void> {
+        return this.http.post<void>(
+            `${this.apiUrl}/mark-interaction/${newsItemId}?clickedLink=${clickedLink}`,
+            {}
+        );
     }
 
     getReadNewsIds(): Observable<string[]> {

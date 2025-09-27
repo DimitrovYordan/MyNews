@@ -11,24 +11,46 @@
       <div class="source-container">
         <div class="source-bubble" (click)="toggleSource(section.sectionId, source)">
           <span class="domain">{{ sectionName.getDomain(source.key) }}</span>
-          <span class="count-news">{{ source.items.length }}</span>
+          <span class="count-news">{{ source.unread.length }}</span>
         </div>
 
         @if (source.isOpen) {
         <ul class="dropdown-news" (click)="$event.stopPropagation()">
-          @for (item of source.items; track item.id) {
-          <li class="news-item" 
-              [class.clicked]="item.isRead" 
-              (click)="toggleNewsItem(source, item)">
+          @if (source.unread.length > 0) {
+          <li class="section-divider">Unreaded</li>
+          @for (item of source.unread; track item.id) {
+          <li class="news-item unread" (click)="toggleNewsItem(source, item)">
+            <div class="news-header">
+              <span class="news-title">
+                {{ item.title }}
+                <span class="unread-dot"></span>
+              </span>
+              <span class="news-date">{{ item.publishedAt | date: 'short' }}</span>
+            </div>
+            @if (source.openItemId === item.id) {
+            <p class="news-content">{{ item.summary }}</p>
+            <a [href]="item.link" target="_blank" (click)="onArticleLinkClick($event, item, true)">Read full article here</a>
+            }
+          </li>
+          }
+          }
+
+          <li class="divider"></li>
+
+          @if (source.read.length > 0) {
+          <li class="section-divider">Readed</li>
+          @for (item of source.read; track item.id) {
+          <li class="news-item read" (click)="toggleNewsItem(source, item)">
             <div class="news-header">
               <span class="news-title">{{ item.title }}</span>
               <span class="news-date">{{ item.publishedAt | date: 'short' }}</span>
             </div>
             @if (source.openItemId === item.id) {
             <p class="news-content">{{ item.summary }}</p>
-            <a [href]="item.link" target="_blank">Read full article here</a>
+            <a [href]="item.link" target="_blank" (click)="onArticleLinkClick($event, item, true)">Read full article here</a>
             }
           </li>
+          }
           }
         </ul>
         }

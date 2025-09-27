@@ -5,8 +5,8 @@ import { Router } from "@angular/router";
 import { SectionService } from "../../services/section.service";
 import { Section } from "../../interfaces/section";
 import { AuthService } from "../../services/auth.service";
-import { SectionsNamesUtilsService } from "../../shared/sections-names-utils.service";
 import { UserSectionService } from "../../services/user-section.service";
+import { SectionsNamesUtilsService } from "../../shared/sections-names-utils.service";
 
 @Component({
     selector: 'app-section-select',
