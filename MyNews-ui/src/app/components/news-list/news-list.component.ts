@@ -62,7 +62,7 @@ export class NewsListComponent implements OnInit {
                         s.unread = s.unread.filter(x => x.id !== openItem.id);
                         s.read = [openItem, ...s.read];
 
-                        this.userNewsService.markInteraction(openItem.id).subscribe();
+                        this.userNewsService.markAsRead(openItem.id).subscribe();
                     }
                     s.openItemId = null;
                 }
@@ -77,35 +77,61 @@ export class NewsListComponent implements OnInit {
 
     toggleNewsItem(source: GroupedNews, item: NewsItem) {
         if (source.openItemId === item.id) {
-            source.openItemId = null;
-
             if (!item.isRead) {
                 item.isRead = true;
                 source.unread = source.unread.filter(x => x.id !== item.id);
                 source.read = [item, ...source.read];
 
-                this.userNewsService.markInteraction(item.id).subscribe();
-            }
-        } else {
-            if (source.openItemId) {
-                const prevItem = [...source.unread, ...source.read].find(x => x.id === source.openItemId);
-                if (prevItem && !prevItem.isRead) {
-                    prevItem.isRead = true;
-                    source.unread = source.unread.filter(x => x.id !== prevItem.id);
-                    source.read = [prevItem, ...source.read];
-
-                    this.userNewsService.markInteraction(prevItem.id).subscribe();
-                }
+                this.userNewsService.markAsRead(item.id).subscribe();
             }
 
-            source.openItemId = item.id;
+            source.openItemId = null;
+            return;
         }
+
+        if (source.openItemId) {
+            const prevItem = [...source.unread, ...source.read].find(x => x.id === source.openItemId);
+            if (prevItem && !prevItem.isRead) {
+                prevItem.isRead = true;
+                source.unread = source.unread.filter(x => x.id !== prevItem.id);
+                source.read = [prevItem, ...source.read];
+
+                this.userNewsService.markAsRead(prevItem.id).subscribe();
+            }
+        }
+
+        source.openItemId = item.id;
     }
 
-    onArticleLinkClick(event: MouseEvent, item: NewsItem, clickedLink: boolean = false) {
+    onArticleLinkClick(event: MouseEvent, item: NewsItem) {
         event.preventDefault();
-        this.userNewsService.markInteraction(item.id, clickedLink).subscribe();
+
+        if (!item.isRead) {
+            item.isRead = true;
+            const source = this.findSourceByItem(item);
+            if (source) {
+                source.unread = source.unread.filter(x => x.id !== item.id);
+                source.read = [item, ...source.read];
+            }
+            this.userNewsService.markAsRead(item.id).subscribe({
+                next: () => this.userNewsService.markLinkClicked(item.id).subscribe()
+            });
+        } else {
+            this.userNewsService.markLinkClicked(item.id).subscribe();
+        }
+
         window.open(item.link, '_blank');
+    }
+
+    private findSourceByItem(item: NewsItem): GroupedNews | undefined {
+        for (const section of this.sectionsWithNews) {
+            for (const source of section.groupedNews) {
+                if ([...source.unread, ...source.read].some(x => x.id === item.id)) {
+                    return source;
+                }
+            }
+        }
+        return undefined;
     }
 
     private fetchNews(): void {

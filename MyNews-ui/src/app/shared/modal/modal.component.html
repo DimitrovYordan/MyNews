@@ -1,0 +1,8 @@
+@if (show) {
+<div class="modal-window">
+    <div class="modal" [ngClass]="type">
+        <p>{{ message }}</p>
+        <button (click)="close()">OK</button>
+    </div>
+</div>
+}

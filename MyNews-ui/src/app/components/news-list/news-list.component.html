@@ -29,7 +29,7 @@
             </div>
             @if (source.openItemId === item.id) {
             <p class="news-content">{{ item.summary }}</p>
-            <a [href]="item.link" target="_blank" (click)="onArticleLinkClick($event, item, true)">Read full article here</a>
+            <a [href]="item.link" target="_blank" (click)="onArticleLinkClick($event, item)">Read full article here</a>
             }
           </li>
           }
@@ -47,7 +47,7 @@
             </div>
             @if (source.openItemId === item.id) {
             <p class="news-content">{{ item.summary }}</p>
-            <a [href]="item.link" target="_blank" (click)="onArticleLinkClick($event, item, true)">Read full article here</a>
+            <a [href]="item.link" target="_blank" (click)="onArticleLinkClick($event, item)">Read full article here</a>
             }
           </li>
           }

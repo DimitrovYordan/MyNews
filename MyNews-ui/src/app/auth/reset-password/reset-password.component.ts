@@ -4,20 +4,23 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 
 import { AuthService } from '../../services/auth.service';
+import { ModalComponent } from '../../shared/modal/modal.component';
 
 @Component({
   selector: 'app-reset-password',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, ModalComponent],
   templateUrl: './reset-password.component.html',
   styleUrls: ['./reset-password.component.scss']
 })
 export class ResetPasswordComponent {
   resetForm: FormGroup;
   token: string = '';
-  errorMessage: string = '';
   showPassword: boolean = false;
   showRepeatPassword: boolean = false;
+  showModal: boolean = false;
+  modalMessage: string = '';
+  modalType: 'success' | 'error' = 'success';
 
   constructor(
     private fb: FormBuilder,
@@ -45,15 +48,25 @@ export class ResetPasswordComponent {
     if (this.resetForm.valid) {
       this.authService.resetPassword({ token: this.token, newPassword: this.resetForm.value.password }).subscribe({
         next: () => {
-          alert('Password reset successfully!');
-          this.router.navigate(['/login']);
+          this.modalType = 'success';
+          this.modalMessage = 'Password reset successfully!';
+          this.showModal = true;
         },
         error: () => {
-          alert('Invalid or expired token.')
+          this.modalType = 'error';
+          this.modalMessage = 'Invalid or expired token.';
+          this.showModal = true;
         }
       });
     } else {
       this.resetForm.markAllAsTouched();
+    }
+  }
+
+  closeModal() {
+    this.showModal = false;
+    if (this.modalType === 'success') {
+      this.router.navigate(['/login']);
     }
   }
 }

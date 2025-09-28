@@ -11,12 +11,14 @@ export class UserNewsService {
 
     constructor(private http: HttpClient) { }
 
-    markInteraction(newsItemId: string, clickedLink: boolean = false): Observable<void> {
-        return this.http.post<void>(
-            `${this.apiUrl}/mark-interaction/${newsItemId}?clickedLink=${clickedLink}`,
-            {}
-        );
+    markAsRead(newsItemId: string): Observable<void> {
+        return this.http.post<void>(`${this.apiUrl}/mark-as-read/${newsItemId}`, {});
     }
+
+    markLinkClicked(newsItemId: string): Observable<void> {
+        return this.http.post<void>(`${this.apiUrl}/mark-link-clicked/${newsItemId}`, {});
+    }
+
 
     getReadNewsIds(): Observable<string[]> {
         return this.http.get<string[]>(`${this.apiUrl}/read-news`);
