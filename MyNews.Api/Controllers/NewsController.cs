@@ -54,14 +54,25 @@ namespace MyNews.Api.Controllers
             return Ok(news);
         }
 
-        [HttpPost("mark-interaction/{newsItemId}")]
-        public async Task<IActionResult> MarkInteraction(Guid newsItemId, [FromQuery] bool clickedLink = false)
+        [HttpPost("mark-as-read/{newsItemId}")]
+        public async Task<IActionResult> MarkAsRead(Guid newsItemId)
         {
             var claim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!Guid.TryParse(claim, out var userId))
                 return Unauthorized();
 
-            await _newsService.MarkNewsInteractionAsync(userId, newsItemId, clickedLink);
+            await _newsService.MarkAsReadAsync(userId, newsItemId);
+            return Ok();
+        }
+
+        [HttpPost("mark-link-clicked/{newsItemId}")]
+        public async Task<IActionResult> MarkLinkClicked(Guid newsItemId)
+        {
+            var claim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(claim, out var userId))
+                return Unauthorized();
+
+            await _newsService.MarkLinkClickedAsync(userId, newsItemId);
             return Ok();
         }
     }

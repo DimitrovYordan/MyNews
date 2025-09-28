@@ -80,7 +80,7 @@ namespace MyNews.Api.Services
             return newsItem;
         }
 
-        public async Task MarkNewsInteractionAsync(Guid userId, Guid newsItemId, bool clickedLink = false)
+        public async Task MarkAsReadAsync(Guid userId, Guid newsItemId)
         {
             var read = await _context.UserNewsReads
                 .FirstOrDefaultAsync(r => r.UserId == userId && r.NewsItemId == newsItemId);
@@ -93,21 +93,31 @@ namespace MyNews.Api.Services
                     NewsItemId = newsItemId,
                     ReadAt = DateTime.UtcNow,
                     HasClickedTitle = true,
-                    HasClickedLink = clickedLink
+                    HasClickedLink = false
                 };
+
                 _context.UserNewsReads.Add(read);
             }
             else
             {
                 read.HasClickedTitle = true;
-                if (clickedLink)
-                    read.HasClickedLink = true;
-
                 read.ReadAt = DateTime.UtcNow;
-                _context.UserNewsReads.Update(read);
             }
 
             await _context.SaveChangesAsync();
+        }
+
+        public async Task MarkLinkClickedAsync(Guid userId, Guid newsItemId)
+        {
+            var read = await _context.UserNewsReads
+                .FirstOrDefaultAsync(r => r.UserId == userId && r.NewsItemId == newsItemId);
+
+            if (read != null)
+            {
+                read.HasClickedLink = true;
+                read.ReadAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+            }
         }
     }
 }
