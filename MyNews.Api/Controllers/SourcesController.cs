@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 using MyNews.Api.Enums;
 using MyNews.Api.Interfaces;
@@ -6,8 +7,9 @@ using MyNews.Api.Models;
 
 namespace MyNews.Api.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
+    [Authorize]
     public class SourcesController : ControllerBase
     {
         private readonly ISourceService _sourceService;
