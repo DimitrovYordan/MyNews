@@ -27,15 +27,26 @@ export class AuthService {
 
     constructor(private http: HttpClient, private router: Router) {
         const userData = sessionStorage.getItem(this.userKey);
-        if (userData) {
+        const token = sessionStorage.getItem(this.tokenKey);
+        if (userData && token && !this.isTokenExpired(token)) {
             this.currentUser = JSON.parse(userData);
             this.currentUser$.next(this.currentUser);
             this.isLoggedIn$.next(true);
+        } else {
+            this.logout();
         }
     }
 
     login(credentials: AuthRequest): Observable<AuthResponse> {
         return this.http.post<AuthResponse>(`${this.apiUrl}/login`, credentials).pipe(
+            tap(res => {
+                this.setSession(res);
+            })
+        );
+    }
+
+    signup(credentials: SignupData): Observable<AuthResponse> {
+        return this.http.post<AuthResponse>(`${this.apiUrl}/register`, credentials).pipe(
             tap(res => {
                 this.setSession(res);
             })
@@ -51,14 +62,6 @@ export class AuthService {
         this.router.navigate(['/'], { replaceUrl: true });
     }
 
-    signup(credentials: SignupData): Observable<AuthResponse> {
-        return this.http.post<AuthResponse>(`${this.apiUrl}/register`, credentials).pipe(
-            tap(res => {
-                this.setSession(res);
-            })
-        );
-    }
-
     forgotPassword(email: string): Observable<any> {
         return this.http.post(`${this.apiUrl}/forgot-password`, { email });
     }
@@ -67,17 +70,8 @@ export class AuthService {
         return this.http.post(`${this.apiUrl}/reset-password`, data);
     }
 
-    setCurrentUser(user: AuthResponse | null) {
-        if (!user) {
-            this.currentUser = null;
-            this.currentUser$.next(null);
-            sessionStorage.removeItem(this.tokenKey);
-            return;
-        }
-
-        this.currentUser = user;
-        this.currentUser$.next(this.currentUser);
-        sessionStorage.setItem(this.userKey, JSON.stringify(user));
+    getToken(): string | null {
+        return sessionStorage.getItem(this.tokenKey);
     }
 
     getCurrentUser(): AuthResponse | null {
@@ -102,10 +96,6 @@ export class AuthService {
         const lastName = user.lastName?.charAt(0).toUpperCase() || '';
 
         return `${firstName}${lastName}` || null;
-    }
-
-    getToken(): string | null {
-        return sessionStorage.getItem(this.tokenKey);
     }
 
     getSelectedSections(): number[] {
@@ -144,7 +134,36 @@ export class AuthService {
     }
 
     isLoggedIn(): boolean {
-        return !!this.getToken();
+        const token = this.getToken();
+        if (!token) {
+            return false;
+        }
+
+        return !this.isTokenExpired(token);
+    }
+
+    setCurrentUser(user: AuthResponse | null) {
+        if (!user) {
+            this.currentUser = null;
+            this.currentUser$.next(null);
+            sessionStorage.removeItem(this.tokenKey);
+            return;
+        }
+
+        this.currentUser = user;
+        this.currentUser$.next(this.currentUser);
+        sessionStorage.setItem(this.userKey, JSON.stringify(user));
+    }
+
+    private isTokenExpired(token: string): boolean {
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const exp = payload.exp * 1000;
+
+            return Date.now() > exp;
+        } catch {
+            return true;
+        }
     }
 
     private setSession(user: AuthResponse) {

@@ -12,8 +12,18 @@ export class ModalComponent {
   @Input() show: boolean = false;
   @Input() type: 'success' | 'error' = 'success';
   @Input() message: string = '';
+  @Input() showCancel: boolean = true;
 
-  @Output() closed = new EventEmitter<void>();
+  @Output() closed = new EventEmitter<boolean>();
+
+  confirm() {
+    this.closed.emit(true);
+  }
+
+  cancel() {
+    this.closed.emit(false);
+    this.show = false;
+  }
 
   close() {
     this.closed.emit();

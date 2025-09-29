@@ -1,7 +1,15 @@
 import { HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
+
+import { AuthService } from '../services/auth.service';
+import { Router } from '@angular/router';
+import { catchError, throwError } from 'rxjs';
 
 export const authInterceptorFn: HttpInterceptorFn = (req, next) => {
-    const token = sessionStorage.getItem('auth_token');
+    const authService = inject(AuthService);
+    const router = inject(Router);
+
+    const token = authService.getToken();
 
     if (token) {
         req = req.clone({
@@ -9,5 +17,14 @@ export const authInterceptorFn: HttpInterceptorFn = (req, next) => {
         });
     }
 
-    return next(req);
+    return next(req).pipe(
+        catchError(err => {
+            if (err.status === 401) {
+                authService.logout();
+                router.navigate(['/']);
+            }
+
+            return throwError(() => err);
+        })
+    );
 };

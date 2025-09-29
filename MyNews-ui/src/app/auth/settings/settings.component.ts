@@ -1,22 +1,25 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { AuthService } from '../../services/auth.service';
 import { UserService } from '../../services/user.service';
+import { DeleteAccountComponent } from '../delete-account/delete-account.component';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [DeleteAccountComponent, CommonModule, ReactiveFormsModule],
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss']
 })
-export class SettingsComponent {
+export class SettingsComponent implements OnInit {
   settingsForm!: FormGroup;
   showPassword: boolean = false;
   showRepeatPassword: boolean = false;
+
+  selectedSection: 'edit' | 'delete' = 'edit';
 
   constructor(
     private fb: FormBuilder,
@@ -32,6 +35,10 @@ export class SettingsComponent {
       password: ['', [Validators.minLength(6), Validators.pattern(/^(?=.*[0-9])(?=.*[!@#$%^&*])/)]],
       repeatPassword: ['']
     }, { validators: this.passwordsMatchValidator });
+  }
+
+  ngOnInit() {
+    this.updateActiveBorder();
   }
 
   passwordsMatchValidator(group: AbstractControl): ValidationErrors | null {
@@ -89,5 +96,35 @@ export class SettingsComponent {
 
   closeSettings(): void {
     this.router.navigate(['/sections']);
+  }
+
+  selectSection(section: 'edit' | 'delete') {
+    this.selectedSection = section;
+    this.updateActiveBorder();
+  }
+
+  goBack(): void {
+    window.history.back();
+  }
+
+  private updateActiveBorder() {
+    setTimeout(() => {
+      const activeBtn = document.querySelector('.settings-menu button.active') as HTMLElement;
+      const content = document.querySelector('.settings-content') as HTMLElement;
+
+      if (activeBtn && content) {
+        const rectBtn = activeBtn.getBoundingClientRect();
+        const rectContent = content.getBoundingClientRect();
+
+        const top = rectBtn.top - rectContent.top;
+        const height = rectBtn.height;
+
+        content.style.setProperty('--active-btn-top', `${top}px`);
+        content.style.setProperty('--active-btn-height', `${height}px`);
+
+        const borderColor = this.selectedSection === 'delete' ? '#dc3545' : '#007bff';
+        content.style.setProperty('--border-color', borderColor);
+      }
+    });
   }
 }
