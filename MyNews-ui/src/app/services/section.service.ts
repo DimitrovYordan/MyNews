@@ -11,7 +11,11 @@ import { Section } from "../interfaces/section";
 export class SectionService {
     private apiUrl = 'http://localhost:5271/api/sections';
 
-    constructor(private http: HttpClient) {}
+    allSections: Section[] = [];
+
+    constructor(private http: HttpClient) {
+        this.getSections().subscribe(sections => this.allSections = sections);
+    }
 
     getSections(): Observable<Section[]> {
         return this.http.get<Section[]>(this.apiUrl);

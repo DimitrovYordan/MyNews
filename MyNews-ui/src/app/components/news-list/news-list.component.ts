@@ -1,10 +1,13 @@
 import { Component, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { Router } from "@angular/router";
+import { FormsModule } from '@angular/forms';
+import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 
 import { NewsService } from "../../services/news.service";
 import { UserNewsService } from "../../services/user-news.service";
 import { UserSectionService } from "../../services/user-section.service";
+import { SectionService } from "../../services/section.service";
 import { NewsItem } from "../../interfaces/news-item";
 import { SectionWithNews } from "../../interfaces/section-with-news";
 import { GroupedNews } from "../../interfaces/grouped-news";
@@ -13,22 +16,23 @@ import { SectionsNamesUtilsService } from "../../shared/sections-names-utils.ser
 @Component({
     selector: 'app-news-list',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, FormsModule, DragDropModule],
     templateUrl: './news-list.component.html',
     styleUrls: ['./news-list.component.scss'],
 })
 export class NewsListComponent implements OnInit {
-    news: NewsItem[] = [];
-    errorMessage: string = '';
-    isLoading: boolean = false;
-
-    selectedSections: number[] = [];
-    sectionsWithNews: (SectionWithNews & { groupedNews: GroupedNews[] })[] = [];
+    public sectionsWithNews: (SectionWithNews & { groupedNews: GroupedNews[] })[] = [];
+    public news: NewsItem[] = [];
+    public selectedSections: number[] = [];
+    public errorMessage: string = '';
+    public searchTerm: string = '';
+    public isLoading: boolean = false;
 
     constructor(
         private newsService: NewsService,
         private userNewsService: UserNewsService,
         private userSectionService: UserSectionService,
+        private sectionService: SectionService,
         private router: Router,
         public sectionName: SectionsNamesUtilsService
     ) { }
@@ -48,6 +52,10 @@ export class NewsListComponent implements OnInit {
 
     goBack() {
         this.router.navigate(['/sections']);
+    }
+
+    dropSection(event: CdkDragDrop<any[]>) {
+        moveItemInArray(this.sectionsWithNews, event.previousIndex, event.currentIndex);
     }
 
     toggleSource(sectionId: number, source: GroupedNews) {
@@ -123,6 +131,32 @@ export class NewsListComponent implements OnInit {
         window.open(item.link, '_blank');
     }
 
+    get filteredSectionsWithNews() {
+        if (!this.searchTerm.trim()) {
+            return this.sectionsWithNews;
+        }
+
+        const lowerSearch = this.searchTerm.toLowerCase();
+
+        return this.sectionsWithNews.map(section => {
+            const groupedNews = section.groupedNews.map(source => {
+                const unread = source.unread.filter(item =>
+                    item.title.toLowerCase().includes(lowerSearch) ||
+                    item.summary.toLowerCase().includes(lowerSearch)
+                );
+
+                const read = source.read.filter(item =>
+                    item.title.toLowerCase().includes(lowerSearch) ||
+                    item.summary.toLowerCase().includes(lowerSearch)
+                );
+
+                return { ...source, unread, read };
+            }).filter(source => source.unread.length > 0 || source.read.length > 0);
+
+            return { ...section, groupedNews };
+        }).filter(section => section.groupedNews.length > 0);
+    }
+
     private findSourceByItem(item: NewsItem): GroupedNews | undefined {
         for (const section of this.sectionsWithNews) {
             for (const source of section.groupedNews) {
@@ -139,38 +173,40 @@ export class NewsListComponent implements OnInit {
 
         this.newsService.getNewsBySections(this.selectedSections).subscribe({
             next: (data: SectionWithNews[]) => {
-                if (!data || data.length === 0) {
-                    this.errorMessage = 'No news available in the selected sections.';
-                    this.isLoading = false;
-                    return;
-                }
+                const selectedMap = new Map<number, SectionWithNews>();
+                data.forEach(section => selectedMap.set(section.sectionId, section));
 
-                this.sectionsWithNews = data.map((section) => {
-                    const groupedMap = section.news.reduce((acc, item) => {
-                        if (!acc[item.sourceUrl]) {
-                            acc[item.sourceUrl] = [];
-                        }
-                        acc[item.sourceUrl].push(item);
-                        return acc;
-                    }, {} as Record<string, NewsItem[]>);
+                this.sectionsWithNews = this.selectedSections.map(sectionId => {
+                    const sectionData = selectedMap.get(sectionId);
+                    if (sectionData) {
+                        const groupedMap = sectionData.news.reduce((acc, item) => {
+                            if (!acc[item.sourceUrl]) acc[item.sourceUrl] = [];
+                            acc[item.sourceUrl].push(item);
+                            return acc;
+                        }, {} as Record<string, NewsItem[]>);
 
-                    const groupedNews: GroupedNews[] = Object.entries(groupedMap).map(([key, items]) => {
-                        const unread = items.filter(i => !i.isRead);
-                        const read = items.filter(i => i.isRead);
+                        const groupedNews: GroupedNews[] = Object.entries(groupedMap).map(([key, items]) => {
+                            const unread = items.filter(i => !i.isRead);
+                            const read = items.filter(i => i.isRead);
+                            return { key, unread, read, isOpen: false, openItemId: null };
+                        });
+
+                        return { ...sectionData, groupedNews };
+                    } else {
+                        const sectionFromAll = this.sectionService.allSections?.find(s => s.id === sectionId);
+                        const sectionNameFormatted = sectionFromAll
+                            ? this.sectionName.formatSectionName(sectionFromAll.name)
+                            : 'Unknown Section';
 
                         return {
-                            key,
-                            unread,
-                            read,
-                            isOpen: false,
-                            openItemId: null
-                        };
-                    });
-
-                    return { ...section, groupedNews };
+                            sectionId,
+                            sectionName: sectionNameFormatted,
+                            news: [],
+                            groupedNews: []
+                        } as SectionWithNews & { groupedNews: GroupedNews[] };
+                    }
                 });
 
-                console.log('Sections with news:', this.sectionsWithNews);
                 this.isLoading = false;
             },
             error: () => {

@@ -36,6 +36,8 @@ export class ForgotPasswordComponent {
           this.modalType = 'success';
           this.modalMessage = 'Password reset email sent.';
           this.forgotPasswordForm.reset();
+          this.forgotPasswordForm.markAsPristine();
+          this.forgotPasswordForm.markAsUntouched();
         },
         error: () => {
           this.showModal = true;

@@ -1,12 +1,21 @@
 <div class="sections-container">
   <button type="button" class="back-btn" (click)="goBack()">Back</button>
 
-  <div class="sections-list">
-    @for (section of sectionsWithNews; track section.sectionId) {
-    <div class="section-bubble">
-      <h2>{{ sectionName.formatSectionName(section.sectionName) }}</h2>
+  <div class="search-container">
+    <input type="text" placeholder="Search news..." [(ngModel)]="searchTerm" />
+  </div>
 
-      @if (section.news.length > 0) {
+  <div class="sections-list" cdkDropList (cdkDropListDropped)="dropSection($event)">
+    @for (section of filteredSectionsWithNews; track section.sectionId) {
+    <div class="section-bubble" cdkDrag>
+      <h2>
+        <span class="drag-handle" cdkDragHandle>
+          ☰
+          <span class="tooltip-text">Drag to reorder sections</span>
+        </span>
+        {{ sectionName.formatSectionName(section.sectionName) }}
+      </h2>
+
       @for (source of section.groupedNews; track source.key) {
       <div class="source-container">
         <div class="source-bubble" (click)="toggleSource(section.sectionId, source)">
@@ -16,8 +25,9 @@
 
         @if (source.isOpen) {
         <ul class="dropdown-news" (click)="$event.stopPropagation()">
-          @if (source.unread.length > 0) {
           <li class="section-divider">Unreaded</li>
+
+          @if (source.unread.length > 0) {
           @for (item of source.unread; track item.id) {
           <li class="news-item unread" (click)="toggleNewsItem(source, item)">
             <div class="news-header">
@@ -33,12 +43,14 @@
             }
           </li>
           }
+          } @else {
+          <li class="news-item empty">No new news.</li>
           }
 
           <li class="divider"></li>
 
-          @if (source.read.length > 0) {
           <li class="section-divider">Readed</li>
+          @if (source.read.length > 0) {
           @for (item of source.read; track item.id) {
           <li class="news-item read" (click)="toggleNewsItem(source, item)">
             <div class="news-header">
@@ -51,13 +63,12 @@
             }
           </li>
           }
+          } @else {
+          <li class="news-item empty">No read news yet.</li>
           }
         </ul>
         }
       </div>
-      }
-      } @else {
-      <p>No news available in this section.</p>
       }
     </div>
     }

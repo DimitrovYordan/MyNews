@@ -19,7 +19,6 @@ export class UserNewsService {
         return this.http.post<void>(`${this.apiUrl}/mark-link-clicked/${newsItemId}`, {});
     }
 
-
     getReadNewsIds(): Observable<string[]> {
         return this.http.get<string[]>(`${this.apiUrl}/read-news`);
     }

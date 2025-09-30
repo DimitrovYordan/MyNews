@@ -3,9 +3,8 @@ import { CommonModule } from "@angular/common";
 import { Router } from "@angular/router";
 
 import { SectionService } from "../../services/section.service";
-import { Section } from "../../interfaces/section";
-import { AuthService } from "../../services/auth.service";
 import { UserSectionService } from "../../services/user-section.service";
+import { Section } from "../../interfaces/section";
 import { SectionsNamesUtilsService } from "../../shared/sections-names-utils.service";
 
 @Component({
@@ -23,7 +22,6 @@ export class SectionSelectComponent implements OnInit {
     isAllSelected: boolean = false;
 
     constructor(
-        private authService: AuthService,
         private sectionService: SectionService,
         private userSectionService: UserSectionService,
         private router: Router,
@@ -71,8 +69,6 @@ export class SectionSelectComponent implements OnInit {
                 console.error('Failed to save sections', err);
             }
         });
-
-        // this.showSections = false;
     }
 
     onCheckboxChange(section: Section, event: Event) {
