@@ -3,6 +3,7 @@ import { CommonModule } from "@angular/common";
 import { Router } from "@angular/router";
 import { FormsModule } from '@angular/forms';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
+import { CdkAccordionModule } from "@angular/cdk/accordion";
 
 import { NewsService } from "../../services/news.service";
 import { UserNewsService } from "../../services/user-news.service";
@@ -16,7 +17,7 @@ import { SectionsNamesUtilsService } from "../../shared/sections-names-utils.ser
 @Component({
     selector: 'app-news-list',
     standalone: true,
-    imports: [CommonModule, FormsModule, DragDropModule],
+    imports: [CommonModule, FormsModule, DragDropModule, CdkAccordionModule],
     templateUrl: './news-list.component.html',
     styleUrls: ['./news-list.component.scss'],
 })
@@ -38,11 +39,13 @@ export class NewsListComponent implements OnInit {
     ) { }
 
     ngOnInit(): void {
+        this.isLoading = true;
         this.userSectionService.getUserSections().subscribe(userSections => {
             this.selectedSections = userSections;
 
             if (this.selectedSections.length === 0) {
                 this.errorMessage = 'No sections selected. Please select sections first.';
+                this.isLoading = false;
                 return;
             }
 

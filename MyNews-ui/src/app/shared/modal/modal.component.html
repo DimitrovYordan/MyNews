@@ -3,10 +3,8 @@
     <div class="modal" [ngClass]="type">
         <p>{{ message }}</p>
         @if (showCancel){
-            <button class="confirm" (click)="confirm()">OK</button>
-            <button class="cancel" (click)="cancel()">Cancel</button>
-        } @else {
-            <button (click)="close()">OK</button>
+        <button class="confirm" (click)="confirm()">OK</button>
+        <button class="cancel" (click)="cancel()">Cancel</button>
         }
     </div>
 </div>

@@ -1,9 +1,10 @@
-import { Component, HostListener, OnInit, signal } from '@angular/core';
+import { Component, HostListener, inject, OnInit, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
 
 import { BehaviorSubject, filter } from 'rxjs';
 
 import { AuthService } from './services/auth.service';
+import { LoadingService } from './services/loading.service';
 
 @Component({
   selector: 'app-root',
@@ -14,6 +15,8 @@ import { AuthService } from './services/auth.service';
 })
 export class App implements OnInit {
   protected readonly title = signal('My News');
+  private loadingService = inject(LoadingService);
+  isLoading = this.loadingService.isLoading;
 
   isLoggedIn: boolean = false;
   isMenuOpen: boolean = false;

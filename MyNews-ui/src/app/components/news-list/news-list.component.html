@@ -16,9 +16,9 @@
         {{ sectionName.formatSectionName(section.sectionName) }}
       </h2>
 
-      @for (source of section.groupedNews; track source.key) {
       <div class="source-container">
-        <div class="source-bubble" (click)="toggleSource(section.sectionId, source)">
+        @for (source of section.groupedNews; track source.key) {
+        <div class="source-bubble" [class.selected]="source.isOpen" (click)="toggleSource(section.sectionId, source)">
           <span class="domain">{{ sectionName.getDomain(source.key) }}</span>
           <span class="count-news">{{ source.unread.length }}</span>
         </div>
@@ -68,8 +68,8 @@
           }
         </ul>
         }
+        }
       </div>
-      }
     </div>
     }
   </div>

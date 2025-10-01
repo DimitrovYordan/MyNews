@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 
 @Component({
   selector: 'app-modal',
@@ -8,13 +8,21 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
   templateUrl: './modal.component.html',
   styleUrl: './modal.component.scss'
 })
-export class ModalComponent {
+export class ModalComponent implements OnChanges {
   @Input() show: boolean = false;
   @Input() type: 'success' | 'error' = 'success';
   @Input() message: string = '';
   @Input() showCancel: boolean = true;
 
   @Output() closed = new EventEmitter<boolean>();
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['show'] && this.show) {
+      setTimeout(() => {
+        this.close();
+      }, 3000);
+    }
+  }
 
   confirm() {
     this.closed.emit(true);
@@ -26,6 +34,7 @@ export class ModalComponent {
   }
 
   close() {
-    this.closed.emit();
+    this.closed.emit(false);
+    this.show = false;
   }
 }
