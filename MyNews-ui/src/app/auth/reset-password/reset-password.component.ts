@@ -32,7 +32,7 @@ export class ResetPasswordComponent {
       password: ['', [Validators.required, Validators.minLength(6), Validators.pattern(/^(?=.*[0-9])(?=.*[!@#$%^&*])/)]],
       repeatPassword: ['', Validators.required]
     }, { validators: this.passwordsMatchValidator });
-
+    
     this.activatedRoute.queryParams.subscribe(params => {
       this.token = params['token'] || '';
     });

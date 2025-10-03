@@ -4,11 +4,12 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
 import { AuthService } from '../../services/auth.service';
+import { ModalComponent } from "../../shared/modal/modal.component";
 
 @Component({
   selector: 'app-signup',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, ModalComponent],
   templateUrl: './signup.component.html',
   styleUrls: ['./signup.component.scss']
 })
@@ -18,6 +19,8 @@ export class SignupComponent {
   showPassword: boolean = false;
   showRepeatPassword: boolean = false;
   loading: boolean = false;
+  showSignupSuccessModal: boolean = false;
+  showWelcomeModal: boolean = false;
 
   constructor(private fb: FormBuilder, private authService: AuthService, private router: Router) {
     this.signupForm = this.fb.group({
@@ -29,6 +32,9 @@ export class SignupComponent {
       password: ['', [Validators.required, Validators.minLength(6), Validators.pattern(/^(?=.*[0-9])(?=.*[!@#$%^&*])/)]],
       repeatPassword: ['', Validators.required]
     }, { validators: this.passwordsMatchValidator });
+
+    const hasSeenWelcome = sessionStorage.getItem('welcomeShown');
+    this.showWelcomeModal = !this.showWelcomeModal;
   }
 
   passwordsMatchValidator(group: AbstractControl): ValidationErrors | null {
@@ -48,7 +54,7 @@ export class SignupComponent {
       this.authService.signup(this.signupForm.value).subscribe({
         next: () => {
           this.loading = false;
-          this.router.navigate(['/sections']);
+          this.showSignupSuccessModal = true;
         },
         error: (err) => {
           this.loading = false;
@@ -65,6 +71,11 @@ export class SignupComponent {
 
   closeSignup() {
     this.router.navigate(['/']);
+  }
+
+  goToSections() {
+    this.showWelcomeModal = false;
+    this.router.navigate(['/sections']);
   }
 
   get emailErrors() {

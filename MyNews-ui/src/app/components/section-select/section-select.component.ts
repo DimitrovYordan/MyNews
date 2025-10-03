@@ -26,7 +26,7 @@ export class SectionSelectComponent implements OnInit {
         private userSectionService: UserSectionService,
         private router: Router,
         private sectionName: SectionsNamesUtilsService
-    ) { }
+    ) { console.log('Selected sections before save:', this.selectedSections);}
 
     ngOnInit(): void {
         this.sectionService.getSections().subscribe(data => {

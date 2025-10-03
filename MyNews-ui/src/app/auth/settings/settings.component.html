@@ -75,7 +75,6 @@
 
                 <button type="submit" [disabled]="settingsForm.invalid">Save</button>
             </form>
-            <button type="button" class="close-btn" (click)="closeSettings()">Close</button>
         </div>
         }
 
@@ -84,3 +83,6 @@
         }
     </div>
 </div>
+
+<app-modal [show]="showModal" [showCancel]="false" [type]="modalType" [message]="modalMessage" (closed)="closeModal()">
+</app-modal>

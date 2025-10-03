@@ -12,6 +12,7 @@ import { ForgotPasswordComponent } from './auth/forgot-password/forgot-password.
 
 export const appRoutes: Routes = [
   { path: '', component: HomeComponent },
+  { path: 'test-page', component: HomeComponent },
   { path: 'login', component: LoginComponent },
   { path: 'signup', component: SignupComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },

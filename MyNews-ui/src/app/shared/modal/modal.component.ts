@@ -13,7 +13,7 @@ export class ModalComponent implements OnChanges {
   @Input() type: 'success' | 'error' = 'success';
   @Input() message: string = '';
   @Input() showCancel: boolean = true;
-
+  @Input() autoClose: boolean = true;
   @Output() closed = new EventEmitter<boolean>();
 
   ngOnChanges(changes: SimpleChanges): void {

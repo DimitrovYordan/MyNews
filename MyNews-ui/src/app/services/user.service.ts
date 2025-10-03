@@ -21,10 +21,6 @@ export class UserService {
         return this.http.put<AuthResponse>(`${this.apiUrl}/update-profile`, data);
     }
 
-    changePassword(oldPassword: string, newPassword: string): Observable<void> {
-        return this.http.post<void>(`${this.apiUrl}/change-password`, { oldPassword, newPassword });
-    }
-
     deleteAccount(): Observable<{ message: string }> {
         return this.http.delete<{ message: string }>(`${this.apiUrl}/delete-profile`);
     }

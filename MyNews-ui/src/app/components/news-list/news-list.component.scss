@@ -1,9 +1,6 @@
 /* ---------- Layout / Containers ---------- */
 .sections-container {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 20px;
-  justify-content: center;
+  display: block;
   margin: 0 auto;
   max-width: 90%;
 }
@@ -13,6 +10,36 @@
   flex-direction: column;
   gap: 20px;
   grid-column: 2;
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+}
+
+/* ---------- Select Language ---------- */
+.language-selector {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.language-selector select {
+  padding: 6px 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  background-color: #fff;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.language-selector select:hover {
+  border-color: #888;
 }
 
 /* ---------- Buttons ---------- */

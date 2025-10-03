@@ -1,15 +1,26 @@
 import { Component, HostListener, inject, OnInit, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 
-import { BehaviorSubject, filter } from 'rxjs';
+import { TranslateModule, TranslateLoader, TranslateService } from '@ngx-translate/core';
+import { BehaviorSubject, filter, Observable } from 'rxjs';
 
 import { AuthService } from './services/auth.service';
 import { LoadingService } from './services/loading.service';
+import { LoaderComponent } from './components/loader/loader.component';
+
+export class MyTranslateLoader implements TranslateLoader {
+  private http = inject(HttpClient);
+
+  getTranslation(lang: string): Observable<any> {
+    return this.http.get(`/assets/i18n/${lang}.json`);
+  }
+}
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterModule],
+  imports: [RouterModule, LoaderComponent, TranslateModule],
   templateUrl: './app.html',
   styleUrls: ['./app.scss']
 })
@@ -27,7 +38,11 @@ export class App implements OnInit {
 
   public hasSelectedSections$ = new BehaviorSubject<boolean>(false);
 
-  constructor(public authService: AuthService, private router: Router) {
+  constructor(
+    public authService: AuthService,
+    private router: Router,
+    private translate: TranslateService
+  ) {
     this.authService.isLoggedIn$.subscribe(status => {
       this.isLoggedIn = status;
 
@@ -60,6 +75,10 @@ export class App implements OnInit {
   }
 
   ngOnInit(): void {
+    const browserLang = this.translate.getBrowserLang() || 'en';
+    this.translate.setFallbackLang('en');
+    this.translate.use(browserLang);
+
     const user = this.authService.getCurrentUser();
     if (user) {
       this.userFirstName = user.firstName;
@@ -105,6 +124,10 @@ export class App implements OnInit {
   goToProfile() {
     this.router.navigate(['/settings']);
     this.isMenuOpen = false;
+  }
+
+  goToSections() {
+    this.router.navigate(['/sections']);
   }
 
   getInitials(): string {

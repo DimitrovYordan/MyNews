@@ -85,3 +85,12 @@
 
   <button type="button" class="close-btn" (click)="closeSignup()">Close</button>
 </div>
+
+<app-modal 
+  [show]="showSignupSuccessModal" 
+  type="success"
+  [message]="'Welcome, ' + signupForm.get('firstName')?.value + '! Your account has been created successfully.'"
+  [showCancel]="false" 
+  [autoClose]="false"
+  (closed)="goToSections()">
+</app-modal>

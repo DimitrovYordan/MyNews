@@ -1,23 +1,27 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { AuthService } from '../../services/auth.service';
 import { UserService } from '../../services/user.service';
 import { DeleteAccountComponent } from '../delete-account/delete-account.component';
+import { ModalComponent } from '../../shared/modal/modal.component';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [DeleteAccountComponent, CommonModule, ReactiveFormsModule],
+  imports: [DeleteAccountComponent, ModalComponent, CommonModule, ReactiveFormsModule],
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss']
 })
-export class SettingsComponent implements OnInit {
+export class SettingsComponent {
   settingsForm!: FormGroup;
   showPassword: boolean = false;
   showRepeatPassword: boolean = false;
+  showModal: boolean = false;
+  modalMessage: string = '';
+  modalType: 'success' | 'error' = 'success';
 
   selectedSection: 'edit' | 'delete' = 'edit';
 
@@ -35,10 +39,6 @@ export class SettingsComponent implements OnInit {
       password: ['', [Validators.minLength(6), Validators.pattern(/^(?=.*[0-9])(?=.*[!@#$%^&*])/)]],
       repeatPassword: ['']
     }, { validators: this.passwordsMatchValidator });
-  }
-
-  ngOnInit() {
-    this.updateActiveBorder();
   }
 
   passwordsMatchValidator(group: AbstractControl): ValidationErrors | null {
@@ -68,10 +68,15 @@ export class SettingsComponent implements OnInit {
           };
 
           this.authService.setCurrentUser(updatedUser);
-          this.router.navigate(['/sections']);
+
+          this.modalMessage = 'Profile updated successfully!';
+          this.modalType = 'success';
+          this.showModal = true;
         },
         error: (err) => {
-          console.error('Error updating profile', err);
+          this.modalMessage = 'Error updating profile.';
+          this.modalType = 'error';
+          this.showModal = true;
         }
       });
     }
@@ -94,37 +99,15 @@ export class SettingsComponent implements OnInit {
     });
   }
 
-  closeSettings(): void {
-    this.router.navigate(['/sections']);
+  closeModal() {
+    this.showModal = false;
   }
 
   selectSection(section: 'edit' | 'delete') {
     this.selectedSection = section;
-    this.updateActiveBorder();
   }
 
   goBack(): void {
     window.history.back();
-  }
-
-  private updateActiveBorder() {
-    setTimeout(() => {
-      const activeBtn = document.querySelector('.settings-menu button.active') as HTMLElement;
-      const content = document.querySelector('.settings-content') as HTMLElement;
-
-      if (activeBtn && content) {
-        const rectBtn = activeBtn.getBoundingClientRect();
-        const rectContent = content.getBoundingClientRect();
-
-        const top = rectBtn.top - rectContent.top;
-        const height = rectBtn.height;
-
-        content.style.setProperty('--active-btn-top', `${top}px`);
-        content.style.setProperty('--active-btn-height', `${height}px`);
-
-        const borderColor = this.selectedSection === 'delete' ? '#dc3545' : '#007bff';
-        content.style.setProperty('--border-color', borderColor);
-      }
-    });
   }
 }

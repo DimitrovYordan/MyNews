@@ -13,6 +13,7 @@ import { NewsItem } from "../../interfaces/news-item";
 import { SectionWithNews } from "../../interfaces/section-with-news";
 import { GroupedNews } from "../../interfaces/grouped-news";
 import { SectionsNamesUtilsService } from "../../shared/sections-names-utils.service";
+import { LanguageService } from "../../services/language.service";
 
 @Component({
     selector: 'app-news-list',
@@ -34,8 +35,9 @@ export class NewsListComponent implements OnInit {
         private userNewsService: UserNewsService,
         private userSectionService: UserSectionService,
         private sectionService: SectionService,
-        private router: Router,
-        public sectionName: SectionsNamesUtilsService
+        public sectionName: SectionsNamesUtilsService,
+        public languageService: LanguageService,
+        private router: Router
     ) { }
 
     ngOnInit(): void {
@@ -134,30 +136,43 @@ export class NewsListComponent implements OnInit {
         window.open(item.link, '_blank');
     }
 
-    get filteredSectionsWithNews() {
+    onLanguageChange(event: Event) {
+        const select = event.target as HTMLSelectElement;
+        if (select) {
+            this.languageService.setLanguage(select.value);
+        }
+    }
+
+    getTitle(news: NewsItem): string {
+        const lang = this.languageService.getLanguage();
+        const translation = news.translations?.find(t => t.languageCode === lang);
+
+        return translation?.title || news.title;
+    }
+
+    getSummary(news: NewsItem): string {
+        const lang = this.languageService.getLanguage();
+        const translation = news.translations?.find(t => t.languageCode === lang);
+
+        return translation?.summary || news.summary;
+    }
+
+    getFilteredItems(source: GroupedNews): { unread: NewsItem[], read: NewsItem[] } {
         if (!this.searchTerm.trim()) {
-            return this.sectionsWithNews;
+            return { unread: source.unread, read: source.read };
         }
 
-        const lowerSearch = this.searchTerm.toLowerCase();
+        const lower = this.searchTerm.toLowerCase();
+        const unread = source.unread.filter(item =>
+            item.title.toLowerCase().includes(lower) ||
+            item.summary.toLowerCase().includes(lower)
+        );
+        const read = source.read.filter(item =>
+            item.title.toLowerCase().includes(lower) ||
+            item.summary.toLowerCase().includes(lower)
+        );
 
-        return this.sectionsWithNews.map(section => {
-            const groupedNews = section.groupedNews.map(source => {
-                const unread = source.unread.filter(item =>
-                    item.title.toLowerCase().includes(lowerSearch) ||
-                    item.summary.toLowerCase().includes(lowerSearch)
-                );
-
-                const read = source.read.filter(item =>
-                    item.title.toLowerCase().includes(lowerSearch) ||
-                    item.summary.toLowerCase().includes(lowerSearch)
-                );
-
-                return { ...source, unread, read };
-            }).filter(source => source.unread.length > 0 || source.read.length > 0);
-
-            return { ...section, groupedNews };
-        }).filter(section => section.groupedNews.length > 0);
+        return { unread, read };
     }
 
     private findSourceByItem(item: NewsItem): GroupedNews | undefined {
