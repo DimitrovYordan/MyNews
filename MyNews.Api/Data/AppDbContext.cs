@@ -16,6 +16,7 @@ namespace MyNews.Api.Data
         public DbSet<User> Users { get; set; }
         public DbSet<UserNewsRead> UserNewsReads { get; set; }
         public DbSet<UserSectionPreference> UserSectionPreferences { get; set; }
+        public DbSet<NewsTranslation> NewsTranslations { get; set; }
 
         // Seed initial data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -66,6 +67,20 @@ namespace MyNews.Api.Data
                 .Property(n => n.Section)
                 .HasConversion<int>();
 
+            modelBuilder.Entity<NewsTranslation>()
+                .HasOne(nt => nt.NewsItem)
+                .WithMany(n => n.Translations)
+                .HasForeignKey(nt => nt.NewsItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<NewsTranslation>()
+                .HasIndex(nt => new { nt.NewsItemId, nt.LanguageCode })
+                .IsUnique();
+
+            modelBuilder.Entity<NewsItem>()
+                .HasIndex(n => new { n.Title, n.SourceId })
+                .IsUnique();
+
             modelBuilder.Entity<Source>().HasData(
                 // ========================
                 // Bulgaria
@@ -98,7 +113,7 @@ namespace MyNews.Api.Data
                 //new Source { Id = 1007, Name = "Offnews - Свят", Url = "https://feed.offnews.bg/rss/%D0%A1%D0%B2%D1%8F%D1%82%20_12" },
                 //new Source { Id = 1008, Name = "Offnews - Туризъм", Url = "https://feed.offnews.bg/rss/%D0%A2%D1%83%D1%80%D0%B8%D0%B7%D1%8A%D0%BC_75" },
                 //new Source { Id = 1009, Name = "Offnews - Здраве", Url = "https://feed.offnews.bg/rss/%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D0%B5_18753" },
-                // нова грешка, бтв праща на страница, дир бг няма, дарик няма, 
+                 
                 // ========================
                 // Global / English
                 // ========================

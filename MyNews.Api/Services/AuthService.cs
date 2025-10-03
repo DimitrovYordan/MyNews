@@ -98,8 +98,6 @@ namespace MyNews.Api.Services
 
         public async Task<bool> ResetPasswordAsync(string token, string newPassword)
         {
-            Console.WriteLine($"[DEBUG] Token from request: {token}");
-
             var user = await _context.Users.FirstOrDefaultAsync(u => u.PasswordResetToken == token && !u.IsDeleted);
 
             if (user == null || user.PasswordResetTokenExpires < DateTime.UtcNow)

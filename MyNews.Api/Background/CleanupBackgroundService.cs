@@ -27,27 +27,78 @@ namespace MyNews.Api.Background
                     using var scope = _scopeFactory.CreateScope();
                     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-                    var cutoffDate = DateTime.UtcNow.AddDays(-2);
-
-                    var oldNews = await dbContext.NewsItems
-                        .Where(n => n.PublishedAt < cutoffDate ||
-                                    dbContext.UserNewsReads.Any(ur => ur.NewsItemId == n.Id))
-                        .ToListAsync(cancellationToken);
-
-                    if (oldNews.Any())
-                    {
-                        dbContext.NewsItems.RemoveRange(oldNews);
-                        await dbContext.SaveChangesAsync();
-
-                        _logger.LogInformation("Deleted {Count} old/read news items ad {Time}", oldNews.Count, DateTime.UtcNow);
-                    }
+                    await CleanupDeletedUsersPreferencesAsync(dbContext, cancellationToken);
+                    await CleanupOldNewsAsync(dbContext, cancellationToken);
                 }
                 catch (Exception ex) 
                 {
-                    _logger.LogError(ex, "Error while cleaning up old/read news items.");
+                    _logger.LogError(ex, "Error while running cleanup tasks.");
                 }
 
                 await Task.Delay(TimeSpan.FromDays(_cleanupIntervalDays), cancellationToken);
+            }
+        }
+
+        /// <summary>
+        /// Delete old news and related UserNewsReads.
+        /// </summary>
+        private async Task CleanupOldNewsAsync(AppDbContext appDbContext, CancellationToken cancellationToken)
+        {
+            var cutofDate = DateTime.UtcNow.AddDays(_cleanupIntervalDays);
+
+            var oldNews = await appDbContext.NewsItems
+                .Where(n => n.PublishedAt < cutofDate)
+                .ToListAsync(cancellationToken);
+
+            if (oldNews.Any())
+            {
+                var newsIds = oldNews.Select(n => n.Id).ToList();
+
+                var relatedReads = await appDbContext.UserNewsReads
+                    .Where(r => newsIds.Contains(r.NewsItemId))
+                    .ToListAsync(cancellationToken);
+
+                if (relatedReads.Any())
+                {
+                    appDbContext.UserNewsReads.RemoveRange(relatedReads);
+
+                    _logger.LogInformation(
+                        "Deleted {Count} UserNewsReads for old news at {Time}",
+                        relatedReads.Count, DateTime.UtcNow);
+                }
+
+                appDbContext.NewsItems.RemoveRange(oldNews);
+                await appDbContext.SaveChangesAsync(cancellationToken);
+
+                _logger.LogInformation(
+                    "Deleted {Count} old news items at {Time}",
+                    oldNews.Count, DateTime.UtcNow);
+            }
+        }
+
+        /// <summary>
+        /// Delete UserSectionPreferences of users marked as deleted.
+        /// </summary>
+        private async Task CleanupDeletedUsersPreferencesAsync(AppDbContext appDbContext, CancellationToken cancellationToken)
+        {
+            var deletedUserIds = await appDbContext.Users
+                .IgnoreQueryFilters()
+                .Where(u => u.IsDeleted)
+                .Select(u => u.Id)
+                .ToListAsync(cancellationToken);
+
+            var oldPreferences = await appDbContext.UserSectionPreferences
+                .Where(p => deletedUserIds.Contains(p.UserId))
+                .ToListAsync(cancellationToken);
+
+            if (oldPreferences.Any())
+            {
+                appDbContext.UserSectionPreferences.RemoveRange(oldPreferences);
+                await appDbContext.SaveChangesAsync(cancellationToken);
+
+                _logger.LogInformation(
+                    "Deleted {Count} UserSectionPreferences for soft-deleted users at {Time}",
+                    oldPreferences.Count, DateTime.UtcNow);
             }
         }
     }

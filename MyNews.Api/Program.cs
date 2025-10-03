@@ -10,6 +10,7 @@ using MyNews.Api.Data;
 using MyNews.Api.Interfaces;
 using MyNews.Api.Middlewares;
 using MyNews.Api.Services;
+using MyNews.Api.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,11 +34,14 @@ builder.Services.AddScoped<ISectionsService, SectionsService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IUserPreferencesService, UserPreferencesService>();
+
 builder.Services.AddHttpClient<IRssService, RssService>();
 builder.Services.AddHttpClient<IChatGptService, ChatGptService>();
 
 builder.Services.AddHostedService<RssBackgroundService>();
 builder.Services.AddHostedService<CleanupBackgroundService>();
+
+builder.Services.Configure<LocalizationOptions>(builder.Configuration.GetSection("Localization"));
 
 builder.Services.AddCors(options =>
 {

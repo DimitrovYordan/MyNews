@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 
 using MyNews.Api.Data;
 using MyNews.Api.DTOs;
+using MyNews.Api.Enums;
 using MyNews.Api.Interfaces;
 using MyNews.Api.Models;
 
@@ -31,9 +32,12 @@ namespace MyNews.Api.Background
                 var chatGptService = scope.ServiceProvider.GetRequiredService<IChatGptService>();
                 var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
+                var newsToAdd = new List<NewsItem>();
+                var translationsToAdd = new List<NewsTranslation>();
+
                 try
                 {
-                    var sources = await dbContext.Sources.Where(s => s.Id == 29).ToListAsync(cancellationToken);
+                    var sources = await dbContext.Sources.ToListAsync(cancellationToken);
 
                     foreach (var source in sources)
                     {
@@ -42,10 +46,8 @@ namespace MyNews.Api.Background
                         var freshItems = new List<NewsItemDto>();
                         foreach (var rssItem in rssItems)
                         {
-                            if (rssItem.PublishedAt < DateTime.UtcNow.AddDays(-5))
-                            {
+                            if (rssItem.PublishedAt < DateTime.UtcNow.AddDays(-2))
                                 continue;
-                            }
 
                             bool existsInDb = await dbContext.NewsItems
                                 .AnyAsync(n => n.Title == rssItem.Title && n.SourceId == source.Id, cancellationToken);
@@ -53,9 +55,7 @@ namespace MyNews.Api.Background
                             bool existsInBatch = freshItems.Any(n => n.Title == rssItem.Title && n.SourceUrl == source.Url);
 
                             if (!existsInDb && !existsInBatch)
-                            {
                                 freshItems.Add(rssItem);
-                            }
                         }
 
                         if (!freshItems.Any())
@@ -66,20 +66,24 @@ namespace MyNews.Api.Background
                         var titles = freshItems.Select(r => r.Title).ToList();
                         var enriched = await chatGptService.EnrichNewsBatchAsync(titles, cancellationToken);
 
-                        var newsToAdd = new List<NewsItem>();
                         for (int i = 0; i < freshItems.Count; i++)
                         {
                             var rssItem = freshItems[i];
-                            var (summary, section) = i < enriched.Count
+                            EnrichedNewsDto item = i < enriched.Count
                                 ? enriched[i]
-                                : ("Summary unavailable", Enums.SectionType.General);
+                                : new EnrichedNewsDto
+                                {
+                                    Title = rssItem.Title,
+                                    Summary = "Summary unavailable",
+                                    Section = SectionType.General
+                                };
 
                             var newsItem = new NewsItem
                             {
                                 Id = Guid.NewGuid(),
-                                Section = section,
-                                Title = rssItem.Title,
-                                Summary = summary,
+                                Section = item.Section,
+                                Title = item.Title,
+                                Summary = item.Summary,
                                 Link = rssItem.Link,
                                 PublishedAt = rssItem.PublishedAt,
                                 FetchedAt = DateTime.UtcNow,
@@ -87,16 +91,29 @@ namespace MyNews.Api.Background
                             };
 
                             newsToAdd.Add(newsItem);
+
+                            foreach (var translatedText in item.Translations)
+                            {
+                                translationsToAdd.Add(new NewsTranslation
+                                {
+                                    Id = Guid.NewGuid(),
+                                    NewsItemId = newsItem.Id,
+                                    LanguageCode = translatedText.Key,
+                                    Title = translatedText.Value.Title,
+                                    Summary = translatedText.Value.Summary,
+                                    Section = item.Section,
+                                });
+                            }
                         }
 
                         if (newsToAdd.Any())
                         {
                             dbContext.NewsItems.AddRange(newsToAdd);
+                            dbContext.NewsTranslations.AddRange(translationsToAdd);
                             await dbContext.SaveChangesAsync(cancellationToken);
 
-                            _logger.LogInformation(
-                                "Added {Count} new news items from source '{SourceName}' at {Time}",
-                                newsToAdd.Count, source.Name, DateTime.UtcNow);
+                            newsToAdd.Clear();
+                            translationsToAdd.Clear();
                         }
                     }
                 }

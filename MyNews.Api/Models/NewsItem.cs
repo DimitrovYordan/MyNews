@@ -37,5 +37,7 @@ namespace MyNews.Api.Models
         public Source? Source { get; set; }
 
         public ICollection<UserNewsRead> UserReads { get; set; } = new List<UserNewsRead>();
+
+        public virtual List<NewsTranslation> Translations { get; set; } = new();
     }
 }
