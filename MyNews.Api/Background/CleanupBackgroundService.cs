@@ -29,6 +29,7 @@ namespace MyNews.Api.Background
 
                     await CleanupDeletedUsersPreferencesAsync(dbContext, cancellationToken);
                     await CleanupOldNewsAsync(dbContext, cancellationToken);
+                    await CleanupOldTranslationsAsync(dbContext, cancellationToken);
                 }
                 catch (Exception ex) 
                 {
@@ -99,6 +100,28 @@ namespace MyNews.Api.Background
                 _logger.LogInformation(
                     "Deleted {Count} UserSectionPreferences for soft-deleted users at {Time}",
                     oldPreferences.Count, DateTime.UtcNow);
+            }
+        }
+
+        /// <summary>
+        /// Delete translations linked to news older than N days.
+        /// </summary>
+        private async Task CleanupOldTranslationsAsync(AppDbContext appDbContext, CancellationToken cancellationToken)
+        {
+            var cutoffDate = DateTime.UtcNow.AddDays(_cleanupIntervalDays);
+
+            var oldTranslations = await appDbContext.NewsTranslations
+                .Where(t => t.NewsItem.PublishedAt < cutoffDate)
+                .ToListAsync(cancellationToken);
+
+            if (oldTranslations.Any())
+            {
+                appDbContext.NewsTranslations.RemoveRange(oldTranslations);
+                await appDbContext.SaveChangesAsync(cancellationToken);
+
+                _logger.LogInformation(
+                    "Deleted {Count} NewsTranslations older than {Days} days at {Time}",
+                    oldTranslations.Count, _cleanupIntervalDays, DateTime.UtcNow);
             }
         }
     }

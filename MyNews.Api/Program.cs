@@ -1,18 +1,20 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-
-using System.Text;
-using System.Threading.RateLimiting;
-
 using MyNews.Api.Background;
 using MyNews.Api.Data;
 using MyNews.Api.Interfaces;
 using MyNews.Api.Middlewares;
-using MyNews.Api.Services;
 using MyNews.Api.Options;
+using MyNews.Api.Services;
+using Serilog;
+using System.Text;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure Serilog
+builder.Host.UseSerilog((ctx, lc) => lc.ReadFrom.Configuration(ctx.Configuration));
 
 // Add services to the container
 builder.Services.AddControllers();

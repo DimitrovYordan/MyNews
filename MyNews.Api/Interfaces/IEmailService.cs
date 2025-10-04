@@ -9,5 +9,7 @@
         /// <param name="firstName">User name (to personalize the message).</param>
         /// <param name="token">Password reset token.</param>
         Task SendPasswordResetEmailAsync(string toEmail, string firstName, string token);
+
+        Task SendContactMessageAsync(string title, string messageBody, string fromEmail);
     }
 }

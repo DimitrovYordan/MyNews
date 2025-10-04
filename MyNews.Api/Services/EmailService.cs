@@ -62,5 +62,53 @@ namespace MyNews.Api.Services
                 throw;
             }
         }
+
+        public async Task SendContactMessageAsync(string title, string messageBody, string fromEmail)
+        {
+            var body = $@"
+                        Contact form message:
+                        ---------------------
+                        From: {fromEmail}
+                        
+                        {messageBody}
+                        ";
+
+            var message = new MailMessage
+            {
+                From = new MailAddress(_configuration["Email:FromAddress"], "My News Contact Form"),
+                Subject = $"📩 Contact Form: {title}",
+                Body = body,
+                IsBodyHtml = false
+            };
+
+            message.To.Add(_configuration["Email:FromAddress"]);
+
+            try
+            {
+                using var smtpClient = new SmtpClient(
+                    _configuration["Email:SmtpServer"],
+                    int.Parse(_configuration["Email:Port"])
+                )
+                {
+                    Credentials = new NetworkCredential(
+                        _configuration["Email:Username"],
+                        _configuration["Email:Password"]
+                    ),
+                    EnableSsl = bool.Parse(_configuration["Email:EnableSsl"])
+                };
+
+                await smtpClient.SendMailAsync(message);
+                _logger.LogInformation("Contact message sent successfully: {Title}", title);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send contact message: {Title}", title);
+                var logPath = Path.Combine(AppContext.BaseDirectory, "Logs", "errors.txt");
+                Directory.CreateDirectory(Path.GetDirectoryName(logPath)!);
+                await File.AppendAllTextAsync(logPath,
+                    $"{DateTime.UtcNow}: Failed to send contact message. Error: {ex}\n");
+                throw;
+            }
+        }
     }
 }
