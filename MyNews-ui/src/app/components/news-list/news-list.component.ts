@@ -36,7 +36,7 @@ export class NewsListComponent implements OnInit {
         private userSectionService: UserSectionService,
         private sectionService: SectionService,
         public sectionName: SectionsNamesUtilsService,
-        public languageService: LanguageService,
+        private languageService: LanguageService,
         private router: Router
     ) { }
 
@@ -157,9 +157,9 @@ export class NewsListComponent implements OnInit {
         return translation?.summary || news.summary;
     }
 
-    getFilteredItems(source: GroupedNews): { unread: NewsItem[], read: NewsItem[] } {
+    getFilteredItems(source: GroupedNews): { unread: NewsItem[], read: NewsItem[], count: number } {
         if (!this.searchTerm.trim()) {
-            return { unread: source.unread, read: source.read };
+            return { unread: source.unread, read: source.read, count: source.unread.length };
         }
 
         const lower = this.searchTerm.toLowerCase();
@@ -172,7 +172,9 @@ export class NewsListComponent implements OnInit {
             item.summary.toLowerCase().includes(lower)
         );
 
-        return { unread, read };
+        const count = unread.length + read.length;
+
+        return { unread, read, count };
     }
 
     private findSourceByItem(item: NewsItem): GroupedNews | undefined {

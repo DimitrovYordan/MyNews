@@ -9,6 +9,7 @@ import { LoginComponent } from './auth/login/login.component';
 import { SignupComponent } from './auth/signup/signup.component';
 import { SettingsComponent } from './auth/settings/settings.component';
 import { ForgotPasswordComponent } from './auth/forgot-password/forgot-password.component';
+import { ContactComponent } from './components/contact/contact.component';
 
 export const appRoutes: Routes = [
   { path: '', component: HomeComponent },
@@ -21,5 +22,6 @@ export const appRoutes: Routes = [
   { path: 'sections', component: SectionSelectComponent, canActivate: [AuthGuard] },
   { path: 'news', component: NewsListComponent, canActivate: [AuthGuard] },
   { path: 'settings', component: SettingsComponent, canActivate: [AuthGuard] },
+  { path: 'contact', component: ContactComponent, canActivate: [AuthGuard] },
   { path: '**', redirectTo: '' }
 ];

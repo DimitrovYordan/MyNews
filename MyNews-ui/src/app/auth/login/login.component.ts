@@ -46,12 +46,12 @@ export class LoginComponent implements OnInit {
         this.loading = false;
       },
       error: (err: any) => {
+        this.loading = false;
         if (err.status === 401) {
           this.errorMessage = 'Invalid email or password.';
         } else {
           this.errorMessage = 'Login failed. Please try again.';
         }
-        this.loading = false;
       }
     });
   }

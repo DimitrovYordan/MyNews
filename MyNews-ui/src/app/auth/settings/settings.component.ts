@@ -72,6 +72,8 @@ export class SettingsComponent {
           this.modalMessage = 'Profile updated successfully!';
           this.modalType = 'success';
           this.showModal = true;
+          
+          this.settingsForm.reset();
         },
         error: (err) => {
           this.modalMessage = 'Error updating profile.';
@@ -93,7 +95,6 @@ export class SettingsComponent {
         this.router.navigate(['/login']);
       },
       error: (err) => {
-        console.error('Error deleting account', err);
         alert('An error occurred while deleting your account.');
       }
     });

@@ -35,8 +35,6 @@ export class AuthService {
         } else {
             this.logout();
         }
-
-        console.log('Has selected sections:', this.hasSelectedSections$.value);
     }
 
     login(credentials: AuthRequest): Observable<AuthResponse> {
@@ -69,11 +67,9 @@ export class AuthService {
     }
 
     resetPassword(data: { token: string; newPassword: string; }) {
-        console.log('Calling API reset-password with data:', data);
         return this.http.post(`${this.apiUrl}/reset-password`, data).pipe(
-            tap(res => console.log('API response:', res)),
+            tap(),
             catchError(err => {
-                console.log('API error:', err);
                 throw err;
             })
         );
@@ -116,6 +112,7 @@ export class AuthService {
                 return [];
             }
         }
+
         return [];
     }
 

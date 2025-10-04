@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { AfterViewInit, Component, OnDestroy } from '@angular/core';
-import { Scene, PerspectiveCamera, WebGLRenderer, SphereGeometry, MeshStandardMaterial, Mesh, TextureLoader, AmbientLight, DirectionalLight, Color } from 'three';
+
+import { Scene, PerspectiveCamera, WebGLRenderer, SphereGeometry, 
+  MeshStandardMaterial, Mesh, TextureLoader, AmbientLight, DirectionalLight, Color } from 'three';
 
 @Component({
   selector: 'app-home',
@@ -15,8 +17,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   private renderer!: WebGLRenderer;
   private sphere!: Mesh;
   private animationId!: number;
-
-  public globeTextureUrl = '/assets/world.topo.bathy.200411.3x5400x2700.jpg';
+  private globeTextureUrl = '/assets/world.topo.bathy.200411.3x5400x2700.jpg';
 
   ngAfterViewInit(): void {
     this.initThree();
@@ -74,9 +75,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
       ctx.putImageData(imageData, 0, 0);
 
       const loader = new TextureLoader();
-      const texture = loader.load(canvas.toDataURL(), () => {
-        console.log('Texture loaded:', texture);
-      });
+      const texture = loader.load(canvas.toDataURL());
 
       const material = new MeshStandardMaterial({
         map: texture,

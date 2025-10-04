@@ -32,7 +32,7 @@
         @for (source of section.groupedNews; track source.key) {
         <div class="source-bubble" [class.selected]="source.isOpen" (click)="toggleSource(section.sectionId, source)">
           <span class="domain">{{ sectionName.getDomain(source.key) }}</span>
-          <span class="count-news">{{ getFilteredItems(source).unread.length }}</span>
+          <span class="count-news">{{ getFilteredItems(source).count }}</span>
         </div>
 
         @if (source.isOpen) {

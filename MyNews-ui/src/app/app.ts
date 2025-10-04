@@ -8,6 +8,7 @@ import { BehaviorSubject, filter, Observable } from 'rxjs';
 import { AuthService } from './services/auth.service';
 import { LoadingService } from './services/loading.service';
 import { LoaderComponent } from './components/loader/loader.component';
+import { GlobeService } from './services/globe.service';
 
 export class MyTranslateLoader implements TranslateLoader {
   private http = inject(HttpClient);
@@ -39,7 +40,8 @@ export class App implements OnInit {
   public hasSelectedSections$ = new BehaviorSubject<boolean>(false);
 
   constructor(
-    public authService: AuthService,
+    private authService: AuthService,
+    private globeService: GlobeService,
     private router: Router,
     private translate: TranslateService
   ) {
@@ -67,7 +69,7 @@ export class App implements OnInit {
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: NavigationEnd) => {
-      const hiddenRoutes = ['/settings', '/news'];
+      const hiddenRoutes = ['/settings', '/news', '/contact'];
       this.showWelcomeText = !hiddenRoutes.includes(event.urlAfterRedirects);
 
       this.authService.closeMenu();
@@ -75,6 +77,8 @@ export class App implements OnInit {
   }
 
   ngOnInit(): void {
+    this.globeService.preload();
+
     const browserLang = this.translate.getBrowserLang() || 'en';
     this.translate.setFallbackLang('en');
     this.translate.use(browserLang);
@@ -128,6 +132,16 @@ export class App implements OnInit {
 
   goToSections() {
     this.router.navigate(['/sections']);
+  }
+
+  goToNews() {
+    this.router.navigate(['/news']);
+    this.isMenuOpen = false;
+  }
+
+  goToContact() {
+    this.router.navigate(['/contact']);
+    this.isMenuOpen = false;
   }
 
   getInitials(): string {

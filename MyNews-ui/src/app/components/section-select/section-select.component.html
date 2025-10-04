@@ -33,3 +33,11 @@
     </div>
 </div>
 }
+
+<app-modal 
+  [show]="showModal" 
+  [type]="modalType" 
+  [message]="modalMessage" 
+  [showCancel]="false"
+  (closed)="closeModal($event)">
+</app-modal>

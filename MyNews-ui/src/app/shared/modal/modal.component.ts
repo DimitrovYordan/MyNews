@@ -20,7 +20,7 @@ export class ModalComponent implements OnChanges {
     if (changes['show'] && this.show) {
       setTimeout(() => {
         this.close();
-      }, 3000);
+      }, 2000);
     }
   }
 

@@ -1,9 +1,10 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { Router } from '@angular/router';
+
+import { catchError, throwError } from 'rxjs';
 
 import { AuthService } from '../services/auth.service';
-import { Router } from '@angular/router';
-import { catchError, throwError } from 'rxjs';
 
 export const authInterceptorFn: HttpInterceptorFn = (req, next) => {
     const authService = inject(AuthService);
@@ -21,7 +22,7 @@ export const authInterceptorFn: HttpInterceptorFn = (req, next) => {
         catchError(err => {
             if (err.status === 401) {
                 authService.logout();
-                router.navigate(['/']);
+                router.navigate(['/login']);
             }
 
             return throwError(() => err);
