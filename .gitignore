@@ -11,9 +11,9 @@
 *.ncb
 *.opendb
 *.log
-[Bb]in/
-[Oo]bj/
-[Ll]og/
+bin/
+obj/
+Log/
 *.dll
 *.exe
 *.app
@@ -59,11 +59,10 @@ dist/
 tmp/
 temp/
 out-tsc/
+.angular/cache/
 package-lock.json
 yarn.lock
 .pnp.*
-coverage/
-.angular/cache/
 
 # ========================
 # Environment / Secrets
@@ -71,11 +70,26 @@ coverage/
 .env
 MyNews.Api/appsettings.json
 MyNews.Api/appsettings.Development.json
-MyNews-ui/appsettings.json
-MyNews-ui/appsettings.Development.json
+MyNews-ui/src/environments/environment*.ts
+
+# ========================
+# .NET publish output
+# ========================
+publish/
+**/publish/
 
 # ========================
 # System files
 # ========================
 .DS_Store
 Thumbs.db
+
+# ========================
+# Miscellaneous
+# ========================
+.sass-cache/
+connect.lock
+coverage/
+libpeerconnection.log
+testem.log
+typings/
