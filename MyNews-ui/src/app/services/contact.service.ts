@@ -4,16 +4,15 @@ import { Injectable } from "@angular/core";
 import { Observable } from "rxjs";
 
 import { ContactMessage } from "../interfaces/contact-message";
+import { environment } from "../../environments/environment";
 
 @Injectable({
     providedIn: 'root'
 })
 export class ContactService {
-    private apiUrl = 'http://localhost:5271/api/contact';
-
     constructor(private http: HttpClient) { }
 
     sendMessage(msg: ContactMessage): Observable<any> {
-        return this.http.post(this.apiUrl, msg);
+        return this.http.post(`${environment.apiUrl}/contact`, msg);
     }
 }

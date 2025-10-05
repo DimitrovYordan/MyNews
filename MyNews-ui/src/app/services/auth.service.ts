@@ -7,12 +7,12 @@ import { BehaviorSubject, catchError, Observable, tap } from "rxjs";
 import { AuthRequest } from "../interfaces/auth-request";
 import { SignupData } from "../interfaces/signup";
 import { AuthResponse } from "../interfaces/auth-response";
+import { environment } from "../../environments/environment";
 
 @Injectable({
     providedIn: 'root'
 })
 export class AuthService {
-    private apiUrl = 'http://localhost:5271/api/auth';
     private tokenKey: string = 'auth_token';
     private userKey: string = 'user';
     private currentUser: AuthResponse | null = null;
@@ -38,7 +38,7 @@ export class AuthService {
     }
 
     login(credentials: AuthRequest): Observable<AuthResponse> {
-        return this.http.post<AuthResponse>(`${this.apiUrl}/login`, credentials).pipe(
+        return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, credentials).pipe(
             tap(res => {
                 this.setSession(res);
             })
@@ -46,7 +46,7 @@ export class AuthService {
     }
 
     signup(credentials: SignupData): Observable<AuthResponse> {
-        return this.http.post<AuthResponse>(`${this.apiUrl}/register`, credentials).pipe(
+        return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register`, credentials).pipe(
             tap(res => {
                 this.setSession(res);
             })
@@ -63,11 +63,11 @@ export class AuthService {
     }
 
     forgotPassword(email: string): Observable<any> {
-        return this.http.post(`${this.apiUrl}/forgot-password`, { email });
+        return this.http.post(`${environment.apiUrl}/auth/forgot-password`, { email });
     }
 
     resetPassword(data: { token: string; newPassword: string; }) {
-        return this.http.post(`${this.apiUrl}/reset-password`, data).pipe(
+        return this.http.post(`${environment.apiUrl}/auth/reset-password`, data).pipe(
             tap(),
             catchError(err => {
                 throw err;

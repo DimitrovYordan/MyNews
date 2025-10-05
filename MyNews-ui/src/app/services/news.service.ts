@@ -5,21 +5,20 @@ import { Observable } from "rxjs";
 
 import { NewsItem } from "../interfaces/news-item";
 import { SectionWithNews } from "../interfaces/section-with-news";
+import { environment } from "../../environments/environment";
 
 @Injectable({
     providedIn: 'root'
 })
 export class NewsService {
-    private apiUrl = 'http://localhost:5271/api/news';
-
     constructor(private http: HttpClient) { }
 
     getAllNews(): Observable<NewsItem[]> {
-        return this.http.get<NewsItem[]>(this.apiUrl);
+        return this.http.get<NewsItem[]>(`${environment.apiUrl}/news`);
     }
 
     getNewsBySections(sectionIds: number[]): Observable<SectionWithNews[]> {
-        return this.http.post<SectionWithNews[]>(`${this.apiUrl}/by-sections`, sectionIds, {
+        return this.http.post<SectionWithNews[]>(`${environment.apiUrl}/news/by-sections`, sectionIds, {
             headers: { 'Content-Type': 'application/json' }
         });
     }

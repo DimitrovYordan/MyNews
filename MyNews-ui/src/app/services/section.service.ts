@@ -4,13 +4,12 @@ import { Injectable } from "@angular/core";
 import { Observable } from "rxjs";
 
 import { Section } from "../interfaces/section";
+import { environment } from "../../environments/environment";
 
 @Injectable({
     providedIn: 'root'
 })
 export class SectionService {
-    private apiUrl = 'http://localhost:5271/api/sections';
-
     allSections: Section[] = [];
 
     constructor(private http: HttpClient) {
@@ -18,6 +17,6 @@ export class SectionService {
     }
 
     getSections(): Observable<Section[]> {
-        return this.http.get<Section[]>(this.apiUrl);
+        return this.http.get<Section[]>(`${environment.apiUrl}/sections`);
     }
 }
