@@ -1,0 +1,56 @@
+2025-10-05 11:47:47.728 +03:00 [ERR] HTTP error fetching RSS for Reuters
+System.Net.Http.HttpRequestException: No such host is known. (feeds.reuters.com:80)
+ ---> System.Net.Sockets.SocketException (11001): No such host is known.
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at System.Net.Sockets.Socket.<ConnectAsync>g__WaitForConnectWithCancellation|285_0(AwaitableSocketAsyncEventArgs saea, ValueTask connectTask, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.ConnectToTcpHostAsync(String host, Int32 port, HttpRequestMessage initialRequest, Boolean async, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at System.Net.Http.HttpConnectionPool.ConnectToTcpHostAsync(String host, Int32 port, HttpRequestMessage initialRequest, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.ConnectAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.CreateHttp11ConnectionAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.InjectNewHttp11ConnectionAsync(QueueItem queueItem)
+   at System.Threading.Tasks.TaskCompletionSourceWithCancellation`1.WaitWithCancellationAsync(CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionWaiter`1.WaitForConnectionWithTelemetryAsync(HttpRequestMessage request, HttpConnectionPool pool, Boolean async, CancellationToken requestCancellationToken)
+   at System.Net.Http.HttpConnectionPool.SendWithVersionDetectionAndRetryAsync(HttpRequestMessage request, Boolean async, Boolean doRequestAuth, CancellationToken cancellationToken)
+   at System.Net.Http.RedirectHandler.SendAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at Microsoft.Extensions.Http.Logging.LoggingHttpMessageHandler.<SendCoreAsync>g__Core|4_0(HttpRequestMessage request, Boolean useAsync, CancellationToken cancellationToken)
+   at Microsoft.Extensions.Http.Logging.LoggingScopeHttpMessageHandler.<SendCoreAsync>g__Core|4_0(HttpRequestMessage request, Boolean useAsync, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.GetStringAsyncCore(HttpRequestMessage request, CancellationToken cancellationToken)
+   at MyNews.Api.Services.RssService.FetchAndProcessRssFeedAsync(IEnumerable`1 sources) in C:\Users\zaharieva\source\MyNews\MyNews.Api\Services\RssService.cs:line 29
+2025-10-05 14:55:05.167 +03:00 [ERR] HTTP error fetching RSS for Reuters
+System.Net.Http.HttpRequestException: No such host is known. (feeds.reuters.com:80)
+ ---> System.Net.Sockets.SocketException (11001): No such host is known.
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at System.Net.Sockets.Socket.<ConnectAsync>g__WaitForConnectWithCancellation|285_0(AwaitableSocketAsyncEventArgs saea, ValueTask connectTask, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.ConnectToTcpHostAsync(String host, Int32 port, HttpRequestMessage initialRequest, Boolean async, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at System.Net.Http.HttpConnectionPool.ConnectToTcpHostAsync(String host, Int32 port, HttpRequestMessage initialRequest, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.ConnectAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.CreateHttp11ConnectionAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.InjectNewHttp11ConnectionAsync(QueueItem queueItem)
+   at System.Threading.Tasks.TaskCompletionSourceWithCancellation`1.WaitWithCancellationAsync(CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionWaiter`1.WaitForConnectionWithTelemetryAsync(HttpRequestMessage request, HttpConnectionPool pool, Boolean async, CancellationToken requestCancellationToken)
+   at System.Net.Http.HttpConnectionPool.SendWithVersionDetectionAndRetryAsync(HttpRequestMessage request, Boolean async, Boolean doRequestAuth, CancellationToken cancellationToken)
+   at System.Net.Http.RedirectHandler.SendAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at Microsoft.Extensions.Http.Logging.LoggingHttpMessageHandler.<SendCoreAsync>g__Core|4_0(HttpRequestMessage request, Boolean useAsync, CancellationToken cancellationToken)
+   at Microsoft.Extensions.Http.Logging.LoggingScopeHttpMessageHandler.<SendCoreAsync>g__Core|4_0(HttpRequestMessage request, Boolean useAsync, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.GetStringAsyncCore(HttpRequestMessage request, CancellationToken cancellationToken)
+   at MyNews.Api.Services.RssService.FetchAndProcessRssFeedAsync(IEnumerable`1 sources) in C:\Users\zaharieva\source\MyNews\MyNews.Api\Services\RssService.cs:line 29
+2025-10-05 14:57:38.721 +03:00 [ERR] HTTP error fetching RSS for Associated Press
+System.Net.Http.HttpRequestException: Response status code does not indicate success: 404 (Not Found).
+   at System.Net.Http.HttpResponseMessage.EnsureSuccessStatusCode()
+   at System.Net.Http.HttpClient.GetStringAsyncCore(HttpRequestMessage request, CancellationToken cancellationToken)
+   at MyNews.Api.Services.RssService.FetchAndProcessRssFeedAsync(IEnumerable`1 sources) in C:\Users\zaharieva\source\MyNews\MyNews.Api\Services\RssService.cs:line 29
+2025-10-05 14:59:02.812 +03:00 [ERR] HTTP error during request to OpenAI. Attempt 1/1
+System.Net.Http.HttpRequestException: Response status code does not indicate success: 520.
+   at System.Net.Http.HttpResponseMessage.EnsureSuccessStatusCode()
+   at MyNews.Api.Services.ChatGptService.SendChatRequestAsync(Object requestBody, Int32 maxToken, CancellationToken cancellationToken) in C:\Users\zaharieva\source\MyNews\MyNews.Api\Services\ChatGptService.cs:line 164
+2025-10-05 14:59:03.553 +03:00 [ERR] Error while processing RSS feeds.
+System.Net.Http.HttpRequestException: Response status code does not indicate success: 520.
+   at System.Net.Http.HttpResponseMessage.EnsureSuccessStatusCode()
+   at MyNews.Api.Services.ChatGptService.SendChatRequestAsync(Object requestBody, Int32 maxToken, CancellationToken cancellationToken) in C:\Users\zaharieva\source\MyNews\MyNews.Api\Services\ChatGptService.cs:line 164
+   at MyNews.Api.Services.ChatGptService.SendChatRequestAsync(Object requestBody, Int32 maxToken, CancellationToken cancellationToken) in C:\Users\zaharieva\source\MyNews\MyNews.Api\Services\ChatGptService.cs:line 169
+   at MyNews.Api.Services.ChatGptService.EnrichNewsBatchAsync(List`1 titles, CancellationToken cancellationToken) in C:\Users\zaharieva\source\MyNews\MyNews.Api\Services\ChatGptService.cs:line 65
+   at MyNews.Api.Background.RssBackgroundService.ExecuteAsync(CancellationToken cancellationToken) in C:\Users\zaharieva\source\MyNews\MyNews.Api\Background\RssBackgroundService.cs:line 68

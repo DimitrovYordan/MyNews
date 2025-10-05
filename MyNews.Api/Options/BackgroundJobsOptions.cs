@@ -1,4 +1,4 @@
-﻿namespace MyNews.Api.Background
+﻿namespace MyNews.Api.Options
 {
     public class BackgroundJobsOptions
     {

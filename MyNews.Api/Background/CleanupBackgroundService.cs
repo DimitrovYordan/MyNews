@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Options;
 
 using MyNews.Api.Data;
+using MyNews.Api.Options;
 
 namespace MyNews.Api.Background
 {

@@ -24,8 +24,12 @@ builder.Services.AddSwaggerGen();
 // Configure SQL Server DbContext
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Configure options
 builder.Services.Configure<BackgroundJobsOptions>(
     builder.Configuration.GetSection("BackgroundJobs"));
+builder.Services.Configure<LocalizationOptions>(
+    builder.Configuration.GetSection("Localization"));
 
 // Register services (DI)
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -43,17 +47,18 @@ builder.Services.AddHttpClient<IChatGptService, ChatGptService>();
 builder.Services.AddHostedService<RssBackgroundService>();
 builder.Services.AddHostedService<CleanupBackgroundService>();
 
-builder.Services.Configure<LocalizationOptions>(builder.Configuration.GetSection("Localization"));
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular",
         policy =>
         {
             // Angular dev server
-            policy.WithOrigins("http://localhost:4200")
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
+            policy.WithOrigins(
+                "http://localhost:4200",
+                "https://mynews.azurewebsites.net"
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod();
         });
 });
 
@@ -109,7 +114,8 @@ else
 }
 
 app.UseHttpsRedirection();
-
+app.UseDefaultFiles();
+app.UseStaticFiles();
 app.UseRouting();
 
 app.UseCors("AllowAngular");
@@ -123,5 +129,5 @@ app.UseAuthorization();
 app.UseRateLimiter();
 
 app.MapControllers();
-
+app.MapFallbackToFile("index.html");
 app.Run();

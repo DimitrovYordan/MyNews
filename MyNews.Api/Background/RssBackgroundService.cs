@@ -6,6 +6,7 @@ using MyNews.Api.DTOs;
 using MyNews.Api.Enums;
 using MyNews.Api.Interfaces;
 using MyNews.Api.Models;
+using MyNews.Api.Options;
 
 namespace MyNews.Api.Background
 {
