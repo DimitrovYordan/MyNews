@@ -13,7 +13,7 @@
 *.log
 bin/
 obj/
-Log/
+Logs/
 *.dll
 *.exe
 *.app
