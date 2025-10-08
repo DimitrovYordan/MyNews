@@ -23,7 +23,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: MyNews-ui
-        run: npm ci
+        run: npm install
 
       - name: Build Angular app
         working-directory: MyNews-ui
