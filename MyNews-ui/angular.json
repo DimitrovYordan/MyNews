@@ -26,6 +26,11 @@
             "assets": [
               "src/favicon.ico",
               "src/assets",
+              {
+                "glob": "**/*",
+                "input": "src/styles",
+                "output": "/assets"
+              },
               "src/web.config"
             ],
             "styles": [
