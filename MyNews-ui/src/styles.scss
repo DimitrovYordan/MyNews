@@ -308,6 +308,27 @@ body {
     }
 }
 
+@font-face {
+    font-family: 'bootstrap-icons';
+    src: url('/assets/bootstrap-icons/bootstrap-icons.woff2') format('woff2'),
+        url('/assets/bootstrap-icons/bootstrap-icons.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+.bi {
+    font-family: 'bootstrap-icons' !important;
+    font-style: normal;
+    font-weight: normal;
+    display: inline-block;
+    text-decoration: inherit;
+    text-align: center;
+    vertical-align: -.125em;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
 @media (max-width: 500px) {
     .nav-buttons {
         display: flex;

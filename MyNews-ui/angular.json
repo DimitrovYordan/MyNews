@@ -28,13 +28,12 @@
               "src/assets",
               {
                 "glob": "**/*",
-                "input": "src/styles/bootstrap-icons",
+                "input": "src/assets/bootstrap-icons",
                 "output": "assets/bootstrap-icons"
               },
               "src/web.config"
             ],
             "styles": [
-              "src/styles/bootstrap-icons.scss",
               "src/styles.scss"
             ]
           },
