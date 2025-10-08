@@ -49,16 +49,20 @@ builder.Services.AddHostedService<CleanupBackgroundService>();
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAngular",
-        policy =>
-        {
-            // Angular dev server
-            policy.WithOrigins(
-                "https://shortglobenews-hwhbhuhnhtbzhuda.westeurope-01.azurewebsites.net"
-            )
-            .AllowAnyHeader()
-            .AllowAnyMethod();
-        });
+    //options.AddPolicy("AllowAngular",
+    //    policy =>
+    //    {
+    //        // Angular dev server
+    //        policy.WithOrigins(
+    //            "https://shortglobenews-hwhbhuhnhtbzhuda.westeurope-01.azurewebsites.net"
+    //        )
+    //        .AllowAnyHeader()
+    //        .AllowAnyMethod();
+    //    });
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+    });
 });
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -132,7 +136,7 @@ app.Use(async (context, next) =>
 });
 app.UseRouting();
 
-app.UseCors("AllowAngular");
+app.UseCors("AllowAll");
 
 // Global error handling
 app.UseMiddleware<ErrorHandlingMiddleware>();
