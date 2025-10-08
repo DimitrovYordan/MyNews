@@ -54,8 +54,7 @@ builder.Services.AddCors(options =>
         {
             // Angular dev server
             policy.WithOrigins(
-                "http://localhost:4200",
-                "https://mynews.azurewebsites.net"
+                "https://shortglobenews-hwhbhuhnhtbzhuda.westeurope-01.azurewebsites.net"
             )
             .AllowAnyHeader()
             .AllowAnyMethod();
@@ -100,6 +99,9 @@ builder.Services.AddRateLimiter(options =>
             }));
 });
 
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+
 var app = builder.Build();
 
 // Configure Swagger for development
@@ -114,8 +116,20 @@ else
 }
 
 app.UseHttpsRedirection();
-app.UseDefaultFiles();
-app.UseStaticFiles();
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (Exception ex)
+    {
+        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Unhandled exception!");
+        context.Response.StatusCode = 500;
+        await context.Response.WriteAsJsonAsync(new { message = ex.Message });
+    }
+});
 app.UseRouting();
 
 app.UseCors("AllowAngular");
@@ -127,7 +141,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseRateLimiter();
-
+app.MapGet("/api/health", () => "API is running");
 app.MapControllers();
-app.MapFallbackToFile("index.html");
 app.Run();
