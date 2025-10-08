@@ -1,17 +1,23 @@
-# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
-
-# Compiled output
+# ========================
+# Compiled output / build
+# ========================
 /dist
 /tmp
 /out-tsc
-/bazel-out
 
-# Node
+# ========================
+# Node / Angular
+# ========================
 /node_modules
 npm-debug.log
 yarn-error.log
+/.angular/cache
+/coverage
+/temp
 
-# IDEs and editors
+# ========================
+# IDEs / editors
+# ========================
 .idea/
 .project
 .classpath
@@ -28,15 +34,21 @@ yarn-error.log
 !.vscode/extensions.json
 .history/*
 
-# Miscellaneous
-/.angular/cache
+# ========================
+# Environment / secrets
+# ========================
+# Ignore local dev settings, but keep production environment
+# src/environments/environment.ts
+# DO NOT ignore production file
+# !src/environments/environment.prod.ts
+
+# ========================
+# Miscellaneous / system files
+# ========================
 .sass-cache/
-/connect.lock
-/coverage
+.connect.lock
 /libpeerconnection.log
 testem.log
 /typings
-
-# System files
 .DS_Store
 Thumbs.db
