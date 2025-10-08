@@ -26,6 +26,11 @@
             "assets": [
               "src/favicon.ico",
               "src/assets",
+              {
+                "glob": "**/*",
+                "input": "node_modules/bootstrap-icons/font",
+                "output": "/assets/bootstrap-icons/"
+              },
               "src/web.config"
             ],
             "styles": [
