@@ -45,6 +45,7 @@ export class SignupComponent {
   }
 
   submitSignup() {
+    console.log('Form submitted with:', this.signupForm.value);
     this.signupForm.markAllAsTouched();
 
     if (this.signupForm.valid) {
