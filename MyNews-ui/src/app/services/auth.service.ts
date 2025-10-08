@@ -38,7 +38,7 @@ export class AuthService {
     }
 
     login(credentials: AuthRequest): Observable<AuthResponse> {
-        return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, credentials).pipe(
+        return this.http.post<AuthResponse>(`${environment.apiUrl}/api/auth/login`, credentials).pipe(
             tap(res => {
                 this.setSession(res);
             })
@@ -47,7 +47,7 @@ export class AuthService {
 
     signup(credentials: SignupData): Observable<AuthResponse> {
         console.log('Environment API URL:', environment.apiUrl);
-        return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register`, credentials).pipe(
+        return this.http.post<AuthResponse>(`${environment.apiUrl}/api/auth/register`, credentials).pipe(
             tap(res => {
                 this.setSession(res);
             })
@@ -64,11 +64,11 @@ export class AuthService {
     }
 
     forgotPassword(email: string): Observable<any> {
-        return this.http.post(`${environment.apiUrl}/auth/forgot-password`, { email });
+        return this.http.post(`${environment.apiUrl}/api/auth/forgot-password`, { email });
     }
 
     resetPassword(data: { token: string; newPassword: string; }) {
-        return this.http.post(`${environment.apiUrl}/auth/reset-password`, data).pipe(
+        return this.http.post(`${environment.apiUrl}/api/auth/reset-password`, data).pipe(
             tap(),
             catchError(err => {
                 throw err;
