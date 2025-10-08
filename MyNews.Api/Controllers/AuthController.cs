@@ -2,6 +2,7 @@
 
 using MyNews.Api.DTOs;
 using MyNews.Api.Interfaces;
+using System.Text.Json;
 
 namespace MyNews.Api.Controllers
 {
@@ -32,17 +33,22 @@ namespace MyNews.Api.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto register)
         {
+            Console.WriteLine("Register endpoint hit!");
+            Console.WriteLine("Register DTO: " + JsonSerializer.Serialize(register));
             try
             {
                 var result = await _authService.RegisterAsync(register);
+                Console.WriteLine("Register result: " + JsonSerializer.Serialize(result));
                 return Ok(result);
             }
             catch (InvalidOperationException ex)
             {
+                Console.WriteLine("InvalidOperationException: " + ex.Message);
                 return BadRequest(new { message = ex.Message });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine("Unhandled exception: " + ex.Message);
                 return StatusCode(500, new { message = "Internal server error" });
             }
         }

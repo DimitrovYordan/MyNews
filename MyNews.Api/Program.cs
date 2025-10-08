@@ -138,6 +138,8 @@ app.UseRouting();
 
 app.UseCors("AllowAll");
 
+Console.WriteLine("JWT Key length: " + builder.Configuration["Jwt:Key"]?.Length);
+Console.WriteLine("Connection String: " + builder.Configuration.GetConnectionString("DefaultConnection"));
 // Global error handling
 app.UseMiddleware<ErrorHandlingMiddleware>();
 

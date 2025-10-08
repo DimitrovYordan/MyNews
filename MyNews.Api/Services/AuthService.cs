@@ -44,6 +44,7 @@ namespace MyNews.Api.Services
 
         public async Task<AuthResponseDto> RegisterAsync(RegisterDto registerDto)
         {
+            Console.WriteLine("Checking if user exists with email: " + registerDto);
             var esists = await _context.Users
                 .AnyAsync(u => u.Email == registerDto.Email && !u.IsDeleted);
 
@@ -67,7 +68,7 @@ namespace MyNews.Api.Services
             await _context.SaveChangesAsync();
 
             var token = _jwtService.GenerateToken(user.Id, user.Email);
-
+            Console.WriteLine("JWT generated: " + token);
             return new AuthResponseDto
             {
                 Token = token,
