@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 
+import { TranslateModule } from '@ngx-translate/core';
+
 import { ContactService } from '../../services/contact.service';
 import { ModalComponent } from '../../shared/modal/modal.component';
 import { AuthService } from '../../services/auth.service';
@@ -10,7 +12,7 @@ import { AuthService } from '../../services/auth.service';
 @Component({
     selector: 'app-contact',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, FormsModule, ModalComponent],
+    imports: [CommonModule, ReactiveFormsModule, FormsModule, ModalComponent, TranslateModule],
     templateUrl: './contact.component.html',
     styleUrls: ['./contact.component.scss']
 })
@@ -57,13 +59,13 @@ export class ContactComponent {
 
         this.contactService.sendMessage(payload).subscribe({
             next: () => {
-                this.modalMessage = 'The message was sent successfully!';
+                this.modalMessage = 'SUCCESS_SEND_MESSAGE';
                 this.modalType = 'success';
                 this.showModal = true;
                 this.contactForm.reset();
             },
             error: () => {
-                this.modalMessage = 'An error occurred. Please try again.';
+                this.modalMessage = 'ERROR_CONTACT';
                 this.modalType = 'error';
                 this.showModal = true
             }

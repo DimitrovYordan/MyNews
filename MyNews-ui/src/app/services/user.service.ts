@@ -13,14 +13,14 @@ export class UserService {
     constructor(private http: HttpClient) { }
 
     getProfile(): Observable<AuthResponse> {
-        return this.http.get<AuthResponse>(`${environment.apiUrl}/users/me`);
+        return this.http.get<AuthResponse>(`${environment.apiUrl}/api/users/me`);
     }
 
     updateProfile(data: any): Observable<AuthResponse> {
-        return this.http.put<AuthResponse>(`${environment.apiUrl}/users/update-profile`, data);
+        return this.http.put<AuthResponse>(`${environment.apiUrl}/api/users/update-profile`, data);
     }
 
     deleteAccount(): Observable<{ message: string }> {
-        return this.http.delete<{ message: string }>(`${environment.apiUrl}/users/delete-profile`);
+        return this.http.delete<{ message: string }>(`${environment.apiUrl}/api/users/delete-profile`);
     }
 }

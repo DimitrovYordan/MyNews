@@ -11,10 +11,10 @@ export class UserSectionService {
     constructor(private http: HttpClient) { }
 
     getUserSections(): Observable<number[]> {
-        return this.http.get<number[]>(`${environment.apiUrl}/userpreferences/sections`);
+        return this.http.get<number[]>(`${environment.apiUrl}/api/userpreferences/sections`);
     }
 
     saveUserSections(sectionIds: number[]): Observable<void> {
-        return this.http.post<void>(`${environment.apiUrl}/userpreferences/sections`, sectionIds);
+        return this.http.post<void>(`${environment.apiUrl}/api/userpreferences/sections`, sectionIds);
     }
 }

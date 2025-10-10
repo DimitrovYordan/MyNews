@@ -3,6 +3,8 @@ import { Component } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 
+import { TranslateModule } from '@ngx-translate/core';
+
 import { AuthService } from '../../services/auth.service';
 import { UserService } from '../../services/user.service';
 import { DeleteAccountComponent } from '../delete-account/delete-account.component';
@@ -11,7 +13,7 @@ import { ModalComponent } from '../../shared/modal/modal.component';
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [DeleteAccountComponent, ModalComponent, CommonModule, ReactiveFormsModule],
+  imports: [DeleteAccountComponent, ModalComponent, CommonModule, ReactiveFormsModule, TranslateModule],
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss']
 })
@@ -69,14 +71,14 @@ export class SettingsComponent {
 
           this.authService.setCurrentUser(updatedUser);
 
-          this.modalMessage = 'Profile updated successfully!';
+          this.modalMessage = 'SUCCESS_UPDATE_PROFILE';
           this.modalType = 'success';
           this.showModal = true;
-          
+
           this.settingsForm.reset();
         },
         error: (err) => {
-          this.modalMessage = 'Error updating profile.';
+          this.modalMessage = 'ERROR_UPDATE';
           this.modalType = 'error';
           this.showModal = true;
         }
@@ -85,17 +87,13 @@ export class SettingsComponent {
   }
 
   deleteAccount(): void {
-    if (!confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-      return;
-    }
-
     this.userService.deleteAccount().subscribe({
       next: (res) => {
         sessionStorage.clear();
         this.router.navigate(['/login']);
       },
       error: (err) => {
-        alert('An error occurred while deleting your account.');
+        alert('ERROR_DELETE');
       }
     });
   }

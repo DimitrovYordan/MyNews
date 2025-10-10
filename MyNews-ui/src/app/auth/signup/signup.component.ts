@@ -3,13 +3,15 @@ import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validatio
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
+import { TranslateModule } from '@ngx-translate/core';
+
 import { AuthService } from '../../services/auth.service';
 import { ModalComponent } from "../../shared/modal/modal.component";
 
 @Component({
   selector: 'app-signup',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, ModalComponent, TranslateModule],
   templateUrl: './signup.component.html',
   styleUrls: ['./signup.component.scss']
 })
@@ -34,7 +36,7 @@ export class SignupComponent {
     }, { validators: this.passwordsMatchValidator });
 
     const hasSeenWelcome = sessionStorage.getItem('welcomeShown');
-    this.showWelcomeModal = !this.showWelcomeModal;
+    this.showWelcomeModal = !hasSeenWelcome;
   }
 
   passwordsMatchValidator(group: AbstractControl): ValidationErrors | null {
@@ -45,7 +47,6 @@ export class SignupComponent {
   }
 
   submitSignup() {
-    console.log('Form submitted with:', this.signupForm.value);
     this.signupForm.markAllAsTouched();
 
     if (this.signupForm.valid) {
@@ -55,6 +56,7 @@ export class SignupComponent {
       this.authService.signup(this.signupForm.value).subscribe({
         next: () => {
           this.loading = false;
+          this.authService.hasSelectedSections$.next(false);
           this.showSignupSuccessModal = true;
         },
         error: (err) => {
@@ -63,7 +65,7 @@ export class SignupComponent {
           if (err.status === 400 && err.error?.message?.includes('already exists')) {
             this.signupForm.get('email')?.setErrors({ emailTaken: true });
           } else {
-            this.errorMessage = 'Signup failed. Plase try again.';
+            this.errorMessage = 'ERROR_SIGNUP';
           }
         }
       });
@@ -81,11 +83,10 @@ export class SignupComponent {
 
   get emailErrors() {
     const control = this.signupForm.get('email');
-    if (!control) return null;
-
-    if (control.hasError('required') && control.touched) return 'Email is required.';
-    if (control.hasError('email') && control.touched) return 'Please enter a valid email.';
-    if (control.hasError('emailTaken')) return 'This email is already registered.';
+   
+    if (control?.hasError('required') && control.touched) return 'ERROR_EMAIL_REQUIRED';
+    if (control?.hasError('email') && control.touched) return 'ERROR_VALID_EMAIL';
+    if (control?.hasError('emailTaken')) return 'ERROR_TAKEN_EMAIL';
 
     return null;
   }

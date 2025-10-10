@@ -13,6 +13,6 @@ export class ContactService {
     constructor(private http: HttpClient) { }
 
     sendMessage(msg: ContactMessage): Observable<any> {
-        return this.http.post(`${environment.apiUrl}/contact`, msg);
+        return this.http.post(`${environment.apiUrl}/api/contact`, msg);
     }
 }

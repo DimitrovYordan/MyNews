@@ -17,6 +17,6 @@ export class SectionService {
     }
 
     getSections(): Observable<Section[]> {
-        return this.http.get<Section[]>(`${environment.apiUrl}/sections`);
+        return this.http.get<Section[]>(`${environment.apiUrl}/api/sections`);
     }
 }

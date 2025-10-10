@@ -2,16 +2,19 @@ import { Component, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { Router } from "@angular/router";
 
+import { TranslateModule } from "@ngx-translate/core";
+
 import { SectionService } from "../../services/section.service";
 import { UserSectionService } from "../../services/user-section.service";
 import { Section } from "../../interfaces/section";
 import { SectionsNamesUtilsService } from "../../shared/sections-names-utils.service";
 import { ModalComponent } from "../../shared/modal/modal.component";
+import { AuthService } from "../../services/auth.service";
 
 @Component({
     selector: 'app-section-select',
     standalone: true,
-    imports: [CommonModule, ModalComponent],
+    imports: [CommonModule, ModalComponent, TranslateModule],
     templateUrl: './section-select.component.html',
     styleUrls: ['section-select.component.scss'],
 })
@@ -27,6 +30,7 @@ export class SectionSelectComponent implements OnInit {
     modalType: 'success' | 'error' = 'success';
 
     constructor(
+        private authService: AuthService,
         private sectionService: SectionService,
         private userSectionService: UserSectionService,
         private router: Router,
@@ -68,12 +72,13 @@ export class SectionSelectComponent implements OnInit {
     saveSelection(): void {
         this.userSectionService.saveUserSections(this.selectedSections).subscribe({
             next: () => {
-                this.modalMessage = 'Sections saved successfully!';
+                this.authService.hasSelectedSections$.next(true);
+                this.modalMessage = 'SUCCESS_SAVED_SECTIONS';
                 this.modalType = 'success';
                 this.showModal = true;
             },
             error: (err) => {
-                this.modalMessage = 'Error saving sections.';
+                this.modalMessage = 'ERROR_SECTIONS';
                 this.modalType = 'error';
                 this.showModal = true;
             }

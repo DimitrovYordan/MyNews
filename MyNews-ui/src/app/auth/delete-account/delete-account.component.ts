@@ -1,6 +1,8 @@
 import { Component, EventEmitter, Output } from "@angular/core";
 import { Router } from "@angular/router";
 
+import { TranslateModule } from "@ngx-translate/core";
+
 import { UserService } from "../../services/user.service";
 import { ModalComponent } from "../../shared/modal/modal.component";
 import { AuthService } from "../../services/auth.service";
@@ -8,14 +10,15 @@ import { AuthService } from "../../services/auth.service";
 @Component({
     selector: 'app-delete-account',
     standalone: true,
-    imports: [ModalComponent],
+    imports: [ModalComponent, TranslateModule],
     templateUrl: './delete-account.component.html',
     styleUrls: ['./delete-account.component.scss']
 })
 export class DeleteAccountComponent {
     @Output() closed = new EventEmitter<void>();
 
-    showConfirm = false;
+    showConfirm: boolean = false;
+    message: string = 'MODAL_DELETE_MESSAGE';
 
     constructor(
         private authService: AuthService,

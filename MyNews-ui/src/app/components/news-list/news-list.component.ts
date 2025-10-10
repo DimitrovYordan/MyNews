@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { CdkAccordionModule } from "@angular/cdk/accordion";
 
+import { TranslateModule } from "@ngx-translate/core";
+
 import { NewsService } from "../../services/news.service";
 import { UserNewsService } from "../../services/user-news.service";
 import { UserSectionService } from "../../services/user-section.service";
@@ -18,7 +20,7 @@ import { LanguageService } from "../../services/language.service";
 @Component({
     selector: 'app-news-list',
     standalone: true,
-    imports: [CommonModule, FormsModule, DragDropModule, CdkAccordionModule],
+    imports: [CommonModule, FormsModule, DragDropModule, CdkAccordionModule, TranslateModule],
     templateUrl: './news-list.component.html',
     styleUrls: ['./news-list.component.scss'],
 })
@@ -44,12 +46,6 @@ export class NewsListComponent implements OnInit {
         this.isLoading = true;
         this.userSectionService.getUserSections().subscribe(userSections => {
             this.selectedSections = userSections;
-
-            if (this.selectedSections.length === 0) {
-                this.errorMessage = 'No sections selected. Please select sections first.';
-                this.isLoading = false;
-                return;
-            }
 
             this.fetchNews();
         });

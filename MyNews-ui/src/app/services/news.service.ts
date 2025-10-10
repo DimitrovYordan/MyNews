@@ -18,7 +18,7 @@ export class NewsService {
     }
 
     getNewsBySections(sectionIds: number[]): Observable<SectionWithNews[]> {
-        return this.http.post<SectionWithNews[]>(`${environment.apiUrl}/news/by-sections`, sectionIds, {
+        return this.http.post<SectionWithNews[]>(`${environment.apiUrl}/api/news/by-sections`, sectionIds, {
             headers: { 'Content-Type': 'application/json' }
         });
     }

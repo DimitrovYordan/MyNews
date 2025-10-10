@@ -4,19 +4,19 @@
         <div class="nav-buttons">
             @if(!isLoggedIn) {
             <ng-container>
-                <button (click)="openLogin()">{{ 'NAV_LOGIN' | translate }}</button>
-                <button (click)="openSignup()">{{ 'NAV_SIGNUP' | translate }}</button>
+                <button (click)="openLogin()">{{ 'BUTTON_LOGIN' | translate }}</button>
+                <button (click)="openSignup()">{{ 'BUTTON_SIGNUP' | translate }}</button>
             </ng-container>
             } @else {
             <div class="user-menu" (click)="$event.stopPropagation(); toggleMenu()" [class.open]="isMenuOpen">
                 <button class="user-avatar">{{ getInitials() }}</button>
                 @if(isMenuOpen) {
                 <div class="user-dropdown" (click)="$event.stopPropagation()">
-                    <button (click)="goToProfile()">{{ 'NAV_PROFILE' | translate }}</button>
-                    <button (click)="goToSections()">{{ 'NAV_SECTIONS' | translate }}</button>
-                    <button (click)="goToNews()">{{ 'NAV_NEWS' | translate }}</button>
-                    <button (click)="goToContact()">{{ 'NAV_CONTACT' | translate }}</button>
-                    <button (click)="logout()">{{ 'NAV_LOGOUT' | translate }}</button>
+                    <button (click)="goToProfile()">{{ 'BUTTON_PROFILE' | translate }}</button>
+                    <button (click)="goToSections()">{{ 'BUTTON_SECTIONS' | translate }}</button>
+                    <button (click)="goToNews()">{{ 'BUTTON_NEWS' | translate }}</button>
+                    <button (click)="goToContact()">{{ 'BUTTON_CONTACT' | translate }}</button>
+                    <button (click)="logout()">{{ 'BUTTON_LOGOUT' | translate }}</button>
                 </div>
                 }
             </div>

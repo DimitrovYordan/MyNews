@@ -3,13 +3,15 @@ import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validatio
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 
+import { TranslateModule } from '@ngx-translate/core';
+
 import { AuthService } from '../../services/auth.service';
 import { ModalComponent } from '../../shared/modal/modal.component';
 
 @Component({
   selector: 'app-reset-password',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, ModalComponent, TranslateModule],
   templateUrl: './reset-password.component.html',
   styleUrls: ['./reset-password.component.scss']
 })
@@ -32,9 +34,11 @@ export class ResetPasswordComponent {
       password: ['', [Validators.required, Validators.minLength(6), Validators.pattern(/^(?=.*[0-9])(?=.*[!@#$%^&*])/)]],
       repeatPassword: ['', Validators.required]
     }, { validators: this.passwordsMatchValidator });
-    
+  }
+
+  ngOnInit(): void {
     this.activatedRoute.queryParams.subscribe(params => {
-      this.token = params['token'] || '';
+      this.token = params['token'];
     });
   }
 
@@ -49,12 +53,12 @@ export class ResetPasswordComponent {
       this.authService.resetPassword({ token: this.token, newPassword: this.resetForm.value.password }).subscribe({
         next: () => {
           this.modalType = 'success';
-          this.modalMessage = 'Password reset successfully!';
+          this.modalMessage = 'SUCCESS_PASSWORD_RESET';
           this.showModal = true;
         },
         error: () => {
           this.modalType = 'error';
-          this.modalMessage = 'Invalid or expired token.';
+          this.modalMessage = 'ERROR_PASSWORD_RESET';
           this.showModal = true;
         }
       });

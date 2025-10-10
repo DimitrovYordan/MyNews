@@ -69,12 +69,15 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "buildTarget": "MyNews-ui:build"
+          },
           "configurations": {
-            "production": {
-              "buildTarget": "MyNews-ui:build:production"
-            },
             "development": {
               "buildTarget": "MyNews-ui:build:development"
+            },
+            "production": {
+              "buildTarget": "MyNews-ui:build:production"
             }
           },
           "defaultConfiguration": "development"

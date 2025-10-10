@@ -10,7 +10,7 @@
         <div class="select-all-container">
             <button type="button" class="select-all-btn" [class.select-mode]="!isAllSelected"
                 [class.unselect-mode]="isAllSelected" (click)="toggleAll()">
-                {{ isAllSelected ? 'Unselect all' : 'Select all' }}
+                {{ (isAllSelected ? 'BUTTON_UNSELECT' : 'BUTTON_SELECT_ALL') | translate}}
             </button>
         </div>
 
@@ -28,7 +28,7 @@
         </form>
 
         <button type="button" class="save-btn" (click)="saveSelection()" [disabled]="selectedSections.length === 0">
-            Save
+            {{'BUTTON_SAVE' | translate}}
         </button>
     </div>
 </div>
@@ -37,7 +37,8 @@
 <app-modal 
   [show]="showModal" 
   [type]="modalType" 
-  [message]="modalMessage" 
+  [message]="modalMessage | translate"
   [showCancel]="false"
+  [autoClose]="true"
   (closed)="closeModal($event)">
 </app-modal>

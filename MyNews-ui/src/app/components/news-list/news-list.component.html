@@ -1,10 +1,10 @@
 <div class="sections-container">
   
   <div class="top-bar">
-    <button type="button" class="back-btn" (click)="goBack()">Back</button>
+    <button type="button" class="back-btn" (click)="goBack()">{{'BUTTON_BACK' | translate}}</button>
 
     <div class="search-container">
-      <input type="text" placeholder="Search news..." [(ngModel)]="searchTerm" />
+      <input type="text" placeholder="{{'SEARCH_NEWS' | translate}}" [(ngModel)]="searchTerm" />
     </div>
 
     <div class="language-selector">
@@ -23,7 +23,7 @@
       <h2>
         <span class="drag-handle" cdkDragHandle>
           ☰
-          <span class="tooltip-text">Drag to reorder sections</span>
+          <span class="tooltip-text">{{'REORDER_SECTIONS' | translate}}</span>
         </span>
         {{ sectionName.formatSectionName(section.sectionName) }}
       </h2>
@@ -37,7 +37,7 @@
 
         @if (source.isOpen) {
         <ul class="dropdown-news" (click)="$event.stopPropagation()">
-          <li class="section-divider">Unreaded</li>
+          <li class="section-divider">{{'UNREADED' | translate}}</li>
 
           @if (getFilteredItems(source).unread.length > 0) {
           @for (item of getFilteredItems(source).unread; track item.id) {
@@ -51,17 +51,17 @@
             </div>
             @if (source.openItemId === item.id) {
             <p class="news-content">{{ getSummary(item) }}</p>
-            <a [href]="item.link" target="_blank" (click)="onArticleLinkClick($event, item)">Read full article here</a>
+            <a [href]="item.link" target="_blank" (click)="onArticleLinkClick($event, item)">{{'FULL_ARTICLE' | translate}}</a>
             }
           </li>
           }
           } @else {
-          <li class="news-item empty">No new news.</li>
+          <li class="news-item empty">{{'NO_NEWS' | translate}}</li>
           }
 
           <li class="divider"></li>
 
-          <li class="section-divider">Readed</li>
+          <li class="section-divider">{{'READED' | translate}}</li>
           @if (getFilteredItems(source).read.length > 0) {
           @for (item of getFilteredItems(source).read; track item.id) {
           <li class="news-item read" (click)="toggleNewsItem(source, item)">
@@ -71,12 +71,12 @@
             </div>
             @if (source.openItemId === item.id) {
             <p class="news-content">{{ getSummary(item) }}</p>
-            <a [href]="item.link" target="_blank" (click)="onArticleLinkClick($event, item)">Read full article here</a>
+            <a [href]="item.link" target="_blank" (click)="onArticleLinkClick($event, item)">{{'FULL_ARTICLE' | translate}}</a>
             }
           </li>
           }
           } @else {
-          <li class="news-item empty">No read news yet.</li>
+          <li class="news-item empty">{{'READED_TEXT' | translate}}</li>
           }
         </ul>
         }

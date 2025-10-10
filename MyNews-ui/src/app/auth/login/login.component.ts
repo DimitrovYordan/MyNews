@@ -3,12 +3,14 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
+import { TranslateModule } from '@ngx-translate/core';
+
 import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TranslateModule],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss']
 })
@@ -33,27 +35,27 @@ export class LoginComponent implements OnInit {
   }
 
   submitLogin() {
-    if (this.loginForm.invalid) {
-      this.loginForm.markAllAsTouched();
-      this.errorMessage = null;
-      return;
-    }
+    this.loginForm.markAllAsTouched();
 
-    this.loading = true;
-    this.authService.login(this.loginForm.value).subscribe({
-      next: () => {
-        this.router.navigate(['/news']);
-        this.loading = false;
-      },
-      error: (err: any) => {
-        this.loading = false;
-        if (err.status === 401) {
-          this.errorMessage = 'Invalid email or password.';
-        } else {
-          this.errorMessage = 'Login failed. Please try again.';
+    if (this.loginForm.valid) {
+      this.loading = true;
+      this.errorMessage = null;
+      
+      this.authService.login(this.loginForm.value).subscribe({
+        next: () => {
+          this.router.navigate(['/news']);
+          this.loading = false;
+        },
+        error: (err: any) => {
+          this.loading = false;
+          if (err.status === 401) {
+            this.errorMessage = 'ERROR_FORM_INVALID';
+          } else {
+            this.errorMessage = 'ERROR_FORM_INVALID';
+          }
         }
-      }
-    });
+      });
+    }
   }
 
   triggerForgotPassword() {
@@ -62,5 +64,18 @@ export class LoginComponent implements OnInit {
 
   closeLogin() {
     this.router.navigate(['/']);
+  }
+
+  get formErrors() {
+    const controlEmail = this.loginForm.get('email');
+    const controlPassword = this.loginForm.get('password');
+    
+    if (controlEmail?.hasError('required') && controlEmail.touched) return 'ERROR_EMAIL_REQUIRED';
+    if (controlEmail?.hasError('email') && controlEmail.touched) return 'ERROR_VALID_EMAIL';
+
+    if (controlPassword?.hasError('required') && controlPassword.touched) return 'ERROR_PASSWORD_REQUIRED';
+    if (controlPassword?.hasError('minlength') && controlPassword.touched) return 'ERROR_PASSWORD_LENGTH';
+
+    return null;
   }
 }

@@ -11,14 +11,14 @@ export class UserNewsService {
     constructor(private http: HttpClient) { }
 
     markAsRead(newsItemId: string): Observable<void> {
-        return this.http.post<void>(`${environment.apiUrl}/news/mark-as-read/${newsItemId}`, {});
+        return this.http.post<void>(`${environment.apiUrl}/api/news/mark-as-read/${newsItemId}`, {});
     }
 
     markLinkClicked(newsItemId: string): Observable<void> {
-        return this.http.post<void>(`${environment.apiUrl}/news/mark-link-clicked/${newsItemId}`, {});
+        return this.http.post<void>(`${environment.apiUrl}/api/news/mark-link-clicked/${newsItemId}`, {});
     }
 
     getReadNewsIds(): Observable<string[]> {
-        return this.http.get<string[]>(`${environment.apiUrl}/news/read-news`);
+        return this.http.get<string[]>(`${environment.apiUrl}/api/news/read-news`);
     }
 }

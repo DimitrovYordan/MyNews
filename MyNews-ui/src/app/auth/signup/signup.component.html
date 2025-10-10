@@ -1,74 +1,71 @@
 <div class="form-content">
-  <h2 class="form-title">Sign Up</h2>
+  <h2 class="form-title">{{'BUTTON_SIGNUP' | translate}}</h2>
 
   <form [formGroup]="signupForm" (ngSubmit)="submitSignup()">
 
     <div class="form-group">
-      <label>First Name</label>
+      <label>{{'FIRST_NAME' | translate}}</label>
       <input type="text" formControlName="firstName" />
       @if (signupForm.get('firstName')?.invalid && signupForm.get('firstName')?.touched) {
-      <small class="error">First name is required.</small>
+      <small class="error">{{'ERROR_FIRST_NAME_REQUIRED' | translate}}</small>
       }
     </div>
 
     <div class="form-group">
-      <label>Last Name</label>
+      <label>{{'LAST_NAME' | translate}}</label>
       <input type="text" formControlName="lastName" />
       @if (signupForm.get('lastName')?.invalid && signupForm.get('lastName')?.touched) {
-      <small class="error">Last name is required.</small>
+      <small class="error">{{'ERROR_LAST_NAME_REQUIRED' | translate}}</small>
       }
     </div>
 
     <div class="form-group">
-      <label>Country</label>
+      <label>{{'COUNTRY' | translate}}</label>
       <input type="text" formControlName="country" />
       @if (signupForm.get('country')?.invalid && signupForm.get('country')?.touched) {
-      <small class="error">Country is required.</small>
+      <small class="error">{{'ERROR_COUNTRY_REQUIRED' | translate}}</small>
       }
     </div>
 
     <div class="form-group">
-      <label>City</label>
+      <label>{{'CITY' | translate}}</label>
       <input type="text" formControlName="city" />
       @if (signupForm.get('city')?.invalid && signupForm.get('city')?.touched) {
-      <small class="error">City is required.</small>
+      <small class="error">{{'ERROR_CITY_REQUIRED' | translate}}</small>
       }
     </div>
 
     <div class="form-group">
-      <label>Email</label>
+      <label>{{'EMAIL' | translate}}</label>
       <input type="email" formControlName="email" />
       @if (emailErrors) {
-      <small class="error">{{ emailErrors }}</small>
+      <small class="error">{{ emailErrors | translate}}</small>
       }
     </div>
 
     <div class="form-group password-group">
-      <label>Password</label>
+      <label>{{'PASSWORD' | translate}}</label>
       <div class="password-wrapper">
-        <input [type]="showPassword ? 'text' : 'password'" formControlName="password"
-          placeholder="Enter your password" />
+        <input [type]="showPassword ? 'text' : 'password'" formControlName="password" />
         <i class="bi" [ngClass]="showPassword ? 'bi-eye-slash' : 'bi-eye'" (click)="showPassword = !showPassword">
         </i>
       </div>
-
-      @if (signupForm.get('password')?.invalid && signupForm.get('password')?.touched) {
-      <small class="error">Password must have at least 6 chars, 1 number, 1 special character.</small>
+      @if (signupForm.get('password')?.value && signupForm.get('password')?.invalid) {
+      <small class="error">{{'ERROR_PASSWORD_LENGTH' | translate}}</small>
       }
     </div>
 
     <div class="form-group password-group">
-      <label>Repeat Password</label>
+      <label>{{'REPEAT_PASSWORD' | translate}}</label>
       <div class="password-wrapper">
-        <input [type]="showRepeatPassword ? 'text' : 'password'" formControlName="repeatPassword"
-          placeholder="Repeat your password" />
+        <input [type]="showRepeatPassword ? 'text' : 'password'" formControlName="repeatPassword" />
         <i class="bi" [ngClass]="showRepeatPassword ? 'bi-eye-slash' : 'bi-eye'"
           (click)="showRepeatPassword = !showRepeatPassword">
         </i>
       </div>
 
       @if (signupForm.hasError('passwordsMismatch') && signupForm.get('repeatPassword')?.touched) {
-      <small class="error">Passwords do not match.</small>
+      <small class="error">{{'ERROR_NOT_MATCH' | translate}}</small>
       }
     </div>
 
@@ -79,17 +76,17 @@
     }
 
     <button type="submit" [disabled]="signupForm.invalid" class="submit-btn">
-      Sign Up
+      {{'BUTTON_SIGNUP' | translate}}
     </button>
   </form>
 
-  <button type="button" class="close-btn" (click)="closeSignup()">Close</button>
+  <button type="button" class="close-btn" (click)="closeSignup()">{{'BUTTON_LOGOUT' | translate}}</button>
 </div>
 
 <app-modal 
   [show]="showSignupSuccessModal" 
   type="success"
-  [message]="'Welcome, ' + signupForm.get('firstName')?.value + '! Your account has been created successfully.'"
+  [message]="('MODAL_WELCOME' | translate) + signupForm.get('firstName')?.value + ('MODAL_WELCOME_MESSAGE' | translate)"
   [showCancel]="false" 
   [autoClose]="false"
   (closed)="goToSections()">

@@ -33,7 +33,9 @@ export class AuthService {
             this.currentUser$.next(this.currentUser);
             this.isLoggedIn$.next(true);
         } else {
-            this.logout();
+            this.currentUser = null;
+            this.currentUser$.next(null);
+            this.isLoggedIn$.next(false);
         }
     }
 
@@ -46,7 +48,6 @@ export class AuthService {
     }
 
     signup(credentials: SignupData): Observable<AuthResponse> {
-        console.log('Environment API URL:', environment.apiUrl);
         return this.http.post<AuthResponse>(`${environment.apiUrl}/api/auth/register`, credentials).pipe(
             tap(res => {
                 this.setSession(res);

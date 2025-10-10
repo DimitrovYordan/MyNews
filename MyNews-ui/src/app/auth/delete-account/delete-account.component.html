@@ -1,11 +1,14 @@
 <div class="delete-account-wrapper">
-    <h2>Delete Account</h2>
-    <p class="warning">This action cannot be undone. Are you sure?</p>
+    <h2>{{'BUTTON_DELETE_ACCOUNT' | translate}}</h2>
+    <p class="warning">{{'DELETE_MESSAGE' | translate}}</p>
 
-    <button class="danger-btn" (click)="openConfirm()">Delete Account</button>
+    <button class="danger-btn" (click)="openConfirm()">{{'BUTTON_DELETE_ACCOUNT' | translate}}</button>
 
-    <app-modal [show]="showConfirm" [showCancel]="true" type="error"
-        message="Are you sure you want to delete your account? This action cannot be undone."
+    <app-modal 
+        [show]="showConfirm" 
+        [showCancel]="true" type="error"
+        [message]="message | translate"
+        [autoClose]="false"
         (closed)="closeConfirm($event)">
     </app-modal>
 </div>

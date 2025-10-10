@@ -6,7 +6,7 @@ import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from
   standalone: true,
   imports: [CommonModule],
   templateUrl: './modal.component.html',
-  styleUrl: './modal.component.scss'
+  styleUrls: ['./modal.component.scss']
 })
 export class ModalComponent implements OnChanges {
   @Input() show: boolean = false;
@@ -18,9 +18,11 @@ export class ModalComponent implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['show'] && this.show) {
-      setTimeout(() => {
-        this.close();
-      }, 2000);
+      if (this.autoClose) {
+        setTimeout(() => {
+          this.close();
+        }, 2000);
+      }
     }
   }
 
