@@ -18,7 +18,7 @@ namespace MyNews.Api.Services
 
         public async Task SendPasswordResetEmailAsync(string toEmail, string firstName, string token)
         {
-            var resetLink = $"{_configuration["FrontendUrl"]}/reset-password?token={token}";
+            var resetLink = $"{_configuration["FrontendUrl"]}reset-password?token={token}";
 
             var message = new MailMessage
             {
@@ -46,13 +46,9 @@ namespace MyNews.Api.Services
 
                     await smtpClient.SendMailAsync(message);
                 }
-
-                _logger.LogInformation("Password reset email sent to {Email}", toEmail);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to send password reset email to {Email}", toEmail);
-
                 var logPath = Path.Combine(AppContext.BaseDirectory, "Logs", "errors.txt");
                 Directory.CreateDirectory(Path.GetDirectoryName(logPath)!);
 
@@ -98,11 +94,9 @@ namespace MyNews.Api.Services
                 };
 
                 await smtpClient.SendMailAsync(message);
-                _logger.LogInformation("Contact message sent successfully: {Title}", title);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to send contact message: {Title}", title);
                 var logPath = Path.Combine(AppContext.BaseDirectory, "Logs", "errors.txt");
                 Directory.CreateDirectory(Path.GetDirectoryName(logPath)!);
                 await File.AppendAllTextAsync(logPath,

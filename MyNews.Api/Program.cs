@@ -1,12 +1,14 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+
 using MyNews.Api.Background;
 using MyNews.Api.Data;
 using MyNews.Api.Interfaces;
 using MyNews.Api.Middlewares;
 using MyNews.Api.Options;
 using MyNews.Api.Services;
+
 using Serilog;
 using System.Text;
 using System.Threading.RateLimiting;
@@ -49,20 +51,24 @@ builder.Services.AddHostedService<CleanupBackgroundService>();
 
 builder.Services.AddCors(options =>
 {
-    //options.AddPolicy("AllowAngular",
-    //    policy =>
-    //    {
-    //        // Angular dev server
-    //        policy.WithOrigins(
-    //            "https://shortglobenews-hwhbhuhnhtbzhuda.westeurope-01.azurewebsites.net"
-    //        )
-    //        .AllowAnyHeader()
-    //        .AllowAnyMethod();
-    //    });
-    options.AddPolicy("AllowAll", policy =>
+    if (builder.Environment.IsDevelopment())
     {
-        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
-    });
+        options.AddPolicy("AllowAngular", policy =>
+        {
+            policy.WithOrigins("http://localhost:4200")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+    }
+    else
+    {
+        options.AddPolicy("AllowAngular", policy =>
+        {
+            policy.WithOrigins("https://shortglobenews-hwhbhuhnhtbzhuda.westeurope-01.azurewebsites.net")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+    }
 });
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -103,9 +109,6 @@ builder.Services.AddRateLimiter(options =>
             }));
 });
 
-builder.Logging.AddConsole();
-builder.Logging.AddDebug();
-
 var app = builder.Build();
 
 // Configure Swagger for development
@@ -136,10 +139,8 @@ app.Use(async (context, next) =>
 });
 app.UseRouting();
 
-app.UseCors("AllowAll");
+app.UseCors("AllowAngular");
 
-Console.WriteLine("JWT Key length: " + builder.Configuration["Jwt:Key"]?.Length);
-Console.WriteLine("Connection String: " + builder.Configuration.GetConnectionString("DefaultConnection"));
 // Global error handling
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
@@ -147,6 +148,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseRateLimiter();
-app.MapGet("/api/health", () => "API is running");
+
 app.MapControllers();
+app.MapFallbackToFile("index.html");
 app.Run();

@@ -16,7 +16,7 @@
         Markets = 11,
         Finance = 12,
         Economy = 13,
-        RealEstate = 14,
+        Real_Estate = 14,
 
         // Sports
         Sports = 20,
@@ -38,7 +38,7 @@
         Health = 40,
         Medicine = 41,
         Fitness = 42,
-        FoodNutrition = 43,
+        Food_Nutrition = 43,
         Lifestyle = 44,
         Travel = 45,
 
@@ -53,7 +53,7 @@
 
         // Events
         Events = 60,
-        CityLife = 61,
+        City_Life = 61,
         Festivals = 62,
         Conferences = 63
     }
