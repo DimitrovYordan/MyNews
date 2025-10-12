@@ -36,92 +36,117 @@ namespace MyNews.Api.Background
                 var newsToAdd = new List<NewsItem>();
                 var translationsToAdd = new List<NewsTranslation>();
 
+                int totalNewsAdded = 0;
+                int totalSourcesProcessed = 0;
+
+                var batchStartTime = DateTime.UtcNow;
+                _logger.LogInformation("RSS batch started at {Time}", batchStartTime);
+
                 try
                 {
                     var sources = await dbContext.Sources.ToListAsync(cancellationToken);
+                    int totalSources = sources.Count;
+                    int index = 1;
 
                     foreach (var source in sources)
                     {
-                        var rssItems = await rssService.FetchAndProcessRssFeedAsync(new[] { source });
+                        totalSourcesProcessed++;
+                        _logger.LogInformation($"[RSS] Processing source {index}/{totalSources}: {source.Url}");
 
-                        var freshItems = new List<NewsItemDto>();
-                        foreach (var rssItem in rssItems)
+                        try
                         {
-                            if (rssItem.PublishedAt < DateTime.UtcNow.AddDays(-2))
+                            var rssItems = await rssService.FetchAndProcessRssFeedAsync(new[] { source });
+
+                            var freshItems = new List<NewsItemDto>();
+                            foreach (var rssItem in rssItems)
+                            {
+                                if (rssItem.PublishedAt < DateTime.UtcNow.AddDays(-2))
+                                    continue;
+
+                                bool existsInDb = await dbContext.NewsItems
+                                    .AnyAsync(n => n.Title == rssItem.Title && n.SourceId == source.Id, cancellationToken);
+
+                                bool existsInBatch = freshItems.Any(n => n.Title == rssItem.Title && n.SourceUrl == source.Url);
+
+                                if (!existsInDb && !existsInBatch)
+                                    freshItems.Add(rssItem);
+                            }
+
+                            if (!freshItems.Any())
+                            {
+                                index++;
                                 continue;
+                            }
 
-                            bool existsInDb = await dbContext.NewsItems
-                                .AnyAsync(n => n.Title == rssItem.Title && n.SourceId == source.Id, cancellationToken);
+                            var titles = freshItems.Select(r => r.Title).ToList();
+                            var enriched = await chatGptService.EnrichNewsBatchAsync(titles, cancellationToken);
 
-                            bool existsInBatch = freshItems.Any(n => n.Title == rssItem.Title && n.SourceUrl == source.Url);
-
-                            if (!existsInDb && !existsInBatch)
-                                freshItems.Add(rssItem);
-                        }
-
-                        if (!freshItems.Any())
-                        {
-                            continue;
-                        }
-
-                        var titles = freshItems.Select(r => r.Title).ToList();
-                        var enriched = await chatGptService.EnrichNewsBatchAsync(titles, cancellationToken);
-
-                        for (int i = 0; i < freshItems.Count; i++)
-                        {
-                            var rssItem = freshItems[i];
-                            EnrichedNewsDto item = i < enriched.Count
-                                ? enriched[i]
-                                : new EnrichedNewsDto
-                                {
-                                    Title = rssItem.Title,
-                                    Summary = "Summary unavailable",
-                                    Section = SectionType.General
-                                };
-
-                            var newsItem = new NewsItem
+                            for (int i = 0; i < freshItems.Count; i++)
                             {
-                                Id = Guid.NewGuid(),
-                                Section = item.Section,
-                                Title = item.Title,
-                                Summary = item.Summary,
-                                Link = rssItem.Link,
-                                PublishedAt = rssItem.PublishedAt,
-                                FetchedAt = DateTime.UtcNow,
-                                SourceId = source.Id
-                            };
+                                var rssItem = freshItems[i];
+                                EnrichedNewsDto item = i < enriched.Count
+                                    ? enriched[i]
+                                    : new EnrichedNewsDto
+                                    {
+                                        Title = rssItem.Title,
+                                        Summary = "Summary unavailable",
+                                        Section = SectionType.General
+                                    };
 
-                            newsToAdd.Add(newsItem);
-
-                            foreach (var translatedText in item.Translations)
-                            {
-                                translationsToAdd.Add(new NewsTranslation
+                                var newsItem = new NewsItem
                                 {
                                     Id = Guid.NewGuid(),
-                                    NewsItemId = newsItem.Id,
-                                    LanguageCode = translatedText.Key,
-                                    Title = translatedText.Value.Title,
-                                    Summary = translatedText.Value.Summary,
                                     Section = item.Section,
-                                });
+                                    Title = item.Title,
+                                    Summary = item.Summary,
+                                    Link = rssItem.Link,
+                                    PublishedAt = rssItem.PublishedAt,
+                                    FetchedAt = DateTime.UtcNow,
+                                    SourceId = source.Id
+                                };
+
+                                newsToAdd.Add(newsItem);
+
+                                foreach (var translatedText in item.Translations)
+                                {
+                                    translationsToAdd.Add(new NewsTranslation
+                                    {
+                                        Id = Guid.NewGuid(),
+                                        NewsItemId = newsItem.Id,
+                                        LanguageCode = translatedText.Key,
+                                        Title = translatedText.Value.Title,
+                                        Summary = translatedText.Value.Summary,
+                                        Section = item.Section,
+                                    });
+                                }
+                            }
+
+                            if (newsToAdd.Any())
+                            {
+                                dbContext.NewsItems.AddRange(newsToAdd);
+                                dbContext.NewsTranslations.AddRange(translationsToAdd);
+                                await dbContext.SaveChangesAsync(cancellationToken);
+
+                                totalNewsAdded += newsToAdd.Count;
+                                newsToAdd.Clear();
+                                translationsToAdd.Clear();
                             }
                         }
-
-                        if (newsToAdd.Any())
+                        catch (Exception ex)
                         {
-                            dbContext.NewsItems.AddRange(newsToAdd);
-                            dbContext.NewsTranslations.AddRange(translationsToAdd);
-                            await dbContext.SaveChangesAsync(cancellationToken);
-
-                            newsToAdd.Clear();
-                            translationsToAdd.Clear();
+                            _logger.LogError(ex, $"Error while processing source: {source.Url}");
                         }
+
+                        index++;
                     }
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error while processing RSS feeds.");
                 }
+
+                var batchEndTime = DateTime.UtcNow;
+                _logger.LogInformation("RSS batch finished at {Time}. Sources processed: {SourcesCount}. Total news added: {NewsCount}", batchEndTime, totalSourcesProcessed, totalNewsAdded);
 
                 await Task.Delay(TimeSpan.FromHours(_rssFetchIntervalHours), cancellationToken);
             }
