@@ -1,10 +1,10 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 
-using MyNews.Api.Interfaces;
-
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+
+using MyNews.Api.Interfaces;
 
 namespace MyNews.Api.Services
 {

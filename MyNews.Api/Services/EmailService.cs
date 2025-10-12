@@ -1,7 +1,7 @@
-﻿using MyNews.Api.Interfaces;
-
-using System.Net;
+﻿using System.Net;
 using System.Net.Mail;
+
+using MyNews.Api.Interfaces;
 
 namespace MyNews.Api.Services
 {

@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
+using System.Text;
+using System.Threading.RateLimiting;
+
 using MyNews.Api.Background;
 using MyNews.Api.Data;
 using MyNews.Api.Interfaces;
@@ -10,8 +13,6 @@ using MyNews.Api.Options;
 using MyNews.Api.Services;
 
 using Serilog;
-using System.Text;
-using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -66,7 +67,7 @@ builder.Services.AddCors(options =>
     {
         options.AddPolicy("AllowAngular", policy =>
         {
-            policy.WithOrigins("https://shortglobenews-hwhbhuhnhtbzhuda.westeurope-01.azurewebsites.net")
+            policy.WithOrigins("https://www.shortglobenews.com/")
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });
