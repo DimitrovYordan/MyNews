@@ -33,6 +33,7 @@ namespace MyNews.Api.Services
 
             var newsItems = await _context.NewsItems
                 .Include(n => n.Source)
+                .Include(n => n.Translations)
                 .Where(n => selectedSections.Contains(n.Section))
                 .OrderByDescending(n => n.PublishedAt)
                 .ToListAsync();
@@ -60,6 +61,13 @@ namespace MyNews.Api.Services
                         Link = n.Link,
                         IsNew = !readNewsIds.Contains(n.Id),
                         IsRead = readNewsIds.Contains(n.Id),
+
+                        Translations = n.Translations.Select(t => new NewsTranslationDto
+                        {
+                            LanguageCode = t.LanguageCode,
+                            Title = t.Title,
+                            Summary = t.Summary,
+                        }).ToList()
                     }).ToList()
                 })
                 .ToList();

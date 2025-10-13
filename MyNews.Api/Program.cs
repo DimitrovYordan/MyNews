@@ -59,8 +59,11 @@ builder.Services.AddScoped<IUserPreferencesService, UserPreferencesService>();
 builder.Services.AddHttpClient<IRssService, RssService>();
 builder.Services.AddHttpClient<IChatGptService, ChatGptService>();
 
-builder.Services.AddHostedService<RssBackgroundService>();
-builder.Services.AddHostedService<CleanupBackgroundService>();
+if (!builder.Environment.IsDevelopment())
+{
+    builder.Services.AddHostedService<RssBackgroundService>();
+    builder.Services.AddHostedService<CleanupBackgroundService>();
+}
 
 builder.Services.AddApplicationInsightsTelemetry();
 

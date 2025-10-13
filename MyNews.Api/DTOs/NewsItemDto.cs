@@ -23,5 +23,7 @@ namespace MyNews.Api.DTOs
         public bool IsNew { get; set; }
 
         public bool IsRead { get; set; }
+
+        public List<NewsTranslationDto>? Translations { get; set; }
     }
 }
