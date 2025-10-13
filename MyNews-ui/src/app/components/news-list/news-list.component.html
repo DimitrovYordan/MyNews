@@ -8,7 +8,8 @@
     </div>
 
     <div class="language-selector">
-      <select (change)="onLanguageChange($event)">
+      <select [value]="currentLang" (change)="onLanguageChange($event)">
+        <option value="DEFAULT">------</option>
         <option value="EN">English</option>
         <option value="BG">Български</option>
         <option value="DE">Deutsch</option>

@@ -31,6 +31,7 @@ export class NewsListComponent implements OnInit {
     public errorMessage: string = '';
     public searchTerm: string = '';
     public isLoading: boolean = false;
+    public currentLang: string = 'DEFAULT';
 
     constructor(
         private newsService: NewsService,
@@ -43,6 +44,11 @@ export class NewsListComponent implements OnInit {
     ) { }
 
     ngOnInit(): void {
+        this.currentLang = this.languageService.getLanguage();
+        this.languageService.language$.subscribe(lang => {
+            this.currentLang = lang;
+        });
+
         this.isLoading = true;
         this.userSectionService.getUserSections().subscribe(userSections => {
             this.selectedSections = userSections;

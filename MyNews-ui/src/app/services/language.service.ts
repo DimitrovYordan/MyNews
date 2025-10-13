@@ -1,15 +1,26 @@
 import { BehaviorSubject } from "rxjs";
 
 export class LanguageService {
-    private currentLang$ = new BehaviorSubject<string>('EN');
+    private readonly storageKey = 'preferredLanguage';
+    private currentLang$ = new BehaviorSubject<string>(this.getSavedLanguage());
 
     public language$ = this.currentLang$.asObservable();
 
     setLanguage(lang: string) {
-        this.currentLang$.next(lang.toUpperCase());
+        if (lang === 'DEFAULT') {
+            localStorage.removeItem(this.storageKey);
+            this.currentLang$.next('DEFAULT');
+        } else {
+            localStorage.setItem(this.storageKey, lang.toUpperCase());
+            this.currentLang$.next(lang.toUpperCase());
+        }
     }
 
     getLanguage(): string {
         return this.currentLang$.getValue();
+    }
+
+    private getSavedLanguage() {
+        return localStorage.getItem(this.storageKey) || 'DEFAULT';
     }
 }
