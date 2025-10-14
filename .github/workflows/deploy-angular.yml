@@ -39,4 +39,4 @@ jobs:
         with:
           app-name: 'shortglobenews'
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: 'MyNews-ui/dist'
+          package: 'MyNews-ui/dist/MyNews-ui/browser'
