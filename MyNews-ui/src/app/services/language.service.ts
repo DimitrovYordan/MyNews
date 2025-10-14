@@ -23,4 +23,4 @@ export class LanguageService {
     private getSavedLanguage() {
         return localStorage.getItem(this.storageKey) || 'DEFAULT';
     }
-} 
+}
