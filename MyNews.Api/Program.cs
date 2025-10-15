@@ -12,6 +12,7 @@ using MyNews.Api.Middlewares;
 using MyNews.Api.Options;
 using MyNews.Api.Services;
 
+using OpenAI.Chat;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -46,6 +47,14 @@ builder.Services.Configure<BackgroundJobsOptions>(
 builder.Services.Configure<LocalizationOptions>(
     builder.Configuration.GetSection("Localization"));
 
+builder.Services.AddSingleton<ChatClient>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var apiKey = config["OpenAI:ApiKey"];
+    var model = config["OpenAI:Model"] ?? "gpt-4o-mini";
+    return new ChatClient(model, apiKey);
+});
+
 // Register services (DI)
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UsersService>();
@@ -55,15 +64,12 @@ builder.Services.AddScoped<ISectionsService, SectionsService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IUserPreferencesService, UserPreferencesService>();
+builder.Services.AddScoped<IChatGptService, ChatGptService>();
 
 builder.Services.AddHttpClient<IRssService, RssService>();
-builder.Services.AddHttpClient<IChatGptService, ChatGptService>();
 
-if (!builder.Environment.IsDevelopment())
-{
-    builder.Services.AddHostedService<RssBackgroundService>();
-    builder.Services.AddHostedService<CleanupBackgroundService>();
-}
+builder.Services.AddHostedService<RssBackgroundService>();
+builder.Services.AddHostedService<CleanupBackgroundService>();
 
 builder.Services.AddApplicationInsightsTelemetry();
 
@@ -155,6 +161,9 @@ app.Use(async (context, next) =>
         await context.Response.WriteAsJsonAsync(new { message = ex.Message });
     }
 });
+
+app.UseDefaultFiles();
+app.UseStaticFiles();
 app.UseRouting();
 
 app.UseCors("AllowAngular");

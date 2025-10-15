@@ -29,24 +29,24 @@ namespace MyNews.Api.Background
                     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
                     await CleanupDeletedUsersPreferencesAsync(dbContext, cancellationToken);
-                    await CleanupOldNewsAsync(dbContext, cancellationToken);
-                    await CleanupOldTranslationsAsync(dbContext, cancellationToken);
+                    await CleanupOldNewsAsync(dbContext, cancellationToken, daysBack: _cleanupIntervalDays);
+                    await CleanupOldTranslationsAsync(dbContext, cancellationToken, daysBack: _cleanupIntervalDays);
                 }
                 catch (Exception ex) 
                 {
                     _logger.LogError(ex, "Error while running cleanup tasks.");
                 }
 
-                await Task.Delay(TimeSpan.FromDays(_cleanupIntervalDays), cancellationToken);
+                await Task.Delay(TimeSpan.FromDays(1), cancellationToken);
             }
         }
 
         /// <summary>
         /// Delete old news and related UserNewsReads.
         /// </summary>
-        private async Task CleanupOldNewsAsync(AppDbContext appDbContext, CancellationToken cancellationToken)
+        private async Task CleanupOldNewsAsync(AppDbContext appDbContext, CancellationToken cancellationToken, int daysBack)
         {
-            var cutofDate = DateTime.UtcNow.AddDays(_cleanupIntervalDays);
+            var cutofDate = DateTime.UtcNow.AddDays(-daysBack);
 
             var oldNews = await appDbContext.NewsItems
                 .Where(n => n.PublishedAt < cutofDate)
@@ -107,9 +107,9 @@ namespace MyNews.Api.Background
         /// <summary>
         /// Delete translations linked to news older than N days.
         /// </summary>
-        private async Task CleanupOldTranslationsAsync(AppDbContext appDbContext, CancellationToken cancellationToken)
+        private async Task CleanupOldTranslationsAsync(AppDbContext appDbContext, CancellationToken cancellationToken, int daysBack)
         {
-            var cutoffDate = DateTime.UtcNow.AddDays(_cleanupIntervalDays);
+            var cutoffDate = DateTime.UtcNow.AddDays(-daysBack);
 
             var oldTranslations = await appDbContext.NewsTranslations
                 .Where(t => t.NewsItem.PublishedAt < cutoffDate)
