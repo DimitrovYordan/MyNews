@@ -92,7 +92,6 @@ namespace MyNews.Api.Data
                 new Source { Id = 5, Name = "Actualno", Url = "https://www.actualno.com/rss" },
                 new Source { Id = 6, Name = "24 Chasa", Url = "https://www.24chasa.bg/rss_category/2/novini.html" },
                 new Source { Id = 7, Name = "BTA", Url = "https://www.bta.bg/bg/rss/free" },
-                new Source { Id = 8, Name = "BNR", Url = "https://bnr.bg/rss/" },
                 new Source { Id = 9, Name = "SofiaGlobe", Url = "http://feeds.feedburner.com/TheSofiaGlobe" },
                 new Source { Id = 10, Name = "Pogled", Url = "https://pogled.info/rss" },
                 new Source { Id = 11, Name = "BurgasNews", Url = "https://www.burgasnews.com/feed" },

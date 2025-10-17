@@ -1,12 +1,15 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
+using System.Text.RegularExpressions;
+
 using MyNews.Api.Data;
 using MyNews.Api.DTOs;
-using MyNews.Api.Enums;
 using MyNews.Api.Interfaces;
 using MyNews.Api.Models;
 using MyNews.Api.Options;
+
+using HtmlAgilityPack;
 
 namespace MyNews.Api.Background
 {
@@ -15,13 +18,23 @@ namespace MyNews.Api.Background
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<RssBackgroundService> _logger;
         private readonly int _rssFetchIntervalHours;
-        private readonly int batchSize = 3;
+        private readonly int _batchSize = 3;
+        private readonly int _concurrency = 3;
+        private readonly int _fetchArticleTimeoutSeconds = 10;
+        private readonly int _maxContentChars = 3000;
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly string[] _globalTargetLanguages;
 
-        public RssBackgroundService(IServiceScopeFactory scopeFactory, ILogger<RssBackgroundService> logger, IOptions<BackgroundJobsOptions> options)
+        public RssBackgroundService(IServiceScopeFactory scopeFactory, ILogger<RssBackgroundService> logger, IOptions<BackgroundJobsOptions> options, IHttpClientFactory httpClientFactory, IOptions<LocalizationOptions> localizationOptions)
         {
             _scopeFactory = scopeFactory;
             _logger = logger;
             _rssFetchIntervalHours = options.Value.RssFetchIntervalHours;
+            _httpClientFactory = httpClientFactory;
+            _globalTargetLanguages = localizationOptions.Value.TargetLanguages
+                .Select(s => s?.Trim().ToLowerInvariant() ?? string.Empty)
+                .Where(s => !string.IsNullOrEmpty(s))
+                .ToArray();
         }
 
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
@@ -30,18 +43,16 @@ namespace MyNews.Api.Background
 
             while (!cancellationToken.IsCancellationRequested)
             {
-                using var scope = _scopeFactory.CreateScope();
-
-                var rssService = scope.ServiceProvider.GetRequiredService<IRssService>();
-                var chatGptService = scope.ServiceProvider.GetRequiredService<IChatGptService>();
-                var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-                int totalNewsAdded = 0;
-                int totalSourcesProcessed = 0;
-                var batchStart = DateTime.UtcNow;
-
                 try
                 {
+                    using var scope = _scopeFactory.CreateScope();
+                    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                    var rssService = scope.ServiceProvider.GetRequiredService<IRssService>();
+
+                    int totalNewsAdded = 0;
+                    int totalSourcesProcessed = 0;
+                    var batchStart = DateTime.UtcNow;
+
                     var sources = await dbContext.Sources.ToListAsync(cancellationToken);
                     int totalSources = sources.Count;
                     int srcIndex = 1;
@@ -77,9 +88,8 @@ namespace MyNews.Api.Background
                                 continue;
                             }
 
-                            var batches = SplitList(freshItems, batchSize);
-
-                            using var semaphore = new SemaphoreSlim(3);
+                            var batches = SplitList(freshItems, _batchSize);
+                            using var semaphore = new SemaphoreSlim(_concurrency);
                             var batchTasks = new List<Task>();
 
                             foreach (var batch in batches)
@@ -90,64 +100,191 @@ namespace MyNews.Api.Background
                                 {
                                     try
                                     {
-                                        var titles = batch.Select(f => f.Title).ToList();
-                                        var enrichedResults = await chatGptService.EnrichBatchAsync(titles, cancellationToken);
+                                        using var taskScope = _scopeFactory.CreateScope();
+                                        var taskChat = taskScope.ServiceProvider.GetRequiredService<IChatGptService>();
+                                        var taskDb = taskScope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-                                        for (int i = 0; i < enrichedResults.Count; i++)
+                                        var inputs = new List<NewsForEnrichmentDto>();
+                                        foreach (var rssItem in batch)
                                         {
-                                            var enriched = enrichedResults[i];
-                                            var rssItem = batch[i];
-
-                                            if (enriched == null)
+                                            string snippet = string.Empty;
+                                            if (!string.IsNullOrWhiteSpace(rssItem.Description) && IsValidDescription(rssItem.Description))
                                             {
-                                                enriched = new EnrichedNewsDto
+                                                snippet = rssItem.Description!;
+                                            }
+                                            else
+                                            {
+                                                try
                                                 {
-                                                    Title = rssItem.Title,
-                                                    Summary = "Summary unavailable",
-                                                    Section = SectionType.General,
-                                                    Translations = new Dictionary<string, NewsTranslationDto>()
-                                                };
+                                                    snippet = await FetchAndExtractArticleAsync(rssItem.Link, cancellationToken);
+                                                }
+                                                catch (Exception exFetch)
+                                                {
+                                                    _logger.LogWarning(exFetch, "Failed to fetch article for {Link}", rssItem.Link);
+                                                    snippet = string.Empty;
+                                                }
                                             }
 
-                                            var newsItem = new NewsItem
+                                            if (string.IsNullOrWhiteSpace(snippet))
                                             {
-                                                Id = Guid.NewGuid(),
-                                                Section = enriched.Section,
-                                                Title = enriched.Title,
-                                                Summary = enriched.Summary,
-                                                Link = rssItem.Link,
-                                                PublishedAt = rssItem.PublishedAt,
-                                                FetchedAt = DateTime.UtcNow,
-                                                SourceId = source.Id
-                                            };
+                                                snippet = rssItem.Title;
+                                            }
 
-                                            dbContext.NewsItems.Add(newsItem);
+                                            snippet = TruncateToSentenceBoundary(snippet, _maxContentChars);
 
-                                            foreach (var kv in enriched.Translations)
+                                            inputs.Add(new NewsForEnrichmentDto
                                             {
-                                                var lang = kv.Key;
-                                                var tDto = kv.Value ?? new NewsTranslationDto { LanguageCode = lang, Title = string.Empty, Summary = string.Empty };
+                                                Title = rssItem.Title,
+                                                ContentSnippet = snippet,
+                                                Link = rssItem.Link
+                                            });
+                                        }
 
-                                                dbContext.NewsTranslations.Add(new NewsTranslation
-                                                {
-                                                    Id = Guid.NewGuid(),
-                                                    NewsItemId = newsItem.Id,
-                                                    LanguageCode = tDto.LanguageCode ?? lang,
-                                                    Title = tDto.Title ?? string.Empty,
-                                                    Summary = tDto.Summary ?? string.Empty,
-                                                    Section = enriched.Section
-                                                });
+                                        List<string> targetLanguages = _globalTargetLanguages.ToList();
+
+                                        if (source.LanguageCode?.Equals("bg", StringComparison.OrdinalIgnoreCase) == true ||
+                                            source.Url.Contains(".bg", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            targetLanguages.Remove("bg");
+                                            if (!targetLanguages.Contains("en"))
+                                                targetLanguages.Add("en");
+                                        }
+
+                                        var enrichedResults = await taskChat.EnrichBatchAsync(inputs, cancellationToken, targetLanguages);
+
+                                        if (source.LanguageCode?.Equals("bg", StringComparison.OrdinalIgnoreCase) == true)
+                                        {
+                                            foreach (var enriched in enrichedResults)
+                                            {
+                                                if (!enriched.Translations.ContainsKey("en"))
+                                                    enriched.Translations["en"] = new NewsTranslationDto 
+                                                    { 
+                                                        LanguageCode = "EN", 
+                                                        Title = enriched.Title, 
+                                                        Summary = enriched.Summary 
+                                                    };
+
+                                                enriched.Translations.Remove("bg");
                                             }
                                         }
 
-                                        await dbContext.SaveChangesAsync(cancellationToken);
-                                        Interlocked.Add(ref totalNewsAdded, enrichedResults.Count);
+                                        var needTranslation = enrichedResults
+                                            .Where(e => e.Summary != "Summary unavailable" &&
+                                                        e.Translations.Values.Any(t => string.IsNullOrWhiteSpace(t.Summary)))
+                                            .ToList();
 
-                                        _logger.LogInformation("[RSS] Saved {Count} enriched items for source {Url}", enrichedResults.Count, source.Url);
+                                        if (needTranslation.Any())
+                                        {
+                                            _logger.LogInformation("[GPT] Running secondary translation pass for {Count} items", needTranslation.Count);
+
+                                            foreach (var enriched in needTranslation)
+                                            {
+                                                var missingLangs = enriched.Translations
+                                                    .Where(t => string.IsNullOrWhiteSpace(t.Value.Summary))
+                                                    .Select(t => t.Key.ToUpper())
+                                                    .ToList();
+
+                                                if (!missingLangs.Any())
+                                                    continue;
+
+                                                try
+                                                {
+                                                    var translations = await taskChat.TranslateTitlesAndSummariesAsync(
+                                                        enriched.Title,
+                                                        enriched.Summary == "Summary unavailable" ? enriched.Title : enriched.Summary,
+                                                        missingLangs,
+                                                        cancellationToken);
+
+                                                    foreach (var lang in translations.Keys)
+                                                    {
+                                                        enriched.Translations[lang] = new NewsTranslationDto
+                                                        {
+                                                            LanguageCode = lang,
+                                                            Title = translations[lang].Title ?? enriched.Title,
+                                                            Summary = translations[lang].Summary ?? enriched.Summary
+                                                        };
+                                                    }
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    _logger.LogWarning(ex, "Translation retry failed for {Title}", enriched.Title);
+                                                }
+                                            }
+                                        }
+
+                                        foreach (var (enriched, rssItem) in enrichedResults.Zip(batch))
+                                        {
+                                            var existingNews = await taskDb.NewsItems
+                                                .Include(n => n.Translations)
+                                                .FirstOrDefaultAsync(n =>
+                                                    n.SourceId == source.Id &&
+                                                    (n.Link == rssItem.Link || n.Title == rssItem.Title),
+                                                    cancellationToken);
+
+                                            NewsItem newsItem;
+                                            if (existingNews != null)
+                                            {
+                                                newsItem = existingNews;
+                                                _logger.LogInformation("[UPSERT] Existing news found: {Title}", enriched.Title);
+                                            }
+                                            else
+                                            {
+                                                newsItem = new NewsItem
+                                                {
+                                                    Id = Guid.NewGuid(),
+                                                    Section = enriched.Section,
+                                                    Title = enriched.Title,
+                                                    Summary = enriched.Summary,
+                                                    Link = rssItem.Link,
+                                                    PublishedAt = rssItem.PublishedAt,
+                                                    FetchedAt = DateTime.UtcNow,
+                                                    SourceId = source.Id
+                                                };
+
+                                                taskDb.NewsItems.Add(newsItem);
+                                                Interlocked.Increment(ref totalNewsAdded);
+                                                _logger.LogInformation("[INSERT] Added new news item: {Title}", enriched.Title);
+                                            }
+
+                                            foreach (var kv in enriched.Translations)
+                                            {
+                                                var lang = kv.Key.ToUpperInvariant();
+                                                var tDto = kv.Value ?? new NewsTranslationDto { LanguageCode = lang, Title = enriched.Title, Summary = enriched.Summary };
+
+                                                var existingTranslation = newsItem.Translations?
+                                                    .FirstOrDefault(t => t.LanguageCode == lang);
+
+                                                if (existingTranslation != null)
+                                                {
+                                                    existingTranslation.Title = tDto.Title ?? existingTranslation.Title;
+                                                    existingTranslation.Summary = tDto.Summary ?? existingTranslation.Summary;
+                                                    _logger.LogInformation("[UPSERT] Updated translation {Lang} for {Title}", lang, enriched.Title);
+                                                }
+                                                else
+                                                {
+                                                    var newTranslation = new NewsTranslation
+                                                    {
+                                                        Id = Guid.NewGuid(),
+                                                        NewsItemId = newsItem.Id,
+                                                        LanguageCode = lang,
+                                                        Title = tDto.Title ?? string.Empty,
+                                                        Summary = tDto.Summary ?? string.Empty,
+                                                        Section = enriched.Section
+                                                    };
+
+                                                    taskDb.NewsTranslations.Add(newTranslation);
+                                                    _logger.LogInformation("[UPSERT] Added translation {Lang} for {Title}", lang, enriched.Title);
+                                                }
+                                            }
+
+                                            await SaveWithRetryAsync(taskDb, enriched.Title, cancellationToken);
+                                        }
+
+                                        _logger.LogInformation("[RSS] Batch saved ({Count}) for source {Url}", enrichedResults.Count, source.Url);
                                     }
                                     catch (Exception ex)
                                     {
-                                        _logger.LogError(ex, "[RSS] Error while enriching batch for {Url}", source.Url);
+                                        _logger.LogError(ex, "[RSS] Error while processing batch for {Url}", source.Url);
                                     }
                                     finally
                                     {
@@ -167,26 +304,155 @@ namespace MyNews.Api.Background
 
                         srcIndex++;
                     }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error while processing RSS feeds.");
-                }
 
-                var batchEnd = DateTime.UtcNow;
-                _logger.LogInformation("RSS batch finished at {Time}. Sources processed: {SourcesCount}. Total news added: {NewsCount}. Duration: {Duration}s",
-                    batchEnd, totalSourcesProcessed, totalNewsAdded, (batchEnd - batchStart).TotalSeconds);
+                    var batchEnd = DateTime.UtcNow;
+                    _logger.LogInformation("RSS batch finished at {Time}. Sources processed: {SourcesCount}. Total news added: {NewsCount}. Duration: {Duration}s",
+                        batchEnd, totalSourcesProcessed, totalNewsAdded, (batchEnd - batchStart).TotalSeconds);
+                }
+                catch (Exception exOuter)
+                {
+                    _logger.LogError(exOuter, "Error while processing RSS feeds.");
+                }
 
                 await Task.Delay(TimeSpan.FromHours(_rssFetchIntervalHours), cancellationToken);
             }
         }
 
+        private static bool IsValidDescription(string? desc)
+        {
+            if (string.IsNullOrWhiteSpace(desc))
+                return false;
+
+            var cleaned = Regex.Replace(desc, "<.*?>", string.Empty).Trim();
+            if (cleaned.Length < 100)
+                return false;
+
+            if (!cleaned.Contains('.'))
+                return false;
+
+            var lower = cleaned.ToLowerInvariant();
+            if (lower.Contains("read more") || lower.Contains("continue reading") || lower.Contains("full story"))
+                return false;
+
+            return true;
+        }
+
+        private async Task<string> FetchAndExtractArticleAsync(string url, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(url)) 
+                return string.Empty;
+
+            var client = _httpClientFactory.CreateClient();
+            client.Timeout = TimeSpan.FromSeconds(_fetchArticleTimeoutSeconds);
+
+            string html;
+            try
+            {
+                html = await client.GetStringAsync(url, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to download HTML from {Url}", url);
+                return string.Empty;
+            }
+
+            try
+            {
+                var doc = new HtmlDocument();
+                doc.LoadHtml(html);
+
+                var articleNode = doc.DocumentNode.SelectSingleNode("//article")
+                               ?? doc.DocumentNode.SelectSingleNode("//div[contains(@class,'article') or contains(@class,'post') or contains(@id,'article')]");
+
+                string text = string.Empty;
+                if (articleNode != null)
+                {
+                    var nodes = articleNode.SelectNodes(".//p|.//h1|.//h2|.//h3");
+                    if (nodes != null)
+                        text = string.Join("\n\n", nodes.Select(n => HtmlEntity.DeEntitize(n.InnerText.Trim())));
+                }
+
+                if (string.IsNullOrWhiteSpace(text))
+                {
+                    var pNodes = doc.DocumentNode.SelectNodes("//p");
+                    if (pNodes != null)
+                    {
+                        var top = pNodes.Select(p => HtmlEntity.DeEntitize(p.InnerText.Trim()))
+                                        .Where(s => !string.IsNullOrWhiteSpace(s))
+                                        .OrderByDescending(s => s.Length)
+                                        .Take(6);
+                        text = string.Join("\n\n", top);
+                    }
+                }
+
+                text = CleanText(text);
+                return text;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to parse HTML for {Url}", url);
+                return string.Empty;
+            }
+        }
+
+        private static string CleanText(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                return string.Empty;
+
+            var s = Regex.Replace(input, @"\s+", " ").Trim();
+            s = s.Replace("\r", " ").Replace("\n", " ").Trim();
+
+            return s;
+        }
+
+        private static string TruncateToSentenceBoundary(string text, int maxChars)
+        {
+            if (string.IsNullOrWhiteSpace(text) || text.Length <= maxChars) 
+                return text?.Trim() ?? string.Empty;
+
+            var substr = text.Substring(0, maxChars);
+            var lastDot = substr.LastIndexOf('.');
+            if (lastDot > maxChars / 2)
+                return substr.Substring(0, lastDot + 1).Trim();
+
+            var lastSpace = substr.LastIndexOf(' ');
+            if (lastSpace > 0)
+                return substr.Substring(0, lastSpace).Trim();
+
+            return substr.Trim();
+        }
+
         private static List<List<T>> SplitList<T>(List<T> items, int size)
         {
-            var result = new List<List<T>>();
+            var res = new List<List<T>>();
             for (int i = 0; i < items.Count; i += size)
-                result.Add(items.GetRange(i, Math.Min(size, items.Count - i)));
-            return result;
+                res.Add(items.GetRange(i, Math.Min(size, items.Count - i)));
+
+            return res;
+        }
+
+        private async Task SaveWithRetryAsync(AppDbContext db, string title, CancellationToken token)
+        {
+            const int maxRetries = 3;
+            int delay = 1000;
+
+            for (int attempt = 1; attempt <= maxRetries; attempt++)
+            {
+                try
+                {
+                    await db.SaveChangesAsync(token);
+                    return;
+                }
+                catch (DbUpdateException ex) when (attempt < maxRetries)
+                {
+                    _logger.LogWarning(ex, "Transient DB error saving '{Title}'. Retrying in {Delay}ms (attempt {Attempt}/{Max})", title, delay, attempt, maxRetries);
+                    await Task.Delay(delay, token);
+                    delay *= 2;
+                }
+            }
+
+            _logger.LogError("Failed to save '{Title}' after {MaxRetries} retries.", title, maxRetries);
         }
     }
 }

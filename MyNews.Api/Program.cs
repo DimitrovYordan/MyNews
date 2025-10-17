@@ -27,19 +27,7 @@ builder.Services.AddSwaggerGen();
 
 // Configure SQL Server DbContext
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        sqlOptions =>
-        {
-            // Automatic retry for Connection timeout / DB waking up / transient errors
-            sqlOptions.EnableRetryOnFailure(
-                maxRetryCount: 5,
-                maxRetryDelay: TimeSpan.FromSeconds(5),
-                errorNumbersToAdd: null
-            );
-        }
-    )
-);
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Configure options
 builder.Services.Configure<BackgroundJobsOptions>(
@@ -49,9 +37,9 @@ builder.Services.Configure<LocalizationOptions>(
 
 builder.Services.AddSingleton<ChatClient>(sp =>
 {
-    var config = sp.GetRequiredService<IConfiguration>();
-    var apiKey = config["OpenAI:ApiKey"];
-    var model = config["OpenAI:Model"] ?? "gpt-4o-mini";
+    var apiKey = sp.GetRequiredService<IConfiguration>()["OpenAI:ApiKey"];
+    var model = sp.GetRequiredService<IConfiguration>()["OpenAI:Model"] ?? "gpt-4-mini";
+
     return new ChatClient(model, apiKey);
 });
 

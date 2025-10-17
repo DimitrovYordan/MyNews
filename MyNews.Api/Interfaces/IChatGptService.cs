@@ -4,6 +4,8 @@ namespace MyNews.Api.Interfaces
 {
     public interface IChatGptService
     {
-        Task<List<EnrichedNewsDto>> EnrichBatchAsync(List<string> titles, CancellationToken cancellationToken = default);
+        Task<List<EnrichedNewsDto>> EnrichBatchAsync(List<NewsForEnrichmentDto> items, CancellationToken cancellationToken = default, List<string>? overrideLanguages = null);
+
+        Task<Dictionary<string, NewsTranslationDto>> TranslateTitlesAndSummariesAsync(string title, string summary, List<string> targetLangs, CancellationToken cancellationToken);
     }
 }

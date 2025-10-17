@@ -5,6 +5,7 @@ namespace MyNews.Api.Models
     public class UserSectionPreference
     {
         public Guid UserId { get; set; }
+
         public User User { get; set; }
 
         public SectionType SectionType { get; set; }

@@ -3,9 +3,11 @@
     public class UserNewsRead
     {
         public Guid NewsItemId { get; set; }
+
         public NewsItem NewsItem { get; set; }
 
         public Guid UserId { get; set; }
+
         public User User { get; set; }
 
         /// <summary>

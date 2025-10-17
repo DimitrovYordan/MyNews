@@ -39,6 +39,54 @@ namespace MyNews.Api.Services
 
                     foreach (var feedItem in feed.Items)
                     {
+                        string description = string.Empty;
+
+                        try
+                        {
+                            if (feedItem.Summary != null && !string.IsNullOrWhiteSpace(feedItem.Summary.Text)) 
+                            {
+                                description = System.Net.WebUtility.HtmlDecode(feedItem.Summary.Text).Trim();
+                            }
+                            else if (feedItem.Content is TextSyndicationContent textContent &&
+                                    !string.IsNullOrWhiteSpace(textContent.Text))
+                            {
+                                description = System.Net.WebUtility.HtmlDecode(textContent.Text).Trim();
+                            }
+                            else
+                            {
+                                foreach (var ext in feedItem.ElementExtensions)
+                                {
+                                    try
+                                    {
+                                        var extObj = ext.GetObject<System.Xml.Linq.XElement>();
+                                        if (extObj != null)
+                                        {
+                                            var val = extObj.Value;
+                                            if (!string.IsNullOrWhiteSpace(val))
+                                            {
+                                                description = System.Net.WebUtility.HtmlDecode(val).Trim();
+                                                if (!string.IsNullOrEmpty(description))
+                                                    break;
+                                            }
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        _logger.LogError(ex.Message, "Unexpected error processing RSS for {SourceName}", ext);
+                                    }
+                                }
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(description))
+                            {
+                                description = StripHtml(description);
+                            }
+                        }
+                        catch
+                        {
+                            description = string.Empty;
+                        }
+
                         var newsDto = new NewsItemDto
                         {
                             Title = feedItem.Title.Text,
@@ -46,6 +94,7 @@ namespace MyNews.Api.Services
                             PublishedAt = feedItem.PublishDate.UtcDateTime,
                             SourceName = source.Name,
                             SourceUrl = source.Url,
+                            Description = description,
                             Summary = string.Empty,
                             Section = 0,
                             IsNew = false
@@ -67,6 +116,11 @@ namespace MyNews.Api.Services
             }
 
             return result;
+        }
+
+        private static string StripHtml(string input)
+        {
+            return System.Text.RegularExpressions.Regex.Replace(input, "<.*?>", string.Empty);
         }
     }
 }
