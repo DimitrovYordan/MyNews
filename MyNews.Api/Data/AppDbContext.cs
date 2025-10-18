@@ -15,7 +15,7 @@ namespace MyNews.Api.Data
         public DbSet<Source> Sources { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<UserNewsRead> UserNewsReads { get; set; }
-        public DbSet<UserSectionPreference> UserSectionPreferences { get; set; }
+        public DbSet<UserPreferences> UserPreferences { get; set; }
         public DbSet<NewsTranslation> NewsTranslations { get; set; }
 
         // Seed initial data
@@ -28,15 +28,20 @@ namespace MyNews.Api.Data
             modelBuilder.Entity<NewsItem>().ToTable("NewsItems");
 
             // Relationships
-            modelBuilder.Entity<UserSectionPreference>()
+            modelBuilder.Entity<UserPreferences>()
                 .HasKey(p => new { p.UserId, p.SectionType });
 
-            modelBuilder.Entity<UserSectionPreference>()
+            modelBuilder.Entity<UserPreferences>()
+                .HasIndex(p => new { p.UserId, p.SourceId })
+                .IsUnique()
+                .HasFilter("[SourceId] IS NOT NULL");
+
+            modelBuilder.Entity<UserPreferences>()
                 .HasOne(p => p.User)
                 .WithMany(u => u.SectionPreferences)
                 .HasForeignKey(p => p.UserId);
 
-            modelBuilder.Entity<UserSectionPreference>()
+            modelBuilder.Entity<UserPreferences>()
                 .Property(p => p.SectionType)
                 .HasConversion<int>();
 

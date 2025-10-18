@@ -89,13 +89,13 @@ namespace MyNews.Api.Background
                 .Select(u => u.Id)
                 .ToListAsync(cancellationToken);
 
-            var oldPreferences = await appDbContext.UserSectionPreferences
+            var oldPreferences = await appDbContext.UserPreferences
                 .Where(p => deletedUserIds.Contains(p.UserId))
                 .ToListAsync(cancellationToken);
 
             if (oldPreferences.Any())
             {
-                appDbContext.UserSectionPreferences.RemoveRange(oldPreferences);
+                appDbContext.UserPreferences.RemoveRange(oldPreferences);
                 await appDbContext.SaveChangesAsync(cancellationToken);
 
                 _logger.LogInformation(

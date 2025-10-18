@@ -48,6 +48,28 @@ namespace MyNews.Api.Controllers
             return Ok(new { message = "Sections updated." });
         }
 
+        [HttpGet("sources")]
+        public async Task<IActionResult> GetSelectedSources()
+        {
+            var userId = GetUserId();
+            if (userId == null)
+                return Unauthorized();
+
+            var sources = await _userPreferencesService.GetSelectedSourcesAsync(userId.Value);
+            return Ok(sources);
+        }
+
+        [HttpPost("sources")]
+        public async Task<IActionResult> UpdateSources([FromBody] List<int> sourceIds)
+        {
+            var userId = GetUserId();
+            if (userId == null)
+                return Unauthorized();
+
+            await _userPreferencesService.UpdateSourcesAsync(userId.Value, sourceIds);
+            return Ok(new { message = "Sources updated." });
+        }
+
         private Guid? GetUserId()
         {
             var claim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

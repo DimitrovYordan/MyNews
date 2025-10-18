@@ -7,5 +7,9 @@ namespace MyNews.Api.Interfaces
         Task<IEnumerable<SectionType>> GetSelectedSectionsAsync(Guid guid);
 
         Task UpdateSectionsAsync(Guid userId, List<SectionType> sectionIds);
+
+        Task<IEnumerable<int>> GetSelectedSourcesAsync(Guid userId);
+
+        Task UpdateSourcesAsync(Guid userId, List<int> sourceIds);
     }
 }

@@ -2,13 +2,15 @@
 
 namespace MyNews.Api.Models
 {
-    public class UserSectionPreference
+    public class UserPreferences
     {
         public Guid UserId { get; set; }
 
         public User User { get; set; }
 
-        public SectionType SectionType { get; set; }
+        public SectionType? SectionType { get; set; }
+
+        public int? SourceId { get; set; }
 
         public bool IsSelected { get; set; } = true;
 
