@@ -33,6 +33,8 @@ namespace MyNews.Api.Models
 
         public ICollection<UserNewsRead> NewsReads { get; set; } = new List<UserNewsRead>();
 
-        public ICollection<UserPreferences> SectionPreferences { get; set; } = new List<UserPreferences>();
+        public ICollection<UserSectionPreference> UserSectionPreference { get; set; } = new List<UserSectionPreference>();
+
+        public ICollection<UserSourcePreferences> UserSourcePreferences { get; set; } = new List<UserSourcePreferences>();
     }
 }

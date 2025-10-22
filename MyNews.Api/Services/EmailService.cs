@@ -74,7 +74,9 @@ namespace MyNews.Api.Services
                 From = new MailAddress(_configuration["Email:FromAddress"], "My News Contact Form"),
                 Subject = $"📩 Contact Form: {title}",
                 Body = body,
-                IsBodyHtml = false
+                IsBodyHtml = false,
+                BodyEncoding = System.Text.Encoding.UTF8,
+                SubjectEncoding = System.Text.Encoding.UTF8
             };
 
             message.To.Add(_configuration["Email:FromAddress"]);

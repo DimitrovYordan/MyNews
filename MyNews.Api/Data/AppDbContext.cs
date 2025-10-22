@@ -15,7 +15,8 @@ namespace MyNews.Api.Data
         public DbSet<Source> Sources { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<UserNewsRead> UserNewsReads { get; set; }
-        public DbSet<UserPreferences> UserPreferences { get; set; }
+        public DbSet<UserSectionPreference> UserSectionPreference { get; set; }
+        public DbSet<UserSourcePreferences> UserSourcePreferences { get; set; }
         public DbSet<NewsTranslation> NewsTranslations { get; set; }
 
         // Seed initial data
@@ -28,22 +29,25 @@ namespace MyNews.Api.Data
             modelBuilder.Entity<NewsItem>().ToTable("NewsItems");
 
             // Relationships
-            modelBuilder.Entity<UserPreferences>()
+            modelBuilder.Entity<UserSectionPreference>()
                 .HasKey(p => new { p.UserId, p.SectionType });
 
-            modelBuilder.Entity<UserPreferences>()
-                .HasIndex(p => new { p.UserId, p.SourceId })
-                .IsUnique()
-                .HasFilter("[SourceId] IS NOT NULL");
-
-            modelBuilder.Entity<UserPreferences>()
+            modelBuilder.Entity<UserSectionPreference>()
                 .HasOne(p => p.User)
-                .WithMany(u => u.SectionPreferences)
+                .WithMany(u => u.UserSectionPreference)
                 .HasForeignKey(p => p.UserId);
 
-            modelBuilder.Entity<UserPreferences>()
+            modelBuilder.Entity<UserSectionPreference>()
                 .Property(p => p.SectionType)
                 .HasConversion<int>();
+
+            modelBuilder.Entity<UserSourcePreferences>()
+                .HasKey(p => new { p.UserId, p.SourceId });
+
+            modelBuilder.Entity<UserSourcePreferences>()
+                .HasOne(p => p.User)
+                .WithMany(u => u.UserSourcePreferences)
+                .HasForeignKey(p => p.UserId);
 
             modelBuilder.Entity<UserNewsRead>()
                 .HasKey(unr => new { unr.UserId, unr.NewsItemId });
@@ -58,6 +62,16 @@ namespace MyNews.Api.Data
                 .WithMany(n => n.UserReads)
                 .HasForeignKey(unr => unr.NewsItemId);
 
+            modelBuilder.Entity<NewsTranslation>()
+                .HasOne(nt => nt.NewsItem)
+                .WithMany(n => n.Translations)
+                .HasForeignKey(nt => nt.NewsItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<NewsTranslation>()
+                .HasIndex(nt => new { nt.NewsItemId, nt.LanguageCode })
+                .IsUnique();
+
             modelBuilder.Entity<NewsItem>()
                 .HasOne(n => n.Source)
                 .WithMany(s => s.NewsItems)
@@ -71,16 +85,6 @@ namespace MyNews.Api.Data
             modelBuilder.Entity<NewsItem>()
                 .Property(n => n.Section)
                 .HasConversion<int>();
-
-            modelBuilder.Entity<NewsTranslation>()
-                .HasOne(nt => nt.NewsItem)
-                .WithMany(n => n.Translations)
-                .HasForeignKey(nt => nt.NewsItemId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<NewsTranslation>()
-                .HasIndex(nt => new { nt.NewsItemId, nt.LanguageCode })
-                .IsUnique();
 
             modelBuilder.Entity<NewsItem>()
                 .HasIndex(n => new { n.Title, n.SourceId })

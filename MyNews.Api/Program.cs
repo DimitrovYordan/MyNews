@@ -56,10 +56,8 @@ builder.Services.AddScoped<IChatGptService, ChatGptService>();
 
 builder.Services.AddHttpClient<IRssService, RssService>();
 
-builder.Services.AddHostedService<RssBackgroundService>();
+//builder.Services.AddHostedService<RssBackgroundService>();
 builder.Services.AddHostedService<CleanupBackgroundService>();
-
-builder.Services.AddApplicationInsightsTelemetry();
 
 builder.Services.AddCors(options =>
 {

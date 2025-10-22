@@ -18,62 +18,57 @@ namespace MyNews.Api.Services
 
         public async Task<IEnumerable<SectionType>> GetSelectedSectionsAsync(Guid userId)
         {
-            return await _context.UserPreferences
-                .Where(p => p.UserId == userId && p.IsSelected && p.SectionType.HasValue)
-                .Select(p => p.SectionType.Value)
+            return await _context.UserSectionPreference
+                .Where(p => p.UserId == userId && p.IsSelected)
+                .Select(p => p.SectionType)
                 .ToListAsync();
         }
 
         public async Task UpdateSectionsAsync(Guid userId, List<SectionType> sectionIds)
         {
-            var existing = await _context.UserPreferences
+            var existing = await _context.UserSectionPreference
                 .Where(p => p.UserId == userId)
                 .ToListAsync();
 
-            _context.UserPreferences.RemoveRange(existing);
+            _context.UserSectionPreference.RemoveRange(existing);
 
-            foreach (var sectionId in sectionIds)
+            var newPreferences = sectionIds.Select(id => new UserSectionPreference
             {
-                _context.UserPreferences.Add(new UserPreferences
-                {
-                    UserId = userId,
-                    SectionType = sectionId,
-                    IsSelected = true,
-                    UpdatedAt = DateTime.UtcNow
-                });
-            }
+                UserId = userId,
+                SectionType = id,
+                IsSelected = true,
+                UpdatedAt = DateTime.UtcNow
+            });
 
+            await _context.UserSectionPreference.AddRangeAsync(newPreferences);
             await _context.SaveChangesAsync();
         }
 
         public async Task<IEnumerable<int>> GetSelectedSourcesAsync(Guid userId)
         {
-            return await _context.UserPreferences
-                .Where(p => p.UserId == userId && p.IsSelected && p.SourceId != null)
-                .Select(p => p.SourceId!.Value)
+            return await _context.UserSourcePreferences
+                .Where(p => p.UserId == userId && p.IsSelected)
+                .Select(p => p.SourceId)
                 .ToListAsync();
         }
 
         public async Task UpdateSourcesAsync(Guid userId, List<int> sourceIds)
         {
-            var existing = await _context.UserPreferences
-                .Where(p => p.UserId == userId && p.SourceId != null)
+            var existing = await _context.UserSourcePreferences
+                .Where(p => p.UserId == userId)
                 .ToListAsync();
 
-            _context.UserPreferences.RemoveRange(existing);
+            _context.UserSourcePreferences.RemoveRange(existing);
 
-            foreach (var sourceId in sourceIds)
+            var newPreferences = sourceIds.Select(id => new UserSourcePreferences
             {
-                _context.UserPreferences.Add(new UserPreferences
-                {
-                    UserId = userId,
-                    SectionType = null,
-                    SourceId = sourceId,
-                    IsSelected = true,
-                    UpdatedAt = DateTime.UtcNow
-                });
-            }
+                UserId = userId,
+                SourceId = id,
+                IsSelected = true,
+                UpdatedAt = DateTime.UtcNow
+            });
 
+            await _context.UserSourcePreferences.AddRangeAsync(newPreferences);
             await _context.SaveChangesAsync();
         }
     }

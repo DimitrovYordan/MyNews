@@ -17,12 +17,42 @@ namespace MyNews.Api.Services
             _context = context;
         }
 
-        public async Task<IEnumerable<NewsItem>> GetNewsAsync(List<int> sectionsIds)
+        public async Task<List<NewsItemDto>> GetNewsBySectionsAndSourcesAsync(IEnumerable<int> sectionIds, IEnumerable<int> sourceIds)
         {
-            return await _context.NewsItems
-                .Where(n => sectionsIds.Count == 0 || sectionsIds.Contains((int)n.Section))
+            var query = _context.NewsItems
+                .Include(n => n.Source)
+                .Include(n => n.Translations)
+                .AsQueryable();
+
+            if (sectionIds != null && sectionIds.Any())
+                query = query.Where(n => sectionIds.Contains((int)n.Section));
+
+            if (sourceIds != null && sourceIds.Any())
+                query = query.Where(n => sourceIds.Contains(n.SourceId));
+
+            var news = await query
                 .OrderByDescending(n => n.PublishedAt)
                 .ToListAsync();
+
+            return news.Select(n => new NewsItemDto
+            {
+                Id = n.Id,
+                Section = n.Section,
+                Title = n.Title,
+                Summary = n.Summary ?? string.Empty,
+                PublishedAt = n.PublishedAt,
+                Link = n.Link,
+                SourceName = n.Source?.Name ?? string.Empty,
+                SourceUrl = n.Source?.Url ?? string.Empty,
+                IsNew = false,
+                IsRead = false,
+                Translations = n.Translations?.Select(t => new NewsTranslationDto
+                {
+                    LanguageCode = t.LanguageCode,
+                    Title = t.Title,
+                    Summary = t.Summary
+                }).ToList()
+            }).ToList();
         }
 
         public async Task<IEnumerable<SectionWithNewsDto>> GetNewsBySectionsAsync(List<SectionType> sectionIds, Guid userId)
@@ -73,19 +103,6 @@ namespace MyNews.Api.Services
                 .ToList();
 
             return result;
-        }
-
-        public async Task<bool> ExistsByTitleAndSourceAsync(string title, int sourceId)
-        {
-            return await _context.NewsItems.AnyAsync(n => n.Title == title && n.SourceId == sourceId);
-        }
-
-        public async Task<NewsItem> AddNewsItemAsync(NewsItem newsItem)
-        {
-            _context.NewsItems.Add(newsItem);
-            await _context.SaveChangesAsync();
-
-            return newsItem;
         }
 
         public async Task MarkAsReadAsync(Guid userId, Guid newsItemId)

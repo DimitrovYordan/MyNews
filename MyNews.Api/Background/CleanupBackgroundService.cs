@@ -79,7 +79,7 @@ namespace MyNews.Api.Background
         }
 
         /// <summary>
-        /// Delete UserSectionPreferences of users marked as deleted.
+        /// Delete all user preference data (sections and sources) for users marked as deleted.
         /// </summary>
         private async Task CleanupDeletedUsersPreferencesAsync(AppDbContext appDbContext, CancellationToken cancellationToken)
         {
@@ -89,19 +89,36 @@ namespace MyNews.Api.Background
                 .Select(u => u.Id)
                 .ToListAsync(cancellationToken);
 
-            var oldPreferences = await appDbContext.UserPreferences
+            if (!deletedUserIds.Any())
+                return;
+
+            var oldSectionPreferences = await appDbContext.UserSectionPreference
                 .Where(p => deletedUserIds.Contains(p.UserId))
                 .ToListAsync(cancellationToken);
 
-            if (oldPreferences.Any())
+            if (oldSectionPreferences.Any())
             {
-                appDbContext.UserPreferences.RemoveRange(oldPreferences);
-                await appDbContext.SaveChangesAsync(cancellationToken);
+                appDbContext.UserSectionPreference.RemoveRange(oldSectionPreferences);
 
                 _logger.LogInformation(
                     "Deleted {Count} UserSectionPreferences for soft-deleted users at {Time}",
-                    oldPreferences.Count, DateTime.UtcNow);
+                    oldSectionPreferences.Count, DateTime.UtcNow);
             }
+
+            var oldSourcePreferences = await appDbContext.UserSourcePreferences
+                .Where(p => deletedUserIds.Contains(p.UserId))
+                .ToListAsync(cancellationToken);
+
+            if (oldSourcePreferences.Any())
+            {
+                appDbContext.UserSourcePreferences.RemoveRange(oldSourcePreferences);
+                _logger.LogInformation(
+                    "Deleted {Count} UserSourcePreferences for soft-deleted users at {Time}",
+                    oldSourcePreferences.Count, DateTime.UtcNow);
+            }
+
+            if (oldSectionPreferences.Any() || oldSourcePreferences.Any())
+                await appDbContext.SaveChangesAsync(cancellationToken);
         }
 
         /// <summary>

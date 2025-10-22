@@ -5,6 +5,7 @@ using System.Security.Claims;
 
 using MyNews.Api.Enums;
 using MyNews.Api.Interfaces;
+using MyNews.Api.DTOs;
 
 namespace MyNews.Api.Controllers
 {
@@ -16,21 +17,55 @@ namespace MyNews.Api.Controllers
         private readonly INewsService _newsService;
         private readonly IRssService _rssService;
         private readonly ISourceService _sourceService;
+        private readonly IUserPreferencesService _userPreferencesService;
 
-        public NewsController(INewsService newsService, IRssService rssService, ISourceService sourceService)
+        public NewsController(INewsService newsService, IRssService rssService, ISourceService sourceService, IUserPreferencesService userPreferencesService)
         {
             _newsService = newsService;
             _rssService = rssService;
             _sourceService = sourceService;
+            _userPreferencesService = userPreferencesService;
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetNews([FromQuery] List<int> sectionsIds)
+        public async Task<IActionResult> GetNews([FromQuery] List<int> sectionIds, [FromQuery] List<int> sourceIds)
         {
-            // Fetch all news items ordered by date descending
-            var news = await _newsService.GetNewsAsync(sectionsIds);
+            var userId = GetUserId();
+            if (userId == null)
+                return Unauthorized();
 
-            return Ok(news);
+            var selectedSourceIds = (sourceIds != null && sourceIds.Any())
+                ? sourceIds
+                : (await _userPreferencesService.GetSelectedSourcesAsync(userId.Value))
+                    .Select(s => (int)s)
+                    .ToList();
+
+            var selectedSectionIds = (sectionIds != null && sectionIds.Any())
+                ? sectionIds
+                : (await _userPreferencesService.GetSelectedSectionsAsync(userId.Value))
+                    .Select(s => (int)s)
+                    .ToList();
+
+            var news = await _newsService.GetNewsBySectionsAndSourcesAsync(selectedSectionIds, selectedSourceIds);
+
+            var result = news.Select(n => new 
+            {
+                n.Id,
+                SectionId = (int)n.Section,
+                SectionName = n.Section.ToString(),
+                n.Title,
+                n.Description,
+                n.Summary,
+                n.PublishedAt,
+                n.Link,
+                n.SourceName,
+                n.SourceUrl,
+                n.IsNew,
+                n.IsRead,
+                n.Translations
+            });
+
+            return Ok(result);
         }
 
         [HttpPost("by-sections")]
@@ -49,7 +84,7 @@ namespace MyNews.Api.Controllers
         [HttpGet("rss")]
         public async Task<IActionResult> GetRssNews()
         {
-            var sources = await _sourceService.GetAllAsync();
+            var sources = await _sourceService.GetAllSources();
 
             var news = await _rssService.FetchAndProcessRssFeedAsync(sources);
 
@@ -76,6 +111,14 @@ namespace MyNews.Api.Controllers
 
             await _newsService.MarkLinkClickedAsync(userId, newsItemId);
             return Ok();
+        }
+
+        private Guid? GetUserId()
+        {
+            var claim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (Guid.TryParse(claim, out var userId))
+                return userId;
+            return null;
         }
     }
 }
