@@ -1,32 +1,35 @@
-@if (showSections && !isLoading) {
+@if (!isLoading) {
 <div class="selection-wrapper">
     <div class="selection-container">
         <button type="button" class="select-all-btn" [class.select-mode]="!isAllSelected"
             [class.unselect-mode]="isAllSelected" (click)="toggleAll()">
-            {{ (isAllSelected ? 'BUTTON_UNSELECT' : 'BUTTON_SELECT_ALL') | translate}}
+            {{ selectAllButtonText }}
         </button>
 
         <form>
             <div class="selection-list-container">
-                @for (section of sections; track section.id) {
-                <div class="selection-card" (click)="toggleSelection(section.id)">
+                @for (source of sources; track source.id) {
+                <div class="selection-card" (click)="toggleSelection(source.id)">
                     <label>
-                        <input type="checkbox" [checked]="selectedSections.includes(section.id)"
+                        <input type="checkbox" [checked]="selectedSources.includes(source.id)"
                             (click)="$event.stopPropagation()" />
-                        {{ section.displayName ?? section.name }}
+
+                        <span class="source-text">
+                            {{ source.name }}
+                        </span>
                     </label>
                 </div>
                 }
             </div>
         </form>
 
-        <button type="button" class="save-btn" (click)="saveSelection()" [disabled]="selectedSections.length === 0">
-            {{'BUTTON_SAVE' | translate}}
+        <button type="button" class="save-btn" (click)="saveSelection()" [disabled]="selectedSources.length === 0">
+            Save
         </button>
     </div>
 </div>
 }
 
 <app-modal [show]="showModal" [type]="modalType" [message]="modalMessage | translate" [showCancel]="false"
-    [autoClose]="true" (closed)="closeModal($event)">
+    [autoClose]="true" (closed)="closeModal()">
 </app-modal>

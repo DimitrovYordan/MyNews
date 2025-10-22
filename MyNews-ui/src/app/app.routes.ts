@@ -10,6 +10,7 @@ import { SignupComponent } from './auth/signup/signup.component';
 import { SettingsComponent } from './auth/settings/settings.component';
 import { ForgotPasswordComponent } from './auth/forgot-password/forgot-password.component';
 import { ContactComponent } from './components/contact/contact.component';
+import { SourceSelectComponent } from './components/source-select/source-select.component';
 
 export const appRoutes: Routes = [
   { path: '', component: HomeComponent, canActivate: [AuthGuard] },
@@ -18,6 +19,7 @@ export const appRoutes: Routes = [
   { path: 'forgot-password', component: ForgotPasswordComponent, canActivate: [AuthGuard] },
   { path: 'reset-password', component: ResetPasswordComponent, canActivate: [AuthGuard] },
 
+  { path: 'sources', component: SourceSelectComponent, canActivate: [AuthGuard] },
   { path: 'sections', component: SectionSelectComponent, canActivate: [AuthGuard] },
   { path: 'news', component: NewsListComponent, canActivate: [AuthGuard] },
   { path: 'settings', component: SettingsComponent, canActivate: [AuthGuard] },

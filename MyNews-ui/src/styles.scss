@@ -82,16 +82,52 @@ body {
 }
 
 /* ===========================
-   Section Selection Page
+   Section / Source Selection Page
    =========================== */
-.section-selection {
-    max-width: 1000px;
-    margin: 0 auto;
+.selection-wrapper {
+    display: flex;
+    justify-content: center;
     padding: 20px;
+}
+
+.selection-container {
+    width: 100%;
+    max-width: 1200px;
+}
+
+.selection-list-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+}
+
+.selection-card {
+    height: 70px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    cursor: pointer;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-align: left;
+    overflow: hidden;
+}
+
+.selection-card label {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    white-space: normal;
+    word-wrap: break-word;
 }
 
 .select-all-btn {
     padding: 10px 20px;
+    margin-bottom: 10px;
     border: none;
     border-radius: 6px;
     font-size: 1rem;
@@ -99,10 +135,6 @@ body {
     background-color: #007bff;
     color: white;
     transition: background 0.2s;
-}
-
-.select-all-btn:hover {
-    background-color: #0056b3;
 }
 
 /* Blue when "Select all" */
@@ -115,24 +147,6 @@ body {
 .select-all-btn.unselect-mode {
     background-color: #dc3545;
     color: white;
-}
-
-/* Section checkboxes grid */
-.section-selection form {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 15px;
-    margin: 20px 0;
-}
-
-.section-card {
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 15px;
-    text-align: left;
-    cursor: pointer;
-    transition: 0.2s ease;
 }
 
 .section-card:hover {

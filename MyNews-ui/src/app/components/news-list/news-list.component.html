@@ -1,5 +1,5 @@
 <div class="sections-container">
-  
+
   <div class="top-bar">
     <button type="button" class="back-btn" (click)="goBack()">{{'BUTTON_BACK' | translate}}</button>
 
@@ -19,6 +19,12 @@
   </div>
 
   <div class="sections-list" cdkDropList (cdkDropListDropped)="dropSection($event)">
+    @if (!isLoading && (!sectionsWithNews || sectionsWithNews.length === 0)) {
+    <div class="no-news-message">
+      <p>За избраните секции и източници в момента няма новини за показване.</p>
+    </div>
+    }
+
     @for (section of sectionsWithNews; track section.sectionId) {
     <div class="section-bubble" cdkDrag>
       <h2>
@@ -26,13 +32,13 @@
           ☰
           <span class="tooltip-text">{{'REORDER_SECTIONS' | translate}}</span>
         </span>
-        {{ sectionName.formatSectionName(section.sectionName) }}
+        {{ namesUtilsService.formatSectionName(section.sectionName) }}
       </h2>
 
       <div class="source-container">
         @for (source of section.groupedNews; track source.key) {
         <div class="source-bubble" [class.selected]="source.isOpen" (click)="toggleSource(section.sectionId, source)">
-          <span class="domain">{{ sectionName.getDomain(source.key) }}</span>
+          <span class="domain">{{ namesUtilsService.getDomain(source.key) }}</span>
           <span class="count-news">{{ getFilteredItems(source).count }}</span>
         </div>
 
@@ -52,7 +58,8 @@
             </div>
             @if (source.openItemId === item.id) {
             <p class="news-content">{{ getSummary(item) }}</p>
-            <a [href]="item.link" target="_blank" (click)="onArticleLinkClick($event, item)">{{'FULL_ARTICLE' | translate}}</a>
+            <a [href]="item.link" target="_blank" (click)="onArticleLinkClick($event, item)">{{'FULL_ARTICLE' |
+              translate}}</a>
             }
           </li>
           }
@@ -72,7 +79,8 @@
             </div>
             @if (source.openItemId === item.id) {
             <p class="news-content">{{ getSummary(item) }}</p>
-            <a [href]="item.link" target="_blank" (click)="onArticleLinkClick($event, item)">{{'FULL_ARTICLE' | translate}}</a>
+            <a [href]="item.link" target="_blank" (click)="onArticleLinkClick($event, item)">{{'FULL_ARTICLE' |
+              translate}}</a>
             }
           </li>
           }

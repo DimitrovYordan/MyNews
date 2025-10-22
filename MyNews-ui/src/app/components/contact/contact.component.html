@@ -21,13 +21,13 @@
 
         <button type="submit">{{'BUTTON_SEND' | translate}}</button>
     </form>
-
-    @if(showModal) {
-    <app-modal 
-        [show]="showModal" 
-        [type]="modalType" 
-        [message]="modalMessage" 
-        (closed)="showModal = false">
-    </app-modal>
-    }
 </div>
+
+<app-modal 
+  [show]="showModal" 
+  [type]="modalType" 
+  [message]="modalMessage | translate"
+  [showCancel]="false"
+  [autoClose]="true"
+  (closed)="closeModal($event)">
+</app-modal>

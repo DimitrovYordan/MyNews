@@ -3,7 +3,7 @@ import { Injectable } from "@angular/core";
 @Injectable({
     providedIn: 'root'
 })
-export class SectionsNamesUtilsService {
+export class NamesUtilsService {
 
     formatSectionName(name: string | null | undefined): string {
         if (!name) {

@@ -1,11 +1,10 @@
-import { HttpClient } from "@angular/common/http";
+import { HttpClient, HttpParams } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 
 import { Observable } from "rxjs";
 
-import { NewsItem } from "../interfaces/news-item";
-import { SectionWithNews } from "../interfaces/section-with-news";
 import { environment } from "../../environments/environment";
+import { NewsItem } from "../interfaces/news-item";
 
 @Injectable({
     providedIn: 'root'
@@ -13,13 +12,14 @@ import { environment } from "../../environments/environment";
 export class NewsService {
     constructor(private http: HttpClient) { }
 
-    getAllNews(): Observable<NewsItem[]> {
-        return this.http.get<NewsItem[]>(`${environment.apiUrl}/news`);
-    }
-
-    getNewsBySections(sectionIds: number[]): Observable<SectionWithNews[]> {
-        return this.http.post<SectionWithNews[]>(`${environment.apiUrl}/api/news/by-sections`, sectionIds, {
-            headers: { 'Content-Type': 'application/json' }
+    getNews(sectionIds: number[], sourceIds: number[]): Observable<NewsItem[]> {
+        const params = new HttpParams({
+            fromObject: {
+                sectionIds: sectionIds.map(x => x.toString()),
+                sourceIds: sourceIds.map(x => x.toString())
+            }
         });
+        
+        return this.http.get<NewsItem[]>(`${environment.apiUrl}/api/news`, { params });
     }
 }

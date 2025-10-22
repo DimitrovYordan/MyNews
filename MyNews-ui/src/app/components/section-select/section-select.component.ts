@@ -5,9 +5,9 @@ import { Router } from "@angular/router";
 import { TranslateModule } from "@ngx-translate/core";
 
 import { SectionService } from "../../services/section.service";
-import { UserSectionService } from "../../services/user-section.service";
+import { UserPreferencesService } from "../../services/user-preferences.service";
 import { Section } from "../../interfaces/section";
-import { SectionsNamesUtilsService } from "../../shared/sections-names-utils.service";
+import { NamesUtilsService } from "../../shared/names-utils.service";
 import { ModalComponent } from "../../shared/modal/modal.component";
 import { AuthService } from "../../services/auth.service";
 
@@ -32,18 +32,18 @@ export class SectionSelectComponent implements OnInit {
     constructor(
         private authService: AuthService,
         private sectionService: SectionService,
-        private userSectionService: UserSectionService,
+        private userPreferencesService: UserPreferencesService,
         private router: Router,
-        private sectionName: SectionsNamesUtilsService
+        private namesUtilsService: NamesUtilsService
     ) { }
 
     ngOnInit(): void {
         this.sectionService.getSections().subscribe(data => {
             this.sections = data.map(s => ({
-                ...s, displayName: this.sectionName.formatSectionName(s.name)
+                ...s, displayName: this.namesUtilsService.formatSectionName(s.name)
             }));
 
-            this.userSectionService.getUserSections().subscribe(userSections => {
+            this.userPreferencesService.getUserSections().subscribe(userSections => {
                 this.selectedSections = userSections;
                 this.isAllSelected = this.selectedSections.length === this.sections.length;
             });
@@ -70,7 +70,7 @@ export class SectionSelectComponent implements OnInit {
     }
 
     saveSelection(): void {
-        this.userSectionService.saveUserSections(this.selectedSections).subscribe({
+        this.userPreferencesService.saveUserSections(this.selectedSections).subscribe({
             next: () => {
                 this.authService.hasSelectedSections$.next(true);
                 this.modalMessage = 'SUCCESS_SAVED_SECTIONS';

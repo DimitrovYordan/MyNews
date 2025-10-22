@@ -2,7 +2,7 @@ import { Pipe, PipeTransform } from "@angular/core";
 
 import { NewsItem } from "../interfaces/news-item";
 import { GroupedNews } from "../interfaces/grouped-news";
-import { SectionsNamesUtilsService } from "./sections-names-utils.service";
+import { NamesUtilsService } from "./names-utils.service";
 
 @Pipe({
     name: 'groupBy',
@@ -10,14 +10,14 @@ import { SectionsNamesUtilsService } from "./sections-names-utils.service";
 })
 export class GroupByPipe implements PipeTransform {
 
-    constructor(private sectionNameService: SectionsNamesUtilsService) { }
+    constructor(private namesUtilsService: NamesUtilsService) { }
 
     transform(items: NewsItem[] = [], field: keyof NewsItem): GroupedNews[] {
         const map = new Map<string, NewsItem[]>();
 
         items.forEach(item => {
             const raw = (item[field] ?? '') as unknown as string;
-            const key = this.sectionNameService.getDomain(raw);
+            const key = this.namesUtilsService.getDomain(raw);
 
             if (!map.has(key)) {
                 map.set(key, []);

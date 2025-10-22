@@ -18,12 +18,13 @@ import { AuthService } from '../../services/auth.service';
 })
 export class ContactComponent {
     contactForm: FormGroup;
+
     showModal: boolean = false;
     modalMessage: string = '';
     modalType: 'success' | 'error' = 'success';
 
     constructor(
-        private http: HttpClient,
+        // private http: HttpClient,
         private fb: FormBuilder,
         private contactService: ContactService,
         private authService: AuthService
@@ -52,8 +53,8 @@ export class ContactComponent {
         const userEmail = currentUser?.email || '';
 
         const payload = {
-            title: encodeURIComponent(this.contactForm.value.title),
-            message: encodeURIComponent(this.contactForm.value.message),
+            title: this.contactForm.value.title,
+            message: this.contactForm.value.message,
             fromEmail: userEmail
         };
 
@@ -72,7 +73,7 @@ export class ContactComponent {
         });
     }
 
-    closeModal() {
+    closeModal(confirmed: boolean) {
         this.showModal = false;
     }
 }

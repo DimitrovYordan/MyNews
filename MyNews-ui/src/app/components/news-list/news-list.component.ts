@@ -9,12 +9,12 @@ import { TranslateModule } from "@ngx-translate/core";
 
 import { NewsService } from "../../services/news.service";
 import { UserNewsService } from "../../services/user-news.service";
-import { UserSectionService } from "../../services/user-section.service";
+import { UserPreferencesService } from "../../services/user-preferences.service";
 import { SectionService } from "../../services/section.service";
 import { NewsItem } from "../../interfaces/news-item";
 import { SectionWithNews } from "../../interfaces/section-with-news";
 import { GroupedNews } from "../../interfaces/grouped-news";
-import { SectionsNamesUtilsService } from "../../shared/sections-names-utils.service";
+import { NamesUtilsService } from "../../shared/names-utils.service";
 import { LanguageService } from "../../services/language.service";
 
 @Component({
@@ -28,6 +28,7 @@ export class NewsListComponent implements OnInit {
     public sectionsWithNews: (SectionWithNews & { groupedNews: GroupedNews[] })[] = [];
     public news: NewsItem[] = [];
     public selectedSections: number[] = [];
+    public selectedSources: number[] = [];
     public errorMessage: string = '';
     public searchTerm: string = '';
     public isLoading: boolean = false;
@@ -36,9 +37,9 @@ export class NewsListComponent implements OnInit {
     constructor(
         private newsService: NewsService,
         private userNewsService: UserNewsService,
-        private userSectionService: UserSectionService,
+        private userPreferencesService: UserPreferencesService,
         private sectionService: SectionService,
-        public sectionName: SectionsNamesUtilsService,
+        public namesUtilsService: NamesUtilsService,
         private languageService: LanguageService,
         private router: Router
     ) { }
@@ -50,11 +51,7 @@ export class NewsListComponent implements OnInit {
         });
 
         this.isLoading = true;
-        this.userSectionService.getUserSections().subscribe(userSections => {
-            this.selectedSections = userSections;
-
-            this.fetchNews();
-        });
+        this.loadUserPreferencesAndFetchNews();
     }
 
     goBack() {
@@ -165,15 +162,42 @@ export class NewsListComponent implements OnInit {
         }
 
         const lower = this.searchTerm.toLowerCase();
-        const unread = source.unread.filter(item =>
-            item.title.toLowerCase().includes(lower) ||
-            item.summary.toLowerCase().includes(lower)
-        );
-        const read = source.read.filter(item =>
-            item.title.toLowerCase().includes(lower) ||
-            item.summary.toLowerCase().includes(lower)
-        );
+        const currentLang = this.languageService.getLanguage().toUpperCase();
 
+        const matcheSearch = (item: NewsItem): boolean => {
+            const currentTranslation = item.translations?.find(
+                t => t.languageCode?.toUpperCase() === currentLang
+            );
+            if (currentTranslation) {
+                if (
+                    (currentTranslation.title && currentTranslation.title.toLowerCase().includes(lower)) ||
+                    (currentTranslation.summary && currentTranslation.summary.toLowerCase().includes(lower))
+                ) {
+                    return true;
+                }
+            }
+
+            if (item.title.toLowerCase().includes(lower) ||
+                item.summary.toLowerCase().includes(lower)
+            ) {
+                return true;
+            }
+
+            if (item.translations && item.translations.length > 0) {
+                return item.translations.some(t =>
+                    (t.languageCode?.toUpperCase() !== currentLang) &&
+                    (
+                        (t.title && t.title.toLowerCase().includes(lower)) ||
+                        (t.summary && t.summary.toLowerCase().includes(lower))
+                    )
+                );
+            }
+
+            return false;
+        }
+
+        const unread = source.unread.filter(matcheSearch);
+        const read = source.read.filter(matcheSearch);
         const count = unread.length + read.length;
 
         return { unread, read, count };
@@ -190,48 +214,74 @@ export class NewsListComponent implements OnInit {
         return undefined;
     }
 
+    private loadUserPreferencesAndFetchNews(): void {
+        this.isLoading = true;
+
+        this.userPreferencesService.getUserSections().subscribe({
+            next: sections => {
+                this.selectedSections = sections;
+
+                this.userPreferencesService.getUserSources().subscribe({
+                    next: sources => {
+                        this.selectedSources = sources;
+                        this.fetchNews();
+                    },
+                    error: () => {
+                        this.errorMessage = 'Failed to load sources.';
+                        this.isLoading = false;
+                    }
+                });
+            },
+            error: () => {
+                this.errorMessage = 'Failed to load sections.';
+                this.isLoading = false;
+            }
+        });
+    }
+
     private fetchNews(): void {
         this.isLoading = true;
 
-        this.newsService.getNewsBySections(this.selectedSections).subscribe({
-            next: (data: SectionWithNews[]) => {
-                const selectedMap = new Map<number, SectionWithNews>();
-                data.forEach(section => selectedMap.set(section.sectionId, section));
+        this.newsService.getNews(this.selectedSections, this.selectedSources).subscribe({
+            next: (data: NewsItem[]) => {
+                const sectionMap = new Map<number, NewsItem[]>();
 
-                this.sectionsWithNews = this.selectedSections.map(sectionId => {
-                    const sectionData = selectedMap.get(sectionId);
-                    if (sectionData) {
-                        const groupedMap = sectionData.news.reduce((acc, item) => {
-                            if (!acc[item.sourceUrl]) acc[item.sourceUrl] = [];
-                            acc[item.sourceUrl].push(item);
-                            return acc;
-                        }, {} as Record<string, NewsItem[]>);
-
-                        const groupedNews: GroupedNews[] = Object.entries(groupedMap).map(([key, items]) => {
-                            const unread = items.filter(i => !i.isRead);
-                            const read = items.filter(i => i.isRead);
-                            return { key, unread, read, isOpen: false, openItemId: null };
-                        });
-
-                        return { ...sectionData, groupedNews };
-                    } else {
-                        const sectionFromAll = this.sectionService.allSections?.find(s => s.id === sectionId);
-                        const sectionNameFormatted = sectionFromAll
-                            ? this.sectionName.formatSectionName(sectionFromAll.name)
-                            : 'Unknown Section';
-
-                        return {
-                            sectionId,
-                            sectionName: sectionNameFormatted,
-                            news: [],
-                            groupedNews: []
-                        } as SectionWithNews & { groupedNews: GroupedNews[] };
+                data.forEach(item => {
+                    if (!sectionMap.has(item.sectionId)) {
+                        sectionMap.set(item.sectionId, []);
                     }
+                    sectionMap.get(item.sectionId)!.push(item);
+                });
+
+                this.sectionsWithNews = Array.from(sectionMap.entries()).map(([sectionId, items]) => {
+                    const groupedMap = items.reduce((acc, item) => {
+                        if (!acc[item.sourceName || item.sourceUrl]) acc[item.sourceName || item.sourceUrl] = [];
+                        acc[item.sourceName || item.sourceUrl].push(item);
+                        return acc;
+                    }, {} as Record<string, NewsItem[]>);
+
+                    const groupedNews: GroupedNews[] = Object.entries(groupedMap).map(([key, items]) => {
+                        const unread = items.filter(i => !i.isRead);
+                        const read = items.filter(i => i.isRead);
+                        return { key, unread, read, isOpen: false, openItemId: null };
+                    });
+
+                    const sectionFromAll = this.sectionService.allSections?.find(s => s.id === sectionId);
+                    const sectionNameFormatted = sectionFromAll
+                        ? this.namesUtilsService.formatSectionName(sectionFromAll.name)
+                        : 'Unknown Section';
+
+                    return {
+                        sectionId,
+                        sectionName: sectionNameFormatted,
+                        news: items,
+                        groupedNews
+                    } as SectionWithNews & { groupedNews: GroupedNews[] };
                 });
 
                 this.isLoading = false;
             },
-            error: () => {
+            error: (error) => {
                 this.errorMessage = 'Failed to load news.';
                 this.isLoading = false;
             }
