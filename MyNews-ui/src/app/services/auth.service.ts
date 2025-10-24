@@ -8,6 +8,7 @@ import { AuthRequest } from "../interfaces/auth-request";
 import { SignupData } from "../interfaces/signup";
 import { AuthResponse } from "../interfaces/auth-response";
 import { environment } from "../../environments/environment";
+import { UserService } from "./user.service";
 
 @Injectable({
     providedIn: 'root'
@@ -25,7 +26,11 @@ export class AuthService {
     public hasSelectedSections$ = new BehaviorSubject<boolean>(false);
     public currentUser$ = new BehaviorSubject<AuthResponse | null>(null);
 
-    constructor(private http: HttpClient, private router: Router) {
+    constructor(
+        private http: HttpClient, 
+        private router: Router, 
+        private userService: UserService
+    ) {
         const userData = sessionStorage.getItem(this.userKey);
         const token = sessionStorage.getItem(this.tokenKey);
         if (userData && token && !this.isTokenExpired(token)) {
@@ -43,6 +48,7 @@ export class AuthService {
         return this.http.post<AuthResponse>(`${environment.apiUrl}/api/auth/login`, credentials).pipe(
             tap(res => {
                 this.setSession(res);
+                this.checkOnboardingAndRedirect();
             })
         );
     }
@@ -180,5 +186,24 @@ export class AuthService {
         this.currentUser = user;
         this.isLoggedIn$.next(true);
         this.currentUser$.next(user);
+    }
+
+    private checkOnboardingAndRedirect(): void {
+        this.userService.getOnboardingStatus().subscribe({
+            next: (res) => {
+                console.log('checkOnboardingAndRedirect() response:', res);
+                if (res.isOnboardingComplete) {
+                    console.log('➡️ redirect to /news');
+                    this.router.navigate(['/news']);
+                } else {
+                    console.log('➡️ redirect to /sections');
+                    this.router.navigate(['/sections'], { queryParams: { onboarding: 'true' } });
+                }
+            },
+            error: (err) => {
+                console.error('❌ checkOnboardingAndRedirect error:', err);
+                this.router.navigate(['/news']);
+            }
+        });
     }
 }

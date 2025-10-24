@@ -1,5 +1,5 @@
 import { Component, OnInit } from "@angular/core";
-import { Router } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 
 import { TranslateModule } from "@ngx-translate/core";
 
@@ -9,6 +9,7 @@ import { UserPreferencesService } from "../../services/user-preferences.service"
 import { NamesUtilsService } from "../../shared/names-utils.service";
 import { AuthService } from "../../services/auth.service";
 import { ModalComponent } from "../../shared/modal/modal.component";
+import { UserService } from "../../services/user.service";
 
 @Component({
     selector: 'app-source-select',
@@ -21,6 +22,7 @@ export class SourceSelectComponent implements OnInit {
     selectedSources: number[] = [];
     isLoading: boolean = true;
     isAllSelected: boolean = false;
+    isOnboarding: boolean = false;
 
     showModal: boolean = false;
     modalMessage: string = '';
@@ -30,11 +32,17 @@ export class SourceSelectComponent implements OnInit {
         private authService: AuthService,
         private sourcesService: SourcesService,
         private userPreferencesService: UserPreferencesService,
+        private userService: UserService,
         private utils: NamesUtilsService,
-        private router: Router
+        private router: Router,
+        private route: ActivatedRoute
     ) { }
 
     ngOnInit(): void {
+        this.route.queryParams.subscribe(params => {
+            this.isOnboarding = params['onboarding'] === 'true';
+        });
+
         this.isLoading = true;
 
         this.sourcesService.getSources().subscribe(allSources => {
@@ -94,7 +102,13 @@ export class SourceSelectComponent implements OnInit {
     closeModal(): void {
         this.showModal = false;
         if (this.modalType === 'success') {
-            this.router.navigate(['/news']);
+            if (this.isOnboarding) {
+                this.userService.completeOnboarding().subscribe(() => {
+                    this.router.navigate(['/news']);
+                });
+            } else {
+                this.router.navigate(['/news']);
+            }
         }
     }
 }

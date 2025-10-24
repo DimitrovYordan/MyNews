@@ -27,6 +27,11 @@
 </div>
 }
 
-<app-modal [show]="showModal" [type]="modalType" [message]="modalMessage | translate" [showCancel]="false"
-    [autoClose]="true" (closed)="closeModal($event)">
+<app-modal 
+    [show]="showModal" 
+    [type]="modalType" 
+    [message]="modalMessage | translate" 
+    [showCancel]="false"
+    [autoClose]="true" 
+    (closed)="closeModal($event)">
 </app-modal>

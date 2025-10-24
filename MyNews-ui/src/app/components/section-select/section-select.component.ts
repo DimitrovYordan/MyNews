@@ -1,6 +1,6 @@
 import { Component, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
-import { Router } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 
 import { TranslateModule } from "@ngx-translate/core";
 
@@ -24,6 +24,7 @@ export class SectionSelectComponent implements OnInit {
     showSections: boolean = true;
     isLoading: boolean = false;
     isAllSelected: boolean = false;
+    isOnboarding: boolean = false;
 
     showModal: boolean = false;
     modalMessage: string = '';
@@ -34,10 +35,15 @@ export class SectionSelectComponent implements OnInit {
         private sectionService: SectionService,
         private userPreferencesService: UserPreferencesService,
         private router: Router,
-        private namesUtilsService: NamesUtilsService
+        private namesUtilsService: NamesUtilsService,
+        private route: ActivatedRoute
     ) { }
 
     ngOnInit(): void {
+        this.route.queryParams.subscribe(params => {
+            this.isOnboarding = params['onboarding'] === 'true';
+        })
+
         this.sectionService.getSections().subscribe(data => {
             this.sections = data.map(s => ({
                 ...s, displayName: this.namesUtilsService.formatSectionName(s.name)
@@ -107,7 +113,11 @@ export class SectionSelectComponent implements OnInit {
     closeModal(confirmed: boolean) {
         this.showModal = false;
         if (this.modalType === 'success') {
-            this.router.navigate(['/news']);
+            if (this.isOnboarding) {
+                this.router.navigate(['/sources'], { queryParams: { onboarding: 'true' } });
+            } else {
+                this.router.navigate(['/news']);
+            }
         }
     }
 }

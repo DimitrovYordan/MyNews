@@ -23,4 +23,12 @@ export class UserService {
     deleteAccount(): Observable<{ message: string }> {
         return this.http.delete<{ message: string }>(`${environment.apiUrl}/api/users/delete-profile`);
     }
+
+    getOnboardingStatus(): Observable<{ isOnboardingComplete: boolean }> {
+        return this.http.get<{ isOnboardingComplete: boolean }>(`${environment.apiUrl}/api/users/onboarding-status`);
+    }
+
+    completeOnboarding(): Observable<{ message: string }> {
+        return this.http.post<{ message: string }>(`${environment.apiUrl}/api/users/complete-onboarding`, {});
+    }
 }

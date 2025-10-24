@@ -77,8 +77,8 @@ export class SignupComponent {
   }
 
   goToSections() {
-    this.showWelcomeModal = false;
-    this.router.navigate(['/sections']);
+    this.showSignupSuccessModal = false;
+    this.router.navigate(['/sections'], { queryParams: { onboarding: 'true' } });
   }
 
   get emailErrors() {
