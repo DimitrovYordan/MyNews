@@ -27,8 +27,9 @@ jobs:
         working-directory: MyNews-ui
 
       - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4
+        uses: peaceiris/github-pages-deploy-action@v4
         with:
           branch: gh-pages
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           folder: dist/mynews-ui/browser
           clean: true
