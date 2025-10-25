@@ -95,5 +95,31 @@ namespace MyNews.Api.Services
 
             return "User deleted successfully.";
         }
+
+        public async Task<bool> MarkOnboardingCompletedAsync(Guid userId)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId && !u.IsDeleted);
+            if (user == null)
+            {
+                return false;
+            }
+
+            user.IsOnboardingCompleted = true;
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<bool?> GetOnboardingStatusAsync(Guid userId)
+        {
+            var user = await _context.Users.AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == userId && !u.IsDeleted);
+            if (user == null)
+            {
+                return null;
+            }
+
+            return user.IsOnboardingCompleted;
+        }
     }
 }

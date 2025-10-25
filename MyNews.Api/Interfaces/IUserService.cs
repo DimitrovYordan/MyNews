@@ -9,5 +9,9 @@ namespace MyNews.Api.Interfaces
         Task<string?> UpdateProfileAsync(Guid userId, UpdateUserDto updateUserDto);
 
         Task<string?> DeleteUserAsync(Guid userId);
+
+        Task<bool> MarkOnboardingCompletedAsync(Guid userId);
+
+        Task<bool?> GetOnboardingStatusAsync(Guid userId);
     }
 }

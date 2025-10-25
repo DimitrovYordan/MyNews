@@ -52,7 +52,7 @@ namespace MyNews.Api.Controllers
             {
                 return NotFound("User not found.");
             }
-            
+
             if (result == "Passwords do not match.")
             {
                 return BadRequest(result);
@@ -77,6 +77,42 @@ namespace MyNews.Api.Controllers
             }
 
             return Ok(new { message = result });
+        }
+
+        [HttpGet("onboarding-status")]
+        public async Task<IActionResult> GetOnboardingStatus()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized("Invalid user.");
+            }
+
+            var status = await _userService.GetOnboardingStatusAsync(userId);
+            if (status == null)
+            {
+                return NotFound("User not found.");
+            }
+
+            return Ok(new { isOnboardingComplete = status });
+        }
+
+        [HttpPost("complete-onboarding")]
+        public async Task<IActionResult> CompleteOnboarding()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized("Invalid user.");
+            }
+
+            var success = await _userService.MarkOnboardingCompletedAsync(userId);
+            if (!success)
+            {
+                return NotFound("User not found.");
+            }
+
+            return Ok(new { message = "Onboarding marked as completed." });
         }
     }
 }

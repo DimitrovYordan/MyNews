@@ -31,6 +31,8 @@ namespace MyNews.Api.Models
 
         public bool IsDeleted { get; set; } = false;
 
+        public bool IsOnboardingCompleted { get; set; } = false;
+
         public ICollection<UserNewsRead> NewsReads { get; set; } = new List<UserNewsRead>();
 
         public ICollection<UserSectionPreference> UserSectionPreference { get; set; } = new List<UserSectionPreference>();
