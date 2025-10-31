@@ -1,5 +1,4 @@
-﻿using MyNews.Api.Enums;
-using MyNews.Api.Models;
+﻿using MyNews.Api.Models;
 
 namespace MyNews.Api.Interfaces
 {

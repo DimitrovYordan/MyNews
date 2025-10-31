@@ -2,6 +2,9 @@
 
 namespace MyNews.Api.DTOs
 {
+    /// <summary>
+    /// Data transfer object representing a contact message sent from the client.
+    /// </summary>
     public class ContactMessageDto
     {
         [Required, MaxLength(50)]

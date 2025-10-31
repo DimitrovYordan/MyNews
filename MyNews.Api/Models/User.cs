@@ -2,6 +2,9 @@
 
 namespace MyNews.Api.Models
 {
+    /// <summary>
+    /// Represents an application user with authentication and profile information.
+    /// </summary>
     public class User
     {
         [Key]
@@ -31,6 +34,9 @@ namespace MyNews.Api.Models
 
         public bool IsDeleted { get; set; } = false;
 
+        /// <summary>
+        /// Indicates whether the user has completed the onboarding process.
+        /// </summary>
         public bool IsOnboardingCompleted { get; set; } = false;
 
         public ICollection<UserNewsRead> NewsReads { get; set; } = new List<UserNewsRead>();

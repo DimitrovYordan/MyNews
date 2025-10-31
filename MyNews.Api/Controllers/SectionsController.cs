@@ -8,6 +8,10 @@ using MyNews.Api.Interfaces;
 
 namespace MyNews.Api.Controllers
 {
+    /// <summary>
+    /// API controller responsible for returning available sections and marking which ones
+    /// are selected by the currently authenticated user.
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
@@ -22,6 +26,11 @@ namespace MyNews.Api.Controllers
             _userPreferencesService = userPreferencesService;
         }
 
+        /// <summary>
+        /// Returns all available news sections and indicates whether each section
+        /// is selected by the current user.
+        /// </summary>
+        /// <returns>A list of sections with selection flags.</returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<object>>> GetAllSections()
         {

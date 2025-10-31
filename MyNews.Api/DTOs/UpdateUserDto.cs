@@ -2,6 +2,9 @@
 
 namespace MyNews.Api.DTOs
 {
+    /// <summary>
+    /// Data transfer object for updating user's profile information.
+    /// </summary>
     public class UpdateUserDto
     {
         public string? FirstName { get; set; }

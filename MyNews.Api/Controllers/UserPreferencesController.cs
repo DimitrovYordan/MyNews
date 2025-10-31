@@ -8,6 +8,10 @@ using MyNews.Api.Interfaces;
 
 namespace MyNews.Api.Controllers
 {
+    /// <summary>
+    /// Provides API endpoints for managing and retrieving user preferences
+    /// related to sections and news sources.
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
@@ -15,11 +19,22 @@ namespace MyNews.Api.Controllers
     {
         private readonly IUserPreferencesService _userPreferencesService;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="UserPreferencesController"/> class.
+        /// </summary>
+        /// <param name="userPreferencesService">Service for managing user preferences.</param>
         public UserPreferencesController(IUserPreferencesService userPreferencesService)
         {
             _userPreferencesService = userPreferencesService;
         }
 
+        /// <summary>
+        /// Retrieves the currently selected sections for the authenticated user.
+        /// </summary>
+        /// <returns>
+        /// A collection of <see cref="SectionType"/> values representing the user’s selected sections.
+        /// Returns <see cref="UnauthorizedResult"/> if the user ID cannot be determined.
+        /// </returns>
         [HttpGet("sections")]
         public async Task<IActionResult> GetSelectedSections()
         {
@@ -34,6 +49,13 @@ namespace MyNews.Api.Controllers
             return Ok(sections);
         }
 
+        /// <summary>
+        /// Updates the user's preferred sections.
+        /// </summary>
+        /// <param name="sectionIds">A list of section identifiers to set as selected.</param>
+        /// <returns>
+        /// A success message or <see cref="UnauthorizedResult"/> if the user is not authenticated.
+        /// </returns>
         [HttpPost("sections")]
         public async Task<IActionResult> UpdateSections([FromBody] List<SectionType> sectionIds)
         {
@@ -48,6 +70,13 @@ namespace MyNews.Api.Controllers
             return Ok(new { message = "Sections updated." });
         }
 
+        /// <summary>
+        /// Retrieves the currently selected sources for the authenticated user.
+        /// </summary>
+        /// <returns>
+        /// A collection of source IDs representing the user’s selected news sources.
+        /// Returns <see cref="UnauthorizedResult"/> if the user ID cannot be determined.
+        /// </returns>
         [HttpGet("sources")]
         public async Task<IActionResult> GetSelectedSources()
         {
@@ -59,6 +88,13 @@ namespace MyNews.Api.Controllers
             return Ok(sources);
         }
 
+        /// <summary>
+        /// Updates the user's preferred news sources.
+        /// </summary>
+        /// <param name="sourceIds">A list of source IDs to set as selected.</param>
+        /// <returns>
+        /// A success message or <see cref="UnauthorizedResult"/> if the user is not authenticated.
+        /// </returns>
         [HttpPost("sources")]
         public async Task<IActionResult> UpdateSources([FromBody] List<int> sourceIds)
         {
@@ -70,9 +106,13 @@ namespace MyNews.Api.Controllers
             return Ok(new { message = "Sources updated." });
         }
 
+        /// <summary>
+        /// Extracts the authenticated user's unique identifier from the JWT claims.
+        /// </summary>
+        /// <returns>The user's ID as <see cref="Guid"/> or <c>null</c> if missing/invalid.</returns>
         private Guid? GetUserId()
         {
-            var claim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var claim = User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (Guid.TryParse(claim, out var userId))
             {
                 return userId;
