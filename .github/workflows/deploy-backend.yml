@@ -31,12 +31,13 @@ jobs:
       - name: Publish
         run: dotnet publish MyNews.Api/MyNews.Api.csproj --configuration Release --output ./publish --no-build
 
-      - name: Upload to VPS
-        uses: appleboy/scp-action@v0.1.7
+      - name: Upload to VPS via SFTP
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
-          host: ${{ secrets.VPS_HOST }}
+          server: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASS }}
-          source: "MyNews.Api/publish/*"
-          target: "C:/inetpub/api"
-          sftp_only: true
+          port: 22
+          local_path: ./publish/*
+          remote_path: C:/inetpub/api
+          sftpArgs: "-o StrictHostKeyChecking=no"
