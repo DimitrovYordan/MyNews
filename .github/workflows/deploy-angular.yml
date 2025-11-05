@@ -1,9 +1,13 @@
-name: Deploy Angular to GitHub Pages
+name: Deploy Angular Frontend to VPS
 
 on:
   push:
     branches:
       - main
+    paths:
+      - 'MyNews-ui/**'
+      - '.github/workflows/deploy-frontend.yml'
+  workflow_dispatch:
 
 jobs:
   build-deploy:
@@ -23,11 +27,14 @@ jobs:
         working-directory: MyNews-ui
 
       - name: Build Angular app
-        run: npm run build -- --configuration production --base-href "/MyNews-ui/"
+        run: npm run build -- --configuration production
         working-directory: MyNews-ui
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Upload build to VPS
+        uses: appleboy/scp-action@v0.1.7
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: MyNews-ui/dist/mynews-ui/browser
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASS }}
+          source: "MyNews-ui/dist/MyNews-ui/browser/*"
+          target: "C:/inetpub/web"

@@ -1,4 +1,4 @@
-name: Build and Deploy .NET Backend to Azure Web App
+name: Deploy .NET Backend to VPS
 
 on:
   push:
@@ -15,7 +15,7 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
@@ -29,11 +29,13 @@ jobs:
         run: dotnet build MyNews.Api/MyNews.Api.csproj --configuration Release --no-restore
 
       - name: Publish
-        run: dotnet publish MyNews.Api/MyNews.Api.csproj --configuration Release --output ./MyNews.Api/publish --no-build
+        run: dotnet publish MyNews.Api/MyNews.Api.csproj --configuration Release --output ./publish --no-build
 
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v2
+      - name: Upload to VPS
+        uses: appleboy/scp-action@v0.1.7
         with:
-          app-name: 'shortglobenews-api'
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_BACKEND }}
-          package: './MyNews.Api/publish'
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASS }}
+          source: "MyNews.Api/publish/*"
+          target: "C:/inetpub/api"
