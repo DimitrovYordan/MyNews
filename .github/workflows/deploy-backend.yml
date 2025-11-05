@@ -54,5 +54,5 @@ jobs:
           password: ${{ secrets.VPS_PASS }}
           port: 22
           local_path: ./publish/*
-          remote_path: /inetpub/api
+          remote_path: /api
           sftpArgs: "-o StrictHostKeyChecking=no"
