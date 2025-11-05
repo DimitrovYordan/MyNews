@@ -112,16 +112,6 @@ namespace MyNews.Api.Data
                 new Source { Id = 17, Name = "Standart", Url = "https://www.standartnews.com/rss" },
                 new Source { Id = 18, Name = "Banker", Url = "https://banker.bg/feed/" },
 
-                new Source { Id = 1001, Name = "Offnews - Политика", Url = "https://feed.offnews.bg/rss/%D0%9F%D0%BE%D0%BB%D0%B8%D1%82%D0%B8%D0%BA%D0%B0_8" },
-                new Source { Id = 1002, Name = "Offnews - Общество", Url = "https://feed.offnews.bg/rss/%D0%9E%D0%B1%D1%89%D0%B5%D1%81%D1%82%D0%B2%D0%BE_4" },
-                new Source { Id = 1003, Name = "Offnews - Икономика", Url = "https://feed.offnews.bg/rss/%D0%98%D0%BA%D0%BE%D0%BD%D0%BE%D0%BC%D0%B8%D0%BA%D0%B0_59" },
-                new Source { Id = 1004, Name = "Offnews - Темида", Url = "https://feed.offnews.bg/rss/%D0%A2%D0%B5%D0%BC%D0%B8%D0%B4%D0%B0_18762" },
-                new Source { Id = 1005, Name = "Offnews - Инциденти", Url = "https://feed.offnews.bg/rss/%D0%98%D0%BD%D1%86%D0%B8%D0%B4%D0%B5%D0%BD%D1%82%D0%B8_6" },
-                new Source { Id = 1006, Name = "Offnews - Медии", Url = "https://feed.offnews.bg/rss/%D0%9C%D0%B5%D0%B4%D0%B8%D0%B8_73" },
-                new Source { Id = 1007, Name = "Offnews - Свят", Url = "https://feed.offnews.bg/rss/%D0%A1%D0%B2%D1%8F%D1%82%20_12" },
-                new Source { Id = 1008, Name = "Offnews - Туризъм", Url = "https://feed.offnews.bg/rss/%D0%A2%D1%83%D1%80%D0%B8%D0%B7%D1%8A%D0%BC_75" },
-                new Source { Id = 1009, Name = "Offnews - Здраве", Url = "https://feed.offnews.bg/rss/%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D0%B5_18753" },
-
                 // ========================
                 // Global / English
                 // ========================

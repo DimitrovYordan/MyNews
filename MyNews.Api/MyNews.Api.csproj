@@ -24,8 +24,5 @@
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
 		<PackageReference Include="System.ServiceModel.Syndication" Version="9.0.9" />
 	</ItemGroup>
-	<ItemGroup>
-		<Content Include="wwwroot\**" CopyToPublishDirectory="PreserveNewest" />
-	</ItemGroup>
 
 </Project>

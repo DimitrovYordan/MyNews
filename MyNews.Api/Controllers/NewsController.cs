@@ -56,7 +56,7 @@ namespace MyNews.Api.Controllers
                     .Select(s => (int)s)
                     .ToList();
 
-            var news = await _newsService.GetNewsBySectionsAndSourcesAsync(selectedSectionIds, selectedSourceIds);
+            var news = await _newsService.GetNewsBySectionsAndSourcesAsync(selectedSectionIds, selectedSourceIds, userId.Value);
 
             var result = news.Select(n => new 
             {

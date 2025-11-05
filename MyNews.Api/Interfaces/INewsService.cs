@@ -5,7 +5,7 @@ namespace MyNews.Api.Interfaces
 {
     public interface INewsService
     {
-        Task<List<NewsItemDto>> GetNewsBySectionsAndSourcesAsync(IEnumerable<int> sectionIds, IEnumerable<int> sourceIds);
+        Task<List<NewsItemDto>> GetNewsBySectionsAndSourcesAsync(IEnumerable<int> sectionIds, IEnumerable<int> sourceIds, Guid userId);
 
         Task<IEnumerable<SectionWithNewsDto>> GetNewsBySectionsAsync(List<SectionType> sectionIds, Guid userId);
 

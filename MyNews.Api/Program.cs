@@ -61,24 +61,13 @@ builder.Services.AddHostedService<CleanupBackgroundService>();
 
 builder.Services.AddCors(options =>
 {
-    if (builder.Environment.IsDevelopment())
+    options.AddPolicy("AllowAngular", policy =>
     {
-        options.AddPolicy("AllowAngular", policy =>
-        {
-            policy.WithOrigins("http://localhost:4200")
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
-        });
-    }
-    else
-    {
-        options.AddPolicy("AllowAngular", policy =>
-        {
-            policy.WithOrigins("https://www.shortglobenews.com/")
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
-        });
-    }
+        policy.WithOrigins("https://shortglobenews.com", "https://www.shortglobenews.com")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
 });
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -122,15 +111,34 @@ builder.Services.AddRateLimiter(options =>
 var app = builder.Build();
 
 // Configure Swagger for development
-if (app.Environment.IsDevelopment())
+app.Use(async (context, next) =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-else
+    if (context.Request.Path.StartsWithSegments("/swagger"))
+    {
+        // Basic Auth
+        var authHeader = context.Request.Headers["Authorization"].ToString();
+        var allowedUser = builder.Configuration["SwaggerAuth:Username"];
+        var allowedPassword = builder.Configuration["SwaggerAuth:Password"];
+        var encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{allowedUser}:{allowedPassword}"));
+
+        if (authHeader != $"Basic {encoded}")
+        {
+            context.Response.Headers["WWW-Authenticate"] = "Basic realm=\"Swagger UI\"";
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            await context.Response.WriteAsync("Unauthorized");
+            return;
+        }
+    }
+
+    await next();
+});
+
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseHsts();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "ShortGlobeNews API V1");
+    c.RoutePrefix = "swagger";
+});
 
 app.UseHttpsRedirection();
 app.Use(async (context, next) =>
@@ -148,8 +156,6 @@ app.Use(async (context, next) =>
     }
 });
 
-app.UseDefaultFiles();
-app.UseStaticFiles();
 app.UseRouting();
 
 app.UseCors("AllowAngular");
@@ -163,5 +169,4 @@ app.UseAuthorization();
 app.UseRateLimiter();
 
 app.MapControllers();
-app.MapFallbackToFile("index.html");
 app.Run();

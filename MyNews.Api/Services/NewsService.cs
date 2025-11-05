@@ -17,7 +17,7 @@ namespace MyNews.Api.Services
             _context = context;
         }
 
-        public async Task<List<NewsItemDto>> GetNewsBySectionsAndSourcesAsync(IEnumerable<int> sectionIds, IEnumerable<int> sourceIds)
+        public async Task<List<NewsItemDto>> GetNewsBySectionsAndSourcesAsync(IEnumerable<int> sectionIds, IEnumerable<int> sourceIds, Guid userId)
         {
             var query = _context.NewsItems
                 .Include(n => n.Source)
@@ -34,6 +34,11 @@ namespace MyNews.Api.Services
                 .OrderByDescending(n => n.PublishedAt)
                 .ToListAsync();
 
+            var readNewsIds = await _context.UserNewsReads
+                .Where(r => r.UserId == userId)
+                .Select(r => r.NewsItemId)
+                .ToListAsync();
+
             return news.Select(n => new NewsItemDto
             {
                 Id = n.Id,
@@ -44,8 +49,8 @@ namespace MyNews.Api.Services
                 Link = n.Link,
                 SourceName = n.Source?.Name ?? string.Empty,
                 SourceUrl = n.Source?.Url ?? string.Empty,
-                IsNew = false,
-                IsRead = false,
+                IsNew = !readNewsIds.Contains(n.Id),
+                IsRead = readNewsIds.Contains(n.Id),
                 Translations = n.Translations?.Select(t => new NewsTranslationDto
                 {
                     LanguageCode = t.LanguageCode,
