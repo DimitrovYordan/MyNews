@@ -39,3 +39,4 @@ jobs:
           password: ${{ secrets.VPS_PASS }}
           source: "MyNews.Api/publish/*"
           target: "C:/inetpub/api"
+          sftp_only: true
