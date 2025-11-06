@@ -24,8 +24,25 @@ jobs:
         working-directory: MyNews-ui
 
       - name: Build Angular app
-        run: npm run build -- --configuration production
+        run: npm run build -- --configuration production --base-href /
         working-directory: MyNews-ui
+
+      - name: Remove staticContent from web.config
+        run: |
+          pwsh -Command "
+            $path = 'MyNews-ui/dist/MyNews-ui/browser/web.config';
+            if (Test-Path $path) {
+              [xml]$xml = Get-Content $path;
+              $node = $xml.configuration.'system.webServer'.staticContent;
+              if ($node) {
+                $xml.configuration.'system.webServer'.RemoveChild($node) | Out-Null;
+                $xml.Save($path);
+                Write-Host 'Removed staticContent section.';
+              } else {
+                Write-Host 'No staticContent section found.';
+              }
+            }
+          "
 
       - name: Clean remote directory
         uses: appleboy/ssh-action@v1.0.0
