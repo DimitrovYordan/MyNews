@@ -30,11 +30,15 @@ jobs:
         run: npm run build -- --configuration production
         working-directory: MyNews-ui
 
-      - name: Upload build to VPS
-        uses: appleboy/scp-action@v0.1.7
+      - name: Upload Angular build to VPS
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
-          host: ${{ secrets.VPS_HOST }}
+          server: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASS }}
-          source: "MyNews-ui/dist/MyNews-ui/browser/*"
-          target: "C:/inetpub/web"
+          port: 22
+          local_path: ./MyNews-ui/dist/MyNews-ui/browser/*
+          remote_path: /web
+          delete_remote_files: true
+          sftpArgs: "-o StrictHostKeyChecking=no"
+          
