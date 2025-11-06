@@ -58,7 +58,7 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASS }}
           port: 22
-          local_path: ./publish/
+          local_path: ./publish/*
           remote_path: /api
           sftpArgs: "-o StrictHostKeyChecking=no"
           delete_remote_files: true
