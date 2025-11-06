@@ -1,4 +1,4 @@
-name: Deploy .NET Backend to VPS
+name: Deploy .NET Backend to Windows VPS
 
 on:
   push:
@@ -31,19 +31,24 @@ jobs:
       - name: Publish
         run: dotnet publish MyNews.Api/MyNews.Api.csproj --configuration Release --output ./publish --no-build
 
-      - name: Prepare remote directory
+      - name: Clean remote directory (Windows)
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASS }}
           port: 22
+          shell: powershell
+          script_stop: true
           script: |
-            echo "Creating/cleaning target directory..."
-            if (Test-Path "C:\inetpub\api") {
-                Remove-Item "C:\inetpub\api\*" -Recurse -Force
+            Write-Host "Cleaning target directory..."
+            $target = "C:\inetpub\api"
+            if (Test-Path $target) {
+              Get-ChildItem $target -Recurse -Force | Remove-Item -Recurse -Force
+              Write-Host "Cleaned existing contents."
             } else {
-                New-Item -ItemType Directory -Force -Path "C:\inetpub\api"
+              New-Item -ItemType Directory -Force -Path $target
+              Write-Host "Created target directory."
             }
 
       - name: Upload new files to VPS via SFTP
@@ -54,5 +59,5 @@ jobs:
           password: ${{ secrets.VPS_PASS }}
           port: 22
           local_path: ./publish/*
-          remote_path: /api
+          remote_path: /inetpub/api
           sftpArgs: "-o StrictHostKeyChecking=no"
