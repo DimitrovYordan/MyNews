@@ -62,3 +62,4 @@ jobs:
           remote_path: /api
           sftpArgs: "-o StrictHostKeyChecking=no"
           delete_remote_files: true
+          
