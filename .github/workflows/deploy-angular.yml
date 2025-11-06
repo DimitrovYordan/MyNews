@@ -30,6 +30,21 @@ jobs:
         run: npm run build -- --configuration production
         working-directory: MyNews-ui
 
+      - name: Clean remote directory
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASS }}
+          port: 22
+          script: |
+            echo "Cleaning C:\inetpub\web..."
+            if (Test-Path "C:\inetpub\web") {
+                Remove-Item "C:\inetpub\web\*" -Recurse -Force
+            } else {
+                New-Item -ItemType Directory -Force -Path "C:\inetpub\web"
+            }
+
       - name: Upload Angular build to VPS
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
@@ -39,6 +54,4 @@ jobs:
           port: 22
           local_path: ./MyNews-ui/dist/MyNews-ui/browser/*
           remote_path: /web
-          delete_remote_files: true
           sftpArgs: "-o StrictHostKeyChecking=no"
-          
