@@ -41,6 +41,10 @@ namespace MyNews.Api.Data
                 .Property(p => p.SectionType)
                 .HasConversion<int>();
 
+            modelBuilder.Entity<UserSectionPreference>()
+                .Property(p => p.OrderIndex)
+                .HasDefaultValue(0);
+
             modelBuilder.Entity<UserSourcePreferences>()
                 .HasKey(p => new { p.UserId, p.SourceId });
 

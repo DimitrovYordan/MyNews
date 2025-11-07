@@ -56,14 +56,17 @@ builder.Services.AddScoped<IChatGptService, ChatGptService>();
 
 builder.Services.AddHttpClient<IRssService, RssService>();
 
-//builder.Services.AddHostedService<RssBackgroundService>();
-builder.Services.AddHostedService<CleanupBackgroundService>();
+if (builder.Environment.IsProduction())
+{
+    builder.Services.AddHostedService<RssBackgroundService>();
+    builder.Services.AddHostedService<CleanupBackgroundService>();
+}
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular", policy =>
     {
-        policy.WithOrigins("https://shortglobenews.com", "https://www.shortglobenews.com")
+        policy.WithOrigins(builder.Configuration["FrontendUrl"])
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();

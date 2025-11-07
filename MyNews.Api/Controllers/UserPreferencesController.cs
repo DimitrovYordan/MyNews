@@ -71,6 +71,31 @@ namespace MyNews.Api.Controllers
         }
 
         /// <summary>
+        /// Updates the order of the user’s selected sections.
+        /// </summary>
+        /// <param name="sectionIds">
+        /// A list of section identifiers representing the new display order.
+        /// The order of the list corresponds to the desired order of sections on the frontend.
+        /// </param>
+        /// <returns>
+        /// Returns <see cref="OkResult"/> on success or <see cref="UnauthorizedResult"/> 
+        /// if the user’s identity cannot be determined.
+        /// </returns>
+        [HttpPost("update-sections-order")]
+        public async Task<IActionResult> UpdateSectionsOrder([FromBody] List<int> sectionIds)
+        {
+            var userId = GetUserId();
+            if (userId == null)
+                return Unauthorized();
+
+            await _userPreferencesService.UpdateSectionsOrderAsync(userId.Value, sectionIds);
+
+            var updatedSections = await _userPreferencesService.GetSelectedSectionsAsync(userId.Value);
+
+            return Ok(new { message = "Section order updated.", sections = updatedSections });
+        }
+
+        /// <summary>
         /// Retrieves the currently selected sources for the authenticated user.
         /// </summary>
         /// <returns>

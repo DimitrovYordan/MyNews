@@ -12,6 +12,8 @@ namespace MyNews.Api.Models
 
         public bool IsSelected { get; set; } = true;
 
+        public int OrderIndex { get; set; }
+
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }
 }

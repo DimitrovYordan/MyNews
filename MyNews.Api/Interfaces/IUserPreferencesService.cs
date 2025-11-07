@@ -8,6 +8,8 @@ namespace MyNews.Api.Interfaces
 
         Task UpdateSectionsAsync(Guid userId, List<SectionType> sectionIds);
 
+        Task UpdateSectionsOrderAsync(Guid userId, List<int> sectionIds);
+
         Task<IEnumerable<int>> GetSelectedSourcesAsync(Guid userId);
 
         Task UpdateSourcesAsync(Guid userId, List<int> sourceIds);

@@ -20,6 +20,7 @@ namespace MyNews.Api.Services
         {
             return await _context.UserSectionPreference
                 .Where(p => p.UserId == userId && p.IsSelected)
+                .OrderBy(s => s.OrderIndex)
                 .Select(p => p.SectionType)
                 .ToListAsync();
         }
@@ -41,6 +42,26 @@ namespace MyNews.Api.Services
             });
 
             await _context.UserSectionPreference.AddRangeAsync(newPreferences);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateSectionsOrderAsync(Guid userId, List<int> sectionIds)
+        {
+            var userSections = await _context.UserSectionPreference
+                .Where(us => us.UserId == userId && us.IsSelected)
+                .ToListAsync();
+
+            for (int i = 0; i < sectionIds.Count; i++)
+            {
+                var sectionId = sectionIds[i];
+                var record = userSections.FirstOrDefault(us => (int)us.SectionType == sectionId);
+                if (record != null)
+                {
+                    record.OrderIndex = i;
+                    record.UpdatedAt = DateTime.UtcNow;
+                }
+            }
+
             await _context.SaveChangesAsync();
         }
 
