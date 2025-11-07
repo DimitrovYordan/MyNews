@@ -41,14 +41,10 @@ jobs:
               $null = $xml.configuration.'system.webServer'.RemoveChild($node)
               $xml.Save($path)
               Write-Host "Removed staticContent section."
-            } else {
-              Write-Host "No staticContent section found."
             }
-          } else {
-            Write-Host "web.config not found."
           }
 
-      - name: Clean remote web directory
+      - name: Ensure clean web directory
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -56,16 +52,15 @@ jobs:
           password: ${{ secrets.VPS_PASS }}
           port: 22
           shell: powershell
-          script_stop: true
           script: |
-            $target = "C:\inetpub\web"
-            Write-Host "Cleaning $target..."
-            if (Test-Path $target) {
-              Get-ChildItem $target -Recurse -Force | Remove-Item -Recurse -Force
-              Write-Host "Cleaned existing contents."
+            $path = "C:\inetpub\web"
+            if (Test-Path $path -PathType Leaf) {
+              Remove-Item $path -Force
+            }
+            if (-not (Test-Path $path)) {
+              New-Item -ItemType Directory -Force -Path $path
             } else {
-              New-Item -ItemType Directory -Force -Path $target
-              Write-Host "Created target directory."
+              Get-ChildItem $path -Recurse -Force | Remove-Item -Recurse -Force
             }
 
       - name: Upload Angular build to VPS
@@ -76,5 +71,5 @@ jobs:
           password: ${{ secrets.VPS_PASS }}
           port: 22
           local_path: ./MyNews-ui/dist/MyNews-ui/browser/*
-          remote_path: /inetpub/web
+          remote_path: C:/inetpub/web
           sftpArgs: "-o StrictHostKeyChecking=no"
