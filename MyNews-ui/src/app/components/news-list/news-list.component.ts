@@ -60,6 +60,15 @@ export class NewsListComponent implements OnInit {
 
     dropSection(event: CdkDragDrop<any[]>) {
         moveItemInArray(this.sectionsWithNews, event.previousIndex, event.currentIndex);
+
+        const newOrder = this.sectionsWithNews.map(s => s.sectionId);
+
+        this.userPreferencesService.updateSectionsOrder(newOrder).subscribe({
+            next: (res: any) => {
+                this.reorderSections(res.sections ?? newOrder);
+            },
+            error: err => console.error('Failed to save section order', err)
+        });
     }
 
     toggleSource(sectionId: number, source: GroupedNews) {
@@ -214,13 +223,25 @@ export class NewsListComponent implements OnInit {
         return undefined;
     }
 
+    private reorderSections(sectionOrder: number[]): void {
+        if (!sectionOrder || sectionOrder.length === 0) return;
+
+        const orderMap = new Map<number, number>();
+        sectionOrder.forEach((id, index) => orderMap.set(id, index));
+
+        this.sectionsWithNews.sort((a, b) => {
+            const aIndex = orderMap.get(a.sectionId) ?? Number.MAX_SAFE_INTEGER;
+            const bIndex = orderMap.get(b.sectionId) ?? Number.MAX_SAFE_INTEGER;
+            return aIndex - bIndex;
+        });
+    }
+
     private loadUserPreferencesAndFetchNews(): void {
         this.isLoading = true;
 
         this.userPreferencesService.getUserSections().subscribe({
             next: sections => {
                 this.selectedSections = sections;
-
                 this.userPreferencesService.getUserSources().subscribe({
                     next: sources => {
                         this.selectedSources = sources;
@@ -241,7 +262,7 @@ export class NewsListComponent implements OnInit {
 
     private fetchNews(): void {
         this.isLoading = true;
-
+        
         this.newsService.getNews(this.selectedSections, this.selectedSources).subscribe({
             next: (data: NewsItem[]) => {
                 const sectionMap = new Map<number, NewsItem[]>();
@@ -277,6 +298,12 @@ export class NewsListComponent implements OnInit {
                         news: items,
                         groupedNews
                     } as SectionWithNews & { groupedNews: GroupedNews[] };
+                });
+
+                this.sectionsWithNews.sort((a, b) => {
+                    const indexA = this.selectedSections.indexOf(a.sectionId);
+                    const indexB = this.selectedSections.indexOf(b.sectionId);
+                    return indexA - indexB;
                 });
 
                 this.isLoading = false;

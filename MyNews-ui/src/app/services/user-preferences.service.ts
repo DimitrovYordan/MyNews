@@ -19,6 +19,14 @@ export class UserPreferencesService {
         return this.http.post<void>(`${environment.apiUrl}/api/userpreferences/sections`, sectionIds);
     }
 
+    updateSectionsOrder(sectionIds: number[]) {
+        return this.http.post(
+            `${environment.apiUrl}/api/UserPreferences/update-sections-order`,
+            sectionIds,
+            { headers: { 'Content-Type': 'application/json' } }
+        );
+    }
+
     getUserSources(): Observable<number[]> {
         return this.http.get<number[]>(`${environment.apiUrl}/api/userpreferences/sources`);
     }

@@ -322,14 +322,6 @@ body {
     }
 }
 
-@font-face {
-    font-family: 'bootstrap-icons';
-    src: url('/assets/bootstrap-icons/bootstrap-icons.woff2') format('woff2'),
-        url('/assets/bootstrap-icons/bootstrap-icons.woff') format('woff');
-    font-weight: normal;
-    font-style: normal;
-}
-
 .bi {
     font-family: 'bootstrap-icons' !important;
     font-style: normal;
