@@ -41,15 +41,14 @@ jobs:
           shell: powershell
           script_stop: true
           script: |
-            Write-Host "Cleaning target directory..."
             $target = "C:\inetpub\api"
+            Write-Host "Cleaning $target ..."
             if (Test-Path $target) {
-              Get-ChildItem $target -Recurse -Force | Remove-Item -Recurse -Force
-              Write-Host "Cleaned existing contents."
+              Remove-Item "$target\*" -Recurse -Force
             } else {
               New-Item -ItemType Directory -Force -Path $target
-              Write-Host "Created target directory."
             }
+            Write-Host "✅ Remote directory cleaned."
 
       - name: Upload new files to VPS via SFTP
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
