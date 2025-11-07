@@ -29,7 +29,7 @@ jobs:
         run: dotnet build MyNews.Api/MyNews.Api.csproj --configuration Release --no-restore
 
       - name: Publish
-        run: dotnet publish MyNews.Api/MyNews.Api.csproj --configuration Release --output ./out --no-build
+        run: dotnet publish MyNews.Api/MyNews.Api.csproj --configuration Release --output ./publish --no-build
 
       - name: Stop IIS before deployment
         uses: appleboy/ssh-action@v1.0.0
@@ -71,7 +71,7 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASS }}
           port: 22
-          local_path: ./out/*
+          local_path: ./publish/*
           remote_path: /inetpub/api
           sftpArgs: "-o StrictHostKeyChecking=no"
 
