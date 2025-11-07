@@ -71,6 +71,5 @@ jobs:
           password: ${{ secrets.VPS_PASS }}
           port: 22
           local_path: ./MyNews-ui/dist/MyNews-ui/browser/*
-          remote_path: /inetpub/web
+          remote_path: /web
           sftpArgs: "-o StrictHostKeyChecking=no"
-          delete_remote_files: true
