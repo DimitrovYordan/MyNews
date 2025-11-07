@@ -51,12 +51,14 @@ jobs:
               Write-Host "Created target directory."
             }
 
-      - name: Upload backend files
-        uses: appleboy/scp-action@v0.1.7
+      - name: Upload new files to VPS via SFTP
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
-          host: ${{ secrets.VPS_HOST }}
+          server: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASS }}
           port: 22
-          source: "./publish/*"
-          target: "C:/inetpub/api"
+          local_path: ./publish/*
+          remote_path: /api
+          sftpArgs: "-o StrictHostKeyChecking=no"
+          delete_remote_files: true
