@@ -62,11 +62,13 @@ if (builder.Environment.IsProduction())
     builder.Services.AddHostedService<CleanupBackgroundService>();
 }
 
+var origins = builder.Configuration.GetSection("FrontendUrl").Get<string[]>();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular", policy =>
     {
-        policy.WithOrigins(builder.Configuration["FrontendUrl"])
+        policy.WithOrigins(origins!)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
