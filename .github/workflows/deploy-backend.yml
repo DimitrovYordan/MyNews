@@ -4,9 +4,9 @@ on:
   push:
     branches:
       - main
-    # paths:
-    #   - 'MyNews.Api/**'
-    #   - '.github/workflows/deploy-backend.yml'
+    paths:
+      - 'MyNews.Api/**'
+      - '.github/workflows/deploy-backend.yml'
   workflow_dispatch:
 
 jobs:
@@ -61,5 +61,4 @@ jobs:
           local_path: ./publish/*
           remote_path: /api
           sftpArgs: "-o StrictHostKeyChecking=no"
-          delete_remote_files: true
-          
+          delete_remote_files: true          

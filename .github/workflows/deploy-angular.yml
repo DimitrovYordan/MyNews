@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'MyNews-ui/**'
+      - '.github/workflows/deploy-angular.yml'
   workflow_dispatch:
 
 jobs:
@@ -70,3 +73,4 @@ jobs:
           local_path: ./MyNews-ui/dist/MyNews-ui/browser/*
           remote_path: /web
           sftpArgs: "-o StrictHostKeyChecking=no"
+          delete_remote_files: true
