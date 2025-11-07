@@ -48,19 +48,24 @@ jobs:
             Write-Host "web.config not found."
           }
 
-      - name: Clean remote directory
+      - name: Clean remote web directory
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASS }}
           port: 22
+          shell: powershell
+          script_stop: true
           script: |
-            echo "Cleaning C:\inetpub\web..."
-            if (Test-Path "C:\inetpub\web") {
-                Remove-Item "C:\inetpub\web\*" -Recurse -Force
+            $target = "C:\inetpub\web"
+            Write-Host "Cleaning $target..."
+            if (Test-Path $target) {
+              Get-ChildItem $target -Recurse -Force | Remove-Item -Recurse -Force
+              Write-Host "Cleaned existing contents."
             } else {
-                New-Item -ItemType Directory -Force -Path "C:\inetpub\web"
+              New-Item -ItemType Directory -Force -Path $target
+              Write-Host "Created target directory."
             }
 
       - name: Upload Angular build to VPS
@@ -71,6 +76,5 @@ jobs:
           password: ${{ secrets.VPS_PASS }}
           port: 22
           local_path: ./MyNews-ui/dist/MyNews-ui/browser/*
-          remote_path: /web
+          remote_path: /inetpub/web
           sftpArgs: "-o StrictHostKeyChecking=no"
-          delete_remote_files: true

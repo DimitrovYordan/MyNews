@@ -31,7 +31,7 @@ jobs:
       - name: Publish
         run: dotnet publish MyNews.Api/MyNews.Api.csproj --configuration Release --output ./publish --no-build
 
-      - name: Clean remote directory (Windows)
+      - name: Stop IIS before deployment
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -41,8 +41,21 @@ jobs:
           shell: powershell
           script_stop: true
           script: |
-            Write-Host "Cleaning target directory..."
+            Write-Host "Stopping IIS to release file locks..."
+            iisreset /stop
+
+      - name: Clean remote API directory
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASS }}
+          port: 22
+          shell: powershell
+          script_stop: true
+          script: |
             $target = "C:\inetpub\api"
+            Write-Host "Cleaning $target..."
             if (Test-Path $target) {
               Get-ChildItem $target -Recurse -Force | Remove-Item -Recurse -Force
               Write-Host "Cleaned existing contents."
@@ -51,14 +64,26 @@ jobs:
               Write-Host "Created target directory."
             }
 
-      - name: Upload new files to VPS via SFTP
+      - name: Upload new backend build to VPS
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
           server: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASS }}
           port: 22
-          local_path: ./publish/*
-          remote_path: /api
+          local_path: ./out/*
+          remote_path: /inetpub/api
           sftpArgs: "-o StrictHostKeyChecking=no"
-          delete_remote_files: true          
+
+      - name: Start IIS after deployment
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASS }}
+          port: 22
+          shell: powershell
+          script_stop: true
+          script: |
+            Write-Host "Starting IIS..."
+            iisreset /start
