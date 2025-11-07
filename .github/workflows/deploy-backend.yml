@@ -58,5 +58,6 @@ jobs:
           password: ${{ secrets.VPS_PASS }}
           port: 22
           source: "./publish/*"
-          target: "C:/inetpub/api"
+          target: "C:/inetpub/api/"
           overwrite: true
+          strip_components: 1
