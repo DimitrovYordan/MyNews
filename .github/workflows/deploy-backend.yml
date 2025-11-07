@@ -29,9 +29,9 @@ jobs:
         run: dotnet build MyNews.Api/MyNews.Api.csproj --configuration Release --no-restore
 
       - name: Publish
-        run: dotnet publish MyNews.Api/MyNews.Api.csproj --configuration Release --output ./out --no-build
+        run: dotnet publish MyNews.Api/MyNews.Api.csproj --configuration Release --output ./publish --no-build
 
-      - name: Stop IIS to release locks
+      - name: Clean remote directory (Windows)
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -39,44 +39,26 @@ jobs:
           password: ${{ secrets.VPS_PASS }}
           port: 22
           shell: powershell
-          script: iisreset /stop
-
-      - name: Ensure clean target folder
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          password: ${{ secrets.VPS_PASS }}
-          port: 22
-          shell: powershell
+          script_stop: true
           script: |
-            $path = "C:\inetpub\api"
-            if (Test-Path $path -PathType Leaf) {
-              Remove-Item $path -Force
-            }
-            if (-not (Test-Path $path)) {
-              New-Item -ItemType Directory -Force -Path $path
+            Write-Host "Cleaning target directory..."
+            $target = "C:\inetpub\api"
+            if (Test-Path $target) {
+              Get-ChildItem $target -Recurse -Force | Remove-Item -Recurse -Force
+              Write-Host "Cleaned existing contents."
             } else {
-              Get-ChildItem $path -Recurse -Force | Remove-Item -Recurse -Force
+              New-Item -ItemType Directory -Force -Path $target
+              Write-Host "Created target directory."
             }
 
-      - name: Upload published backend files
+      - name: Upload new files to VPS via SFTP
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
           server: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASS }}
           port: 22
-          local_path: ./out/*
-          remote_path: C:/inetpub/api
+          local_path: ./publish/*
+          remote_path: /inetpub/api
           sftpArgs: "-o StrictHostKeyChecking=no"
-
-      - name: Start IIS
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          password: ${{ secrets.VPS_PASS }}
-          port: 22
-          shell: powershell
-          script: iisreset /start
+          delete_remote_files: true
