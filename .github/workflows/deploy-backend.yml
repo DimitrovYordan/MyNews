@@ -31,7 +31,7 @@ jobs:
       - name: Publish
         run: dotnet publish MyNews.Api/MyNews.Api.csproj --configuration Release --output ./publish --no-build
 
-      - name: Copy files to VPS using WinSCP via PowerShell
+      - name: Clean target folder on VPS
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -41,32 +41,42 @@ jobs:
           shell: powershell
           script_stop: true
           script: |
-            Write-Host "🔹 Preparing to upload files via WinSCP..."
-
-            $localPath = "C:\tmp\publish"
-            $remotePath = "C:\inetpub\api"
-
-            if (Test-Path $localPath) { Remove-Item -Recurse -Force $localPath }
-            New-Item -ItemType Directory -Force -Path $localPath | Out-Null
-
-            $winSCP = "$env:TEMP\WinSCP.com"
-            if (-not (Test-Path $winSCP)) {
-              Invoke-WebRequest -Uri "https://winscp.net/download/WinSCP-6.1.2-Portable.zip" -OutFile "$env:TEMP\WinSCP.zip"
-              Expand-Archive "$env:TEMP\WinSCP.zip" -DestinationPath "$env:TEMP\WinSCP" -Force
-              Copy-Item "$env:TEMP\WinSCP\WinSCP.com" $winSCP
-            }
-
-            if (Test-Path $remotePath) {
-              Write-Host "🧹 Cleaning remote directory $remotePath"
-              Remove-Item "$remotePath\*" -Recurse -Force
+            $target = "C:\inetpub\api"
+            Write-Host "Cleaning $target ..."
+            if (Test-Path $target) {
+              Remove-Item "$target\*" -Recurse -Force
             } else {
-              New-Item -ItemType Directory -Force -Path $remotePath
+              New-Item -ItemType Directory -Force -Path $target | Out-Null
             }
+            Write-Host "✅ Target directory ready."
 
-            Write-Host "🚀 Uploading files to $remotePath ..."
-            & $winSCP /command `
-              "open scp://${{ secrets.VPS_USER }}:${{ secrets.VPS_PASS }}@${{ secrets.VPS_HOST }}/ -hostkey=* -rawsettings SendBuf=0 SshSimple=0" `
-              "put C:\actions-runner\_work\MyNews\MyNews\publish\* $remotePath\" `
-              "exit"
+      - name: Upload published files via SSH PowerShell
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASS }}
+          port: 22
+          shell: powershell
+          script_stop: true
+          script: |
+            $target = "C:\inetpub\api"
+            $local = "$env:GITHUB_WORKSPACE\publish"
+            Write-Host "Uploading from $local to $target ..."
+            $session = New-PSSession -HostName "${{ secrets.VPS_HOST }}" -UserName "${{ secrets.VPS_USER }}" -Password (ConvertTo-SecureString "${{ secrets.VPS_PASS }}" -AsPlainText -Force)
+            Copy-Item -Path "$local\*" -Destination $target -Recurse -Force -ToSession $session
+            Write-Host "✅ Files uploaded successfully."
 
-            Write-Host "✅ Deployment completed successfully!"
+      - name: Restart IIS
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASS }}
+          port: 22
+          shell: powershell
+          script_stop: true
+          script: |
+            Write-Host "Restarting IIS..."
+            iisreset
+            Write-Host "✅ IIS restarted successfully."
