@@ -3,6 +3,7 @@
   display: block;
   margin: 0 auto;
   max-width: 90%;
+  box-sizing: border-box;
 }
 
 .sections-list {
@@ -88,9 +89,10 @@
 
 .source-container {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 5px;
   margin-top: 8px;
+  width: 100%;
 }
 
 .source-container .dropdown-news {
@@ -102,13 +104,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
+  padding: 8px 14px;
   background-color: #f2f2f2;
   border-radius: 8px;
   cursor: pointer;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  transition: transform 0.2s, background-color 0.2s;
 }
 
 .source-bubble:hover {
@@ -116,9 +119,9 @@
 }
 
 .source-bubble .domain {
-  font-weight: bold;
+  font-weight: 600;
   margin-right: 6px;
-  overflow: hidden;
+  flex: 1;
   text-overflow: ellipsis;
 }
 
@@ -273,8 +276,8 @@
     grid-template-columns: 1fr;
   }
 
-  .source-bubble {
-    max-width: calc(50% - 8px);
+  .source-container {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   }
 
   .back-btn {
@@ -294,8 +297,14 @@
   }
 }
 
-@media (max-width: 600px) {
-  .source-bubble {
-    max-width: 100%;
+@media (max-width: 500px) {
+  .source-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 450px) {
+  .source-container {
+    grid-template-columns: 1fr;
   }
 }
