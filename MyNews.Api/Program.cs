@@ -62,7 +62,8 @@ if (builder.Environment.IsProduction())
     builder.Services.AddHostedService<CleanupBackgroundService>();
 }
 
-var origins = builder.Configuration.GetSection("FrontendUrl").Get<string[]>();
+var frontendUrl = builder.Configuration["FrontendUrl"];
+var origins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>();
 
 builder.Services.AddCors(options =>
 {

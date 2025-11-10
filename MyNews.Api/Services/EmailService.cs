@@ -18,7 +18,11 @@ namespace MyNews.Api.Services
 
         public async Task SendPasswordResetEmailAsync(string toEmail, string firstName, string token)
         {
-            var resetLink = $"{_configuration["FrontendUrl"]}reset-password?token={token}";
+            var url = _configuration["FrontendUrl"] ?? "";
+            if (!url.EndsWith("/"))
+                url += "/";
+
+            var resetLink = $"{url}reset-password?token={token}";
 
             var message = new MailMessage
             {
