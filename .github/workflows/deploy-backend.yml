@@ -31,7 +31,7 @@ jobs:
       - name: Publish
         run: dotnet publish MyNews.Api/MyNews.Api.csproj --configuration Release --output ./publish --no-build
 
-      - name: Clean target folder on VPS
+      - name: Clean remote directory (Windows)
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -42,41 +42,21 @@ jobs:
           script_stop: true
           script: |
             $target = "C:\inetpub\api"
-            Write-Host "Cleaning $target ..."
+            Write-Host "Cleaning $target..."
             if (Test-Path $target) {
               Remove-Item "$target\*" -Recurse -Force
             } else {
               New-Item -ItemType Directory -Force -Path $target | Out-Null
             }
-            Write-Host "✅ Target directory ready."
+            Write-Host "✅ Remote directory cleaned."
 
-      - name: Upload published files via SSH PowerShell
-        uses: appleboy/ssh-action@v1.0.0
+      - name: Upload new files to VPS via SCP
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
-          host: ${{ secrets.VPS_HOST }}
+          server: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASS }}
           port: 22
-          shell: powershell
-          script_stop: true
-          script: |
-            $target = "C:\inetpub\api"
-            $local = "$env:GITHUB_WORKSPACE\publish"
-            Write-Host "Uploading from $local to $target ..."
-            $session = New-PSSession -HostName "${{ secrets.VPS_HOST }}" -UserName "${{ secrets.VPS_USER }}" -Password (ConvertTo-SecureString "${{ secrets.VPS_PASS }}" -AsPlainText -Force)
-            Copy-Item -Path "$local\*" -Destination $target -Recurse -Force -ToSession $session
-            Write-Host "✅ Files uploaded successfully."
-
-      - name: Restart IIS
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          password: ${{ secrets.VPS_PASS }}
-          port: 22
-          shell: powershell
-          script_stop: true
-          script: |
-            Write-Host "Restarting IIS..."
-            iisreset
-            Write-Host "✅ IIS restarted successfully."
+          local_path: ./publish/*
+          remote_path: /api
+          sftpArgs: "-o StrictHostKeyChecking=no"
