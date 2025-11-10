@@ -20,7 +20,9 @@ namespace MyNews.Api.Services
         {
             var url = _configuration["FrontendUrl"] ?? "";
             if (!url.EndsWith("/"))
+            {
                 url += "/";
+            }
 
             var resetLink = $"{url}reset-password?token={token}";
 
