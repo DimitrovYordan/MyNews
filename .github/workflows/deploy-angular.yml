@@ -73,3 +73,4 @@ jobs:
           local_path: ./MyNews-ui/dist/MyNews-ui/browser/*
           remote_path: /web
           sftpArgs: "-o StrictHostKeyChecking=no"
+          
