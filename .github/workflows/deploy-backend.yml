@@ -60,4 +60,3 @@ jobs:
           source: "./publish/*"
           target: "C:/inetpub/api/"
           overwrite: true
-          strip_components: 1
