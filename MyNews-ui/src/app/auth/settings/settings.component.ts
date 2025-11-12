@@ -9,11 +9,12 @@ import { AuthService } from '../../services/auth.service';
 import { UserService } from '../../services/user.service';
 import { DeleteAccountComponent } from '../delete-account/delete-account.component';
 import { ModalComponent } from '../../shared/modal/modal.component';
+import { LocationSelectorComponent } from '../../components/location-selector/location-selector';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [DeleteAccountComponent, ModalComponent, CommonModule, ReactiveFormsModule, TranslateModule],
+  imports: [DeleteAccountComponent, ModalComponent, CommonModule, ReactiveFormsModule, TranslateModule, LocationSelectorComponent],
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss']
 })

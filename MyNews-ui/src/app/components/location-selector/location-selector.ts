@@ -49,38 +49,10 @@ export class LocationSelectorComponent implements OnInit {
     }
   }
 
-  onCountryChange(event: Event) {
-    const selected = (event.target as HTMLSelectElement).value;
-    const found = this.countries.find(c => c.country === selected);
-    this.cities = found ? found.cities : [];
-
-    const countryCtrl = this.formGroup.get('country');
-    const cityCtrl = this.formGroup.get('city');
-
-    countryCtrl?.setValue(selected);
-    countryCtrl?.markAsTouched();
-    countryCtrl?.updateValueAndValidity();
-
-    cityCtrl?.setValue('');
-    cityCtrl?.markAsUntouched();
-    cityCtrl?.updateValueAndValidity();
+  onCountryChange() {
+    const selectedCountry = this.formGroup.get('country')?.value;
+    const match = this.countries.find(c => c.country === selectedCountry);
+    this.cities = match ? match.cities : [];
+    this.formGroup.get('city')?.setValue('');
   }
-
-  onCityChange(event: Event) {
-    const selected = (event.target as HTMLSelectElement).value;
-    const cityCtrl = this.formGroup.get('city');
-    cityCtrl?.setValue(selected);
-    cityCtrl?.markAsTouched();
-    cityCtrl?.updateValueAndValidity();
-  }
-
-  markTouched() {
-  const countryCtrl = this.formGroup.get('country');
-  const cityCtrl = this.formGroup.get('city');
-
-  countryCtrl?.markAsTouched();
-  cityCtrl?.markAsTouched();
-  countryCtrl?.updateValueAndValidity();
-  cityCtrl?.updateValueAndValidity();
-}
 }

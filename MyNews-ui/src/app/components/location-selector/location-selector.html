@@ -1,35 +1,27 @@
 <div [formGroup]="formGroup">
   <div class="form-group">
     <label>{{ 'COUNTRY' | translate }}</label>
-    <select
-      formControlName="country"
-      class="styled-select"
-      (change)="onCountryChange($event)">
+    <select formControlName="country" class="styled-select" (change)="onCountryChange()">
       <option value="">-- {{ 'SELECT COUNTRY' }} --</option>
       @for (c of countries; track c.country) {
-        <option [value]="c.country">{{ c.country }}</option>
+      <option [value]="c.country">{{ c.country }}</option>
       }
     </select>
-
-    @if (formGroup.get('country')?.invalid && formGroup.get('country')?.touched) {
-      <small class="error">{{ 'ERROR_COUNTRY_REQUIRED' | translate }}</small>
+    @if (formGroup.get('country')?.touched && formGroup.get('country')?.invalid) {
+    <small class="error">{{ 'ERROR_COUNTRY_REQUIRED' | translate }}</small>
     }
   </div>
 
   <div class="form-group">
     <label>{{ 'CITY' | translate }}</label>
-    <select
-      formControlName="city"
-      class="styled-select"
-      (change)="onCityChange($event)">
+    <select formControlName="city" class="styled-select">
       <option value="">-- {{ 'SELECT CITY' }} --</option>
       @for (city of cities; track city) {
-        <option [value]="city">{{ city }}</option>
+      <option [value]="city">{{ city }}</option>
       }
     </select>
-
-    @if (formGroup.get('city')?.invalid && formGroup.get('city')?.touched) {
-      <small class="error">{{ 'ERROR_CITY_REQUIRED' | translate }}</small>
+    @if (formGroup.get('city')?.touched && formGroup.get('city')?.invalid) {
+    <small class="error">{{ 'ERROR_CITY_REQUIRED' | translate }}</small>
     }
   </div>
 </div>

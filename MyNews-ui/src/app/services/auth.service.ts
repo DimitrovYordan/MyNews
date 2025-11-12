@@ -191,17 +191,13 @@ export class AuthService {
     private checkOnboardingAndRedirect(): void {
         this.userService.getOnboardingStatus().subscribe({
             next: (res) => {
-                console.log('checkOnboardingAndRedirect() response:', res);
                 if (res.isOnboardingComplete) {
-                    console.log('➡️ redirect to /news');
                     this.router.navigate(['/news']);
                 } else {
-                    console.log('➡️ redirect to /sections');
                     this.router.navigate(['/sections'], { queryParams: { onboarding: 'true' } });
                 }
             },
             error: (err) => {
-                console.error('❌ checkOnboardingAndRedirect error:', err);
                 this.router.navigate(['/news']);
             }
         });

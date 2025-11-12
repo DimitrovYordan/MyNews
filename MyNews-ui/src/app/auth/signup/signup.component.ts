@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
@@ -8,15 +8,16 @@ import { TranslateModule } from '@ngx-translate/core';
 
 import { AuthService } from '../../services/auth.service';
 import { ModalComponent } from "../../shared/modal/modal.component";
+import { LocationSelectorComponent } from "../../components/location-selector/location-selector";
 
 @Component({
   selector: 'app-signup',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ModalComponent, TranslateModule],
+  imports: [CommonModule, ReactiveFormsModule, ModalComponent, TranslateModule, LocationSelectorComponent],
   templateUrl: './signup.component.html',
   styleUrls: ['./signup.component.scss']
 })
-export class SignupComponent implements OnInit {
+export class SignupComponent {
   signupForm: FormGroup;
   errorMessage: string | null = null;
   showPassword: boolean = false;
@@ -24,9 +25,6 @@ export class SignupComponent implements OnInit {
   loading: boolean = false;
   showSignupSuccessModal: boolean = false;
   showWelcomeModal: boolean = false;
-
-  countries: any[] = [];
-  cities: string[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -48,13 +46,6 @@ export class SignupComponent implements OnInit {
     this.showWelcomeModal = !hasSeenWelcome;
   }
 
-  ngOnInit(): void {
-    this.http.get<any>('https://countriesnow.space/api/v0.1/countries')
-      .subscribe(res => {
-        this.countries = res.data;
-      });
-  }
-
   passwordsMatchValidator(group: AbstractControl): ValidationErrors | null {
     const password = group.get('password')?.value;
     const repeatPassword = group.get('repeatPassword')?.value;
@@ -64,19 +55,6 @@ export class SignupComponent implements OnInit {
 
   submitSignup() {
     this.signupForm.markAllAsTouched();
-    
-    Object.keys(this.signupForm.controls).forEach(key => {
-      const control = this.signupForm.get(key);
-      control?.markAsTouched();
-      control?.updateValueAndValidity();
-    });
-
-    console.log('Form valid?', this.signupForm.valid);
-
-    if (this.signupForm.invalid) {
-      this.errorMessage = 'ERROR_SIGNUP_INVALID';
-      return;
-    }
 
     this.loading = true;
     this.errorMessage = null;
@@ -97,13 +75,6 @@ export class SignupComponent implements OnInit {
         }
       }
     });
-  }
-
-  onCountryChange() {
-    const selectedCountry = this.signupForm.get('country')?.value;
-    const match = this.countries.find(c => c.country === selectedCountry);
-    this.cities = match ? match.cities : [];
-    this.signupForm.get('city')?.setValue('');
   }
 
   closeSignup() {
