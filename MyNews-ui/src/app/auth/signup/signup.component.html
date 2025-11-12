@@ -6,7 +6,7 @@
     <div class="form-group">
       <label>{{'FIRST_NAME' | translate}}</label>
       <input type="text" formControlName="firstName" />
-      @if (signupForm.get('firstName')?.invalid && signupForm.get('firstName')?.touched) {
+      @if (signupForm.get('firstName')?.touched && signupForm.get('firstName')?.invalid) {
       <small class="error">{{'ERROR_FIRST_NAME_REQUIRED' | translate}}</small>
       }
     </div>
@@ -14,24 +14,34 @@
     <div class="form-group">
       <label>{{'LAST_NAME' | translate}}</label>
       <input type="text" formControlName="lastName" />
-      @if (signupForm.get('lastName')?.invalid && signupForm.get('lastName')?.touched) {
+      @if (signupForm.get('lastName')?.touched && signupForm.get('lastName')?.invalid) {
       <small class="error">{{'ERROR_LAST_NAME_REQUIRED' | translate}}</small>
       }
     </div>
 
     <div class="form-group">
-      <label>{{'COUNTRY' | translate}}</label>
-      <input type="text" formControlName="country" />
-      @if (signupForm.get('country')?.invalid && signupForm.get('country')?.touched) {
-      <small class="error">{{'ERROR_COUNTRY_REQUIRED' | translate}}</small>
+      <label>{{ 'COUNTRY' | translate }}</label>
+      <select formControlName="country" class="styled-select" (change)="onCountryChange()">
+        <option value="">-- {{ 'SELECT COUNTRY' }} --</option>
+        @for (c of countries; track c.country) {
+        <option [value]="c.country">{{ c.country }}</option>
+        }
+      </select>
+      @if (signupForm.get('country')?.touched && signupForm.get('country')?.invalid) {
+      <small class="error">{{ 'ERROR_COUNTRY_REQUIRED' | translate }}</small>
       }
     </div>
 
     <div class="form-group">
-      <label>{{'CITY' | translate}}</label>
-      <input type="text" formControlName="city" />
-      @if (signupForm.get('city')?.invalid && signupForm.get('city')?.touched) {
-      <small class="error">{{'ERROR_CITY_REQUIRED' | translate}}</small>
+      <label>{{ 'CITY' | translate }}</label>
+      <select formControlName="city" class="styled-select" >
+        <option value="">-- {{ 'SELECT CITY' }} --</option>
+        @for (city of cities; track city) {
+        <option [value]="city">{{ city }}</option>
+        }
+      </select>
+      @if (signupForm.get('city')?.touched && signupForm.get('city')?.invalid) {
+      <small class="error">{{ 'ERROR_CITY_REQUIRED' | translate }}</small>
       }
     </div>
 
@@ -83,11 +93,7 @@
   <button type="button" class="close-btn" (click)="closeSignup()">{{'BUTTON_LOGOUT' | translate}}</button>
 </div>
 
-<app-modal 
-  [show]="showSignupSuccessModal" 
-  type="success"
+<app-modal [show]="showSignupSuccessModal" type="success"
   [message]="('MODAL_WELCOME' | translate) + signupForm.get('firstName')?.value + ('MODAL_WELCOME_MESSAGE' | translate)"
-  [showCancel]="false" 
-  [autoClose]="false"
-  (closed)="goToSections()">
+  [showCancel]="false" [autoClose]="false" (closed)="goToSections()">
 </app-modal>

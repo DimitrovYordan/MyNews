@@ -31,7 +31,7 @@ export class ResetPasswordComponent {
     private router: Router
   ) {
     this.resetForm = this.fb.group({
-      password: ['', [Validators.required, Validators.minLength(6), Validators.pattern(/^(?=.*[0-9])(?=.*[!@#$%^&*])/)]],
+      password: ['', [Validators.required, Validators.minLength(6), Validators.pattern(/^(?=.*[0-9])(?=.*[^a-zA-Z0-9]).*$/)]],
       repeatPassword: ['', Validators.required]
     }, { validators: this.passwordsMatchValidator });
   }

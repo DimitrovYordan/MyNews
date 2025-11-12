@@ -65,17 +65,4 @@ export class LoginComponent implements OnInit {
   closeLogin() {
     this.router.navigate(['/']);
   }
-
-  get formErrors() {
-    const controlEmail = this.loginForm.get('email');
-    const controlPassword = this.loginForm.get('password');
-    
-    if (controlEmail?.hasError('required') && controlEmail.touched) return 'ERROR_EMAIL_REQUIRED';
-    if (controlEmail?.hasError('email') && controlEmail.touched) return 'ERROR_VALID_EMAIL';
-
-    if (controlPassword?.hasError('required') && controlPassword.touched) return 'ERROR_PASSWORD_REQUIRED';
-    if (controlPassword?.hasError('minlength') && controlPassword.touched) return 'ERROR_PASSWORD_LENGTH';
-
-    return null;
-  }
 }

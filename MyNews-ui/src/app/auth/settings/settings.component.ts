@@ -38,7 +38,7 @@ export class SettingsComponent {
       country: [''],
       city: [''],
       email: ['', [Validators.email]],
-      password: ['', [Validators.minLength(6), Validators.pattern(/^(?=.*[0-9])(?=.*[!@#$%^&*])/)]],
+      password: ['', [Validators.minLength(6), Validators.pattern(/^(?=.*[0-9])(?=.*[^a-zA-Z0-9]).*$/)]],
       repeatPassword: ['']
     }, { validators: this.passwordsMatchValidator });
   }
