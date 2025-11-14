@@ -18,18 +18,22 @@ namespace MyNews.Api.Background
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<RssBackgroundService> _logger;
         private readonly int _rssFetchIntervalHours;
-        private readonly int _batchSize = 3;
-        private readonly int _concurrency = 3;
+        private readonly OpenAIOptions _options;
         private readonly int _fetchArticleTimeoutSeconds = 10;
-        private readonly int _maxContentChars = 3000;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly string[] _globalTargetLanguages;
 
-        public RssBackgroundService(IServiceScopeFactory scopeFactory, ILogger<RssBackgroundService> logger, IOptions<BackgroundJobsOptions> options, IHttpClientFactory httpClientFactory, IOptions<LocalizationOptions> localizationOptions)
+        public RssBackgroundService(IServiceScopeFactory scopeFactory, 
+            ILogger<RssBackgroundService> logger, 
+            IOptions<BackgroundJobsOptions> bjOptions, 
+            IHttpClientFactory httpClientFactory, 
+            IOptions<LocalizationOptions> localizationOptions,
+            IOptions<OpenAIOptions> options)
         {
+            _options = options.Value;
             _scopeFactory = scopeFactory;
             _logger = logger;
-            _rssFetchIntervalHours = options.Value.RssFetchIntervalHours;
+            _rssFetchIntervalHours = bjOptions.Value.RssFetchIntervalHours;
             _httpClientFactory = httpClientFactory;
             _globalTargetLanguages = localizationOptions.Value.TargetLanguages
                 .Select(s => s?.Trim().ToLowerInvariant() ?? string.Empty)
@@ -39,28 +43,28 @@ namespace MyNews.Api.Background
 
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("RSS background service started at {Time}", DateTime.UtcNow);
+            _logger.LogInformation("=== RSS Job started at {Time} ===", DateTime.UtcNow);
 
             while (!cancellationToken.IsCancellationRequested)
             {
+                var batchStart = DateTime.UtcNow;
+                int totalSourcesProcessed = 0;
+                int totalNewsAdded = 0;
+
                 try
                 {
                     using var scope = _scopeFactory.CreateScope();
                     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                     var rssService = scope.ServiceProvider.GetRequiredService<IRssService>();
 
-                    int totalNewsAdded = 0;
-                    int totalSourcesProcessed = 0;
-                    var batchStart = DateTime.UtcNow;
-
                     var sources = await dbContext.Sources.ToListAsync(cancellationToken);
-                    int totalSources = sources.Count;
+                    _logger.LogInformation("📡 Found {Count} RSS sources", sources.Count);
+
                     int srcIndex = 1;
 
                     foreach (var source in sources)
                     {
                         totalSourcesProcessed++;
-                        _logger.LogInformation("[RSS] Processing source {Index}/{Total}: {Url}", srcIndex, totalSources, source.Url);
 
                         try
                         {
@@ -82,14 +86,16 @@ namespace MyNews.Api.Background
                                     freshItems.Add(rssItem);
                             }
 
+                            _logger.LogInformation("[RSS] {Count} new items found for {Url}", freshItems.Count, source.Url);
+
                             if (!freshItems.Any())
                             {
                                 srcIndex++;
                                 continue;
                             }
 
-                            var batches = SplitList(freshItems, _batchSize);
-                            using var semaphore = new SemaphoreSlim(_concurrency);
+                            var batches = SplitList(freshItems, _options.BatchSize);
+                            using var semaphore = new SemaphoreSlim(_options.Concurrency);
                             var batchTasks = new List<Task>();
 
                             foreach (var batch in batches)
@@ -120,7 +126,8 @@ namespace MyNews.Api.Background
                                                 }
                                                 catch (Exception exFetch)
                                                 {
-                                                    _logger.LogWarning(exFetch, "Failed to fetch article for {Link}", rssItem.Link);
+                                                    _logger.LogError(exFetch, "[NEWS FAIL] Could not fetch article: {Link}. Reason: {Message}",
+                                                        rssItem.Link, exFetch.Message);
                                                     snippet = string.Empty;
                                                 }
                                             }
@@ -130,7 +137,7 @@ namespace MyNews.Api.Background
                                                 snippet = rssItem.Title;
                                             }
 
-                                            snippet = TruncateToSentenceBoundary(snippet, _maxContentChars);
+                                            snippet = TruncateToSentenceBoundary(snippet, _options.MaxContentChars);
 
                                             inputs.Add(new NewsForEnrichmentDto
                                             {
@@ -175,8 +182,6 @@ namespace MyNews.Api.Background
 
                                         if (needTranslation.Any())
                                         {
-                                            _logger.LogInformation("[GPT] Running secondary translation pass for {Count} items", needTranslation.Count);
-
                                             foreach (var enriched in needTranslation)
                                             {
                                                 var missingLangs = enriched.Translations
@@ -225,7 +230,6 @@ namespace MyNews.Api.Background
                                             if (existingNews != null)
                                             {
                                                 newsItem = existingNews;
-                                                _logger.LogInformation("[UPSERT] Existing news found: {Title}", enriched.Title);
                                             }
                                             else
                                             {
@@ -243,7 +247,6 @@ namespace MyNews.Api.Background
 
                                                 taskDb.NewsItems.Add(newsItem);
                                                 Interlocked.Increment(ref totalNewsAdded);
-                                                _logger.LogInformation("[INSERT] Added new news item: {Title}", enriched.Title);
                                             }
 
                                             foreach (var kv in enriched.Translations)
@@ -258,7 +261,6 @@ namespace MyNews.Api.Background
                                                 {
                                                     existingTranslation.Title = tDto.Title ?? existingTranslation.Title;
                                                     existingTranslation.Summary = tDto.Summary ?? existingTranslation.Summary;
-                                                    _logger.LogInformation("[UPSERT] Updated translation {Lang} for {Title}", lang, enriched.Title);
                                                 }
                                                 else
                                                 {
@@ -273,18 +275,15 @@ namespace MyNews.Api.Background
                                                     };
 
                                                     taskDb.NewsTranslations.Add(newTranslation);
-                                                    _logger.LogInformation("[UPSERT] Added translation {Lang} for {Title}", lang, enriched.Title);
                                                 }
                                             }
 
                                             await SaveWithRetryAsync(taskDb, enriched.Title, cancellationToken);
                                         }
-
-                                        _logger.LogInformation("[RSS] Batch saved ({Count}) for source {Url}", enrichedResults.Count, source.Url);
                                     }
                                     catch (Exception ex)
                                     {
-                                        _logger.LogError(ex, "[RSS] Error while processing batch for {Url}", source.Url);
+                                        _logger.LogError(ex, "[RSS] Batch FAILED for {Url}. Reason: {Message}", source.Url, ex.Message);
                                     }
                                     finally
                                     {
@@ -313,6 +312,10 @@ namespace MyNews.Api.Background
                 {
                     _logger.LogError(exOuter, "Error while processing RSS feeds.");
                 }
+
+                _logger.LogInformation(
+                    "=== RSS Job finished at {Time}. Total sources: {Sources}. Total news added: {News}. Duration: {Duration}s ===",
+                    DateTime.UtcNow, totalSourcesProcessed, totalNewsAdded, (DateTime.UtcNow - batchStart).TotalSeconds);
 
                 await Task.Delay(TimeSpan.FromHours(_rssFetchIntervalHours), cancellationToken);
             }

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 using System.Text;
@@ -35,12 +36,12 @@ builder.Services.Configure<BackgroundJobsOptions>(
 builder.Services.Configure<LocalizationOptions>(
     builder.Configuration.GetSection("Localization"));
 
+builder.Services.Configure<OpenAIOptions>(builder.Configuration.GetSection("OpenAI"));
+
 builder.Services.AddSingleton<ChatClient>(sp =>
 {
-    var apiKey = sp.GetRequiredService<IConfiguration>()["OpenAI:ApiKey"];
-    var model = sp.GetRequiredService<IConfiguration>()["OpenAI:Model"] ?? "gpt-4-mini";
-
-    return new ChatClient(model, apiKey);
+    var options = sp.GetRequiredService<IOptions<OpenAIOptions>>().Value;
+    return new ChatClient(options.Model, options.ApiKey);
 });
 
 // Register services (DI)
@@ -55,6 +56,7 @@ builder.Services.AddScoped<IUserPreferencesService, UserPreferencesService>();
 builder.Services.AddScoped<IChatGptService, ChatGptService>();
 
 builder.Services.AddHttpClient<IRssService, RssService>();
+builder.Services.AddHostedService<RssBackgroundService>();
 
 if (builder.Environment.IsProduction())
 {

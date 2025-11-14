@@ -2,8 +2,8 @@
 {
     public class BackgroundJobsOptions
     {
-        public int CleanupIntervalDays { get; set; } = 2;
+        public int CleanupIntervalDays { get; set; } = 3;
 
-        public int RssFetchIntervalHours { get; set; } = 6;
+        public int RssFetchIntervalHours { get; set; } = 8;
     }
 }

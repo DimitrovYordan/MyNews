@@ -17,13 +17,14 @@ namespace MyNews.Api.Services
         private readonly ChatClient _chatClient;
         private readonly ILogger<ChatGptService> _logger;
         private readonly string[] _targetLanguages;
-        private const int ChunkSize = 3;
+        private readonly OpenAIOptions _options;
 
-        public ChatGptService(ChatClient chatClient, IOptions<LocalizationOptions> localizationOptions, IConfiguration configuration, ILogger<ChatGptService> logger)
+        public ChatGptService(ChatClient chatClient, IOptions<LocalizationOptions> localizationOptions, IConfiguration configuration, ILogger<ChatGptService> logger, IOptions<OpenAIOptions> options)
         {
             _chatClient = chatClient;
             _logger = logger;
             _targetLanguages = localizationOptions.Value.TargetLanguages;
+            _options = options.Value;
         }
 
         public async Task<List<EnrichedNewsDto>> EnrichBatchAsync(List<NewsForEnrichmentDto> items, CancellationToken cancellationToken = default, List<string>? overrideLanguages = null)
@@ -32,9 +33,12 @@ namespace MyNews.Api.Services
             if (items == null || items.Count == 0)
                 return results;
 
-            var targetLanguages = (overrideLanguages ?? _targetLanguages.ToList()).Select(x => x.ToLowerInvariant()).ToList();
+            var targetLanguages = (overrideLanguages ?? _targetLanguages.ToList())
+                .Select(x => x.ToLowerInvariant())
+                .Distinct()
+                .ToList();
 
-            var chunks = SplitList(items, ChunkSize);
+            var chunks = SplitList(items, _options.ChunkSize);
 
             foreach (var chunk in chunks)
             {
@@ -51,9 +55,13 @@ namespace MyNews.Api.Services
                     $"Return a JSON array (same order as input) with objects containing exactly: Title, Summary, Section, Translations. " +
                     $"Do NOT include commentary or code fences.";
 
-                var userLines = chunk.Select((c, idx) =>
-                    $"{idx + 1}. Title: {EscapeForPrompt(c.Title)}\nContent: {EscapeForPrompt(c.ContentSnippet)}"
-                );
+                var batchSize = chunk.Count;
+
+                var userLines = string.Join("\n\n---\n\n", chunk.Select((a, idx) =>
+                {
+                    return $"{idx + 1}. Title: {EscapeForPrompt(a.Title, batchSize: batchSize)}\n" +
+                           $"Content: {EscapeForPrompt(a.ContentSnippet ?? string.Empty, batchSize: batchSize)}";
+                }));
 
                 var messages = new List<ChatMessage>
                 {
@@ -62,8 +70,7 @@ namespace MyNews.Api.Services
                 };
 
                 int attempts = 0;
-                const int maxAttempts = 3;
-                TimeSpan delay = TimeSpan.FromSeconds(1);
+                const int maxAttempts = 2;
                 bool success = false;
 
                 while (attempts < maxAttempts && !success)
@@ -90,30 +97,13 @@ namespace MyNews.Api.Services
                             results.Add(ParseEnrichedFromJsonElement(item, targetLanguages));
                         }
 
-                        if (results.Count < items.Count)
-                        {
-                            while (results.Count % chunk.Count != 0)
-                            {
-                                var idx = results.Count % chunk.Count;
-                                results.Add(CreateFallbackSingle(chunk[idx].Title));
-                            }
-                        }
-
                         success = true;
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogWarning(ex, "GPT attempt {Attempt} failed for chunk", attempts);
+                        _logger.LogWarning(ex, "[GPT] Enrichment failed (attempt {Attempt})", attempts);
                         if (attempts >= maxAttempts)
-                        {
-                            _logger.LogError(ex, "GPT failed for chunk after {Attempts} attempts. Using fallback for chunk.", attempts);
                             results.AddRange(CreateFallback(chunk.Select(c => c.Title).ToList()));
-                        }
-                        else
-                        {
-                            await Task.Delay(delay, cancellationToken);
-                            delay = delay * 2;
-                        }
                     }
                 }
             }
@@ -127,7 +117,7 @@ namespace MyNews.Api.Services
             if (targetLangs == null || targetLangs.Count == 0)
                 return translations;
 
-            string prompt = $"Translate the following news title and summary into the specified languages: {string.Join(", ", targetLangs)}.\n" +
+            string prompt = $"Translate this news title and summary into: {string.Join(", ", targetLangs)}.\n" +
                             $"Return valid JSON with one object per language, keys: 'Title', 'Summary'.\n" +
                             $"No commentary or markdown.\n\n" +
                             $"Title: {title}\nSummary: {summary}";
@@ -143,7 +133,8 @@ namespace MyNews.Api.Services
                 var completion = await _chatClient.CompleteChatAsync(messages, cancellationToken: cancellationToken);
                 var raw = completion.Value.Content.FirstOrDefault()?.Text ?? string.Empty;
                 var match = Regex.Match(raw, @"\{[\s\S]*\}");
-                if (!match.Success) return translations;
+                if (!match.Success) 
+                    return translations;
 
                 var json = JsonDocument.Parse(match.Value);
                 foreach (var lang in json.RootElement.EnumerateObject())
@@ -232,12 +223,20 @@ namespace MyNews.Api.Services
             return result;
         }
 
-        private static string EscapeForPrompt(string s)
+        private static string EscapeForPrompt(string s, int maxChars = 900, int batchSize = 3)
         {
             if (string.IsNullOrWhiteSpace(s))
                 return string.Empty;
 
-            return s.Replace("\r", " ").Replace("\n", " ").Trim();
+            int limit = batchSize > 3 ? 700 : maxChars;
+            var result = s.Length > limit ? s[..limit] + "..." : s;
+
+            result = Regex.Replace(result, "<.*?>", "");
+            result = Regex.Replace(result, @"https?://\S+", "");
+            result = Regex.Replace(result, @"\b(by|via|photo:|source:)\b.*?(?=[.?!]|$)", "", RegexOptions.IgnoreCase);
+            result = Regex.Replace(result, @"\s+", " ").Trim();
+
+            return result.Replace("\r", " ").Replace("\n", " ");
         }
 
         private List<EnrichedNewsDto> CreateFallback(List<string> titles)
