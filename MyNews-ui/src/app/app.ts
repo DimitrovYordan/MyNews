@@ -155,6 +155,14 @@ export class App implements OnInit {
     return (user.firstName?.[0] || '') + (user.lastName?.[0] || '');
   }
 
+  goToHomeOrNews() {
+    if (this.isLoggedIn) {
+      this.router.navigate(['/news']);
+    } else {
+      this.router.navigate(['/']);
+    }
+  }
+
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
     if (!this.authService.isMenuOpen$.value) return;

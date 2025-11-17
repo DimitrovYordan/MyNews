@@ -1,12 +1,21 @@
 <div [formGroup]="formGroup">
   <div class="form-group">
     <label>{{ 'COUNTRY' | translate }}</label>
-    <select formControlName="country" class="styled-select" (change)="onCountryChange()">
-      <option value="">-- {{ 'SELECT COUNTRY' }} --</option>
-      @for (c of countries; track c.country) {
-      <option [value]="c.country">{{ c.country }}</option>
+    <div class="autocomplete-wrapper">
+      <input type="text" class="styled-select" placeholder="{{ 'SELECT COUNTRY' | translate }}"
+        formControlName="country" (input)="filterCountries()" (focus)="filterCountries()"
+        (keydown)="onCountryKeyDown($event)" autocomplete="off" />
+
+      @if (filteredCountries.length > 0) {
+      <ul class="dropdown">
+        @for (c of filteredCountries; let i = $index; track c) {
+        <li (click)="selectCountry(c.country)" [class.active]="i === countryActiveIndex" #countryItem>
+          {{ c.country }}
+        </li>
+        }
+      </ul>
       }
-    </select>
+    </div>
     @if (formGroup.get('country')?.touched && formGroup.get('country')?.invalid) {
     <small class="error">{{ 'ERROR_COUNTRY_REQUIRED' | translate }}</small>
     }
@@ -14,12 +23,20 @@
 
   <div class="form-group">
     <label>{{ 'CITY' | translate }}</label>
-    <select formControlName="city" class="styled-select">
-      <option value="">-- {{ 'SELECT CITY' }} --</option>
-      @for (city of cities; track city) {
-      <option [value]="city">{{ city }}</option>
+    <div class="autocomplete-wrapper">
+      <input type="text" class="styled-select" placeholder="{{ 'SELECT CITY' | translate }}" formControlName="city"
+        (input)="filterCities()" (focus)="filterCities()" (keydown)="onCityKeyDown($event)" autocomplete="off" />
+
+      @if (filteredCities.length > 0) {
+      <ul class="dropdown">
+        @for (city of filteredCities; let i = $index; track city) {
+        <li (click)="selectCity(city)" [class.active]="i === cityActiveIndex" #cityItem>
+          {{ city }}
+        </li>
+        }
+      </ul>
       }
-    </select>
+    </div>
     @if (formGroup.get('city')?.touched && formGroup.get('city')?.invalid) {
     <small class="error">{{ 'ERROR_CITY_REQUIRED' | translate }}</small>
     }
