@@ -18,6 +18,7 @@ namespace MyNews.Api.Data
         public DbSet<UserSectionPreference> UserSectionPreference { get; set; }
         public DbSet<UserSourcePreferences> UserSourcePreferences { get; set; }
         public DbSet<NewsTranslation> NewsTranslations { get; set; }
+        public DbSet<UserActivity> UserActivities { get; set; }
 
         // Seed initial data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -93,6 +94,14 @@ namespace MyNews.Api.Data
             modelBuilder.Entity<NewsItem>()
                 .HasIndex(n => new { n.Title, n.SourceId })
                 .IsUnique();
+
+            modelBuilder.Entity<UserActivity>()
+                .HasKey(a => a.UserId);
+
+            modelBuilder.Entity<UserActivity>()
+                .HasOne(a => a.User)
+                .WithOne()
+                .HasForeignKey<UserActivity>(a => a.UserId);
 
             modelBuilder.Entity<Source>().HasData(
                 // ========================

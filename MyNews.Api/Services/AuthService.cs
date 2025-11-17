@@ -12,12 +12,14 @@ namespace MyNews.Api.Services
         private readonly AppDbContext _context;
         private readonly IJwtService _jwtService;
         private readonly IEmailService _emailService;
+        private readonly IUserActivityService _userActivityService;
 
-        public AuthService(AppDbContext context, IJwtService jwtService, IEmailService emailService)
+        public AuthService(AppDbContext context, IJwtService jwtService, IEmailService emailService, IUserActivityService userActivityService)
         {
             _context = context;
             _jwtService = jwtService;
             _emailService = emailService;
+            _userActivityService = userActivityService;
         }
 
         public async Task<AuthResponseDto> LoginAsync(LoginDto loginDto)
@@ -31,6 +33,8 @@ namespace MyNews.Api.Services
             }
 
             var token = _jwtService.GenerateToken(user.Id, user.Email);
+
+            await _userActivityService.RecordLoginAsync(user.Id);
 
             return new AuthResponseDto
             {
@@ -67,6 +71,8 @@ namespace MyNews.Api.Services
             await _context.SaveChangesAsync();
 
             var token = _jwtService.GenerateToken(user.Id, user.Email);
+
+            await _userActivityService.RecordLoginAsync(user.Id);
 
             return new AuthResponseDto
             {
