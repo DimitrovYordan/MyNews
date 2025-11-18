@@ -58,7 +58,7 @@ namespace MyNews.Api.Background
                     var rssService = scope.ServiceProvider.GetRequiredService<IRssService>();
 
                     var sources = await dbContext.Sources.ToListAsync(cancellationToken);
-                    _logger.LogInformation("📡 Found {Count} RSS sources", sources.Count);
+                    _logger.LogInformation("Found {Count} RSS sources", sources.Count);
 
                     int srcIndex = 1;
 

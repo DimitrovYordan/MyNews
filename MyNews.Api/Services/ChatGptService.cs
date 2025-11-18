@@ -44,7 +44,7 @@ namespace MyNews.Api.Services
             {
                 var sectionTypes = string.Join(", ", Enum.GetNames(typeof(SectionType)));
                 var systemPrompt =
-                    $"You are a news enrichment assistant.\n\n" +
+                    $"You are an expert news editor.\n\n" +
                     $"For each input object (Title + Content):\n" +
                     $"1) Write a concise and informative Summary in 2 to 4 sentences.\n" +
                     $"- Clearly explain the main point.\n" +
@@ -228,15 +228,14 @@ namespace MyNews.Api.Services
             if (string.IsNullOrWhiteSpace(s))
                 return string.Empty;
 
-            int limit = batchSize > 3 ? 700 : maxChars;
-            var result = s.Length > limit ? s[..limit] + "..." : s;
+            s = Regex.Replace(s, "<.*?>", "");
+            s = Regex.Replace(s, @"https?://\S+", "");
+            s = Regex.Replace(s, @"\s+", " ").Trim();
 
-            result = Regex.Replace(result, "<.*?>", "");
-            result = Regex.Replace(result, @"https?://\S+", "");
-            result = Regex.Replace(result, @"\b(by|via|photo:|source:)\b.*?(?=[.?!]|$)", "", RegexOptions.IgnoreCase);
-            result = Regex.Replace(result, @"\s+", " ").Trim();
+            if (s.Length > maxChars)
+                s = s[..maxChars] + "...";
 
-            return result.Replace("\r", " ").Replace("\n", " ");
+            return s;
         }
 
         private List<EnrichedNewsDto> CreateFallback(List<string> titles)
