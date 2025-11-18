@@ -60,8 +60,6 @@ namespace MyNews.Api.Background
                     var sources = await dbContext.Sources.ToListAsync(cancellationToken);
                     _logger.LogInformation("Found {Count} RSS sources", sources.Count);
 
-                    int srcIndex = 1;
-
                     foreach (var source in sources)
                     {
                         totalSourcesProcessed++;
@@ -90,7 +88,6 @@ namespace MyNews.Api.Background
 
                             if (!freshItems.Any())
                             {
-                                srcIndex++;
                                 continue;
                             }
 
@@ -300,8 +297,6 @@ namespace MyNews.Api.Background
                         {
                             _logger.LogError(ex, "Error while processing source {Url}", source.Url);
                         }
-
-                        srcIndex++;
                     }
 
                     var batchEnd = DateTime.UtcNow;

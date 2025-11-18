@@ -18,8 +18,9 @@ namespace MyNews.Api.Services
         private readonly ILogger<ChatGptService> _logger;
         private readonly string[] _targetLanguages;
         private readonly OpenAIOptions _options;
+        private const int DefaultMaxAttempts = 2;
 
-        public ChatGptService(ChatClient chatClient, IOptions<LocalizationOptions> localizationOptions, IConfiguration configuration, ILogger<ChatGptService> logger, IOptions<OpenAIOptions> options)
+        public ChatGptService(ChatClient chatClient, IOptions<LocalizationOptions> localizationOptions, ILogger<ChatGptService> logger, IOptions<OpenAIOptions> options)
         {
             _chatClient = chatClient;
             _logger = logger;
@@ -59,18 +60,22 @@ namespace MyNews.Api.Services
 
                 var userLines = string.Join("\n\n---\n\n", chunk.Select((a, idx) =>
                 {
-                    return $"{idx + 1}. Title: {EscapeForPrompt(a.Title, batchSize: batchSize)}\n" +
-                           $"Content: {EscapeForPrompt(a.ContentSnippet ?? string.Empty, batchSize: batchSize)}";
+                    return $"{idx + 1}. Title: {EscapeForPrompt(a.Title, batchSize)}\n" +
+                           $"Content: {EscapeForPrompt(a.ContentSnippet ?? string.Empty, batchSize)}";
                 }));
 
                 var messages = new List<ChatMessage>
                 {
                     new SystemChatMessage(systemPrompt),
-                    new UserChatMessage(string.Join("\n\n", userLines))
+                    new UserChatMessage(userLines)
                 };
 
+                var estimatedTokens = EstimateTokens(systemPrompt, userLines);
+                _logger.LogInformation("[GPT DEBUG] Est. tokens for request: {Tokens} | ChunkSize: {ChunkSize} | BatchSize: {BatchSize}",
+                                       estimatedTokens, _options.ChunkSize, batchSize);
+
                 int attempts = 0;
-                const int maxAttempts = 2;
+                const int maxAttempts = DefaultMaxAttempts;
                 bool success = false;
 
                 while (attempts < maxAttempts && !success)
@@ -79,7 +84,7 @@ namespace MyNews.Api.Services
                     try
                     {
                         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                        cts.CancelAfter(TimeSpan.FromMinutes(3));
+                        cts.CancelAfter(TimeSpan.FromMinutes(_options.TimeoutSeconds));
 
                         var completion = await _chatClient.CompleteChatAsync(messages, cancellationToken: cts.Token);
                         var raw = completion.Value.Content.FirstOrDefault()?.Text ?? string.Empty;
@@ -101,9 +106,16 @@ namespace MyNews.Api.Services
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogWarning(ex, "[GPT] Enrichment failed (attempt {Attempt})", attempts);
+                        _logger.LogWarning(ex, "[GPT] Enrichment failed (attempt {Attempt}).", attempts);
                         if (attempts >= maxAttempts)
+                        {
+                            _logger.LogError(ex, "[GPT] Failed after {Attempts} attempts for this chunk. Adding fallback entries.", attempts);
                             results.AddRange(CreateFallback(chunk.Select(c => c.Title).ToList()));
+                        }
+                        else
+                        {
+                            await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+                        }
                     }
                 }
             }
@@ -156,6 +168,12 @@ namespace MyNews.Api.Services
             }
 
             return translations;
+        }
+
+        private int EstimateTokens(string systemPrompt, string userContent)
+        {
+            var totalChars = (systemPrompt?.Length ?? 0) + (userContent?.Length ?? 0);
+            return Math.Max(1, totalChars / 4);
         }
 
         private EnrichedNewsDto ParseEnrichedFromJsonElement(JsonElement item, List<string> targetLanguages)
@@ -223,19 +241,21 @@ namespace MyNews.Api.Services
             return result;
         }
 
-        private static string EscapeForPrompt(string s, int maxChars = 900, int batchSize = 3)
+        private static string EscapeForPrompt(string s, int batchSize = 1)
         {
             if (string.IsNullOrWhiteSpace(s))
                 return string.Empty;
 
-            s = Regex.Replace(s, "<.*?>", "");
-            s = Regex.Replace(s, @"https?://\S+", "");
-            s = Regex.Replace(s, @"\s+", " ").Trim();
+            int maxChars = batchSize > 4 ? 700 : 2500;
 
-            if (s.Length > maxChars)
-                s = s[..maxChars] + "...";
+            var result = Regex.Replace(s, "<.*?>", "");
+            result = Regex.Replace(result, @"https?://\S+", "");
+            result = Regex.Replace(result, @"\s+", " ").Trim();
 
-            return s;
+            if (result.Length > maxChars)
+                result = result.Substring(0, maxChars).TrimEnd() + "...";
+
+            return result.Replace("\r", " ").Replace("\n", " ");
         }
 
         private List<EnrichedNewsDto> CreateFallback(List<string> titles)
