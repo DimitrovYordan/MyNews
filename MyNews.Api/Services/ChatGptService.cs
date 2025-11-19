@@ -18,14 +18,13 @@ namespace MyNews.Api.Services
         private readonly ILogger<ChatGptService> _logger;
         private readonly string[] _targetLanguages;
         private readonly OpenAIOptions _options;
-        private const int DefaultMaxAttempts = 2;
 
         public ChatGptService(ChatClient chatClient, IOptions<LocalizationOptions> localizationOptions, ILogger<ChatGptService> logger, IOptions<OpenAIOptions> options)
         {
             _chatClient = chatClient;
             _logger = logger;
-            _targetLanguages = localizationOptions.Value.TargetLanguages;
             _options = options.Value;
+            _targetLanguages = localizationOptions.Value.TargetLanguages;
         }
 
         public async Task<List<EnrichedNewsDto>> EnrichBatchAsync(List<NewsForEnrichmentDto> items, CancellationToken cancellationToken = default, List<string>? overrideLanguages = null)
@@ -38,7 +37,6 @@ namespace MyNews.Api.Services
                 .Select(x => x.ToLowerInvariant())
                 .Distinct()
                 .ToList();
-
             var chunks = SplitList(items, _options.ChunkSize);
 
             foreach (var chunk in chunks)
@@ -56,26 +54,18 @@ namespace MyNews.Api.Services
                     $"Return a JSON array (same order as input) with objects containing exactly: Title, Summary, Section, Translations. " +
                     $"Do NOT include commentary or code fences.";
 
-                var batchSize = chunk.Count;
-
-                var userLines = string.Join("\n\n---\n\n", chunk.Select((a, idx) =>
-                {
-                    return $"{idx + 1}. Title: {EscapeForPrompt(a.Title, batchSize)}\n" +
-                           $"Content: {EscapeForPrompt(a.ContentSnippet ?? string.Empty, batchSize)}";
-                }));
+                var userLines = chunk.Select((c, idx) =>
+                    $"{idx + 1}. Title: {EscapeForPrompt(c.Title)}\nContent: {EscapeForPrompt(c.ContentSnippet)}"
+                );
 
                 var messages = new List<ChatMessage>
                 {
                     new SystemChatMessage(systemPrompt),
-                    new UserChatMessage(userLines)
+                    new UserChatMessage(string.Join("\n\n", userLines))
                 };
 
-                var estimatedTokens = EstimateTokens(systemPrompt, userLines);
-                _logger.LogInformation("[GPT DEBUG] Est. tokens for request: {Tokens} | ChunkSize: {ChunkSize} | BatchSize: {BatchSize}",
-                                       estimatedTokens, _options.ChunkSize, batchSize);
-
                 int attempts = 0;
-                const int maxAttempts = DefaultMaxAttempts;
+                const int maxAttempts = 3;
                 bool success = false;
 
                 while (attempts < maxAttempts && !success)
@@ -100,6 +90,15 @@ namespace MyNews.Api.Services
                         foreach (var item in json.RootElement.EnumerateArray())
                         {
                             results.Add(ParseEnrichedFromJsonElement(item, targetLanguages));
+                        }
+
+                        if (results.Count < items.Count)
+                        {
+                            while (results.Count % chunk.Count != 0)
+                            {
+                                var idx = results.Count % chunk.Count;
+                                results.Add(CreateFallbackSingle(chunk[idx].Title));
+                            }
                         }
 
                         success = true;
@@ -170,12 +169,6 @@ namespace MyNews.Api.Services
             return translations;
         }
 
-        private int EstimateTokens(string systemPrompt, string userContent)
-        {
-            var totalChars = (systemPrompt?.Length ?? 0) + (userContent?.Length ?? 0);
-            return Math.Max(1, totalChars / 4);
-        }
-
         private EnrichedNewsDto ParseEnrichedFromJsonElement(JsonElement item, List<string> targetLanguages)
         {
             string title = item.TryGetProperty("Title", out var pTitle) ? pTitle.GetString() ?? string.Empty : string.Empty;
@@ -241,12 +234,12 @@ namespace MyNews.Api.Services
             return result;
         }
 
-        private static string EscapeForPrompt(string s, int batchSize = 1)
+        private string EscapeForPrompt(string s, int batchSize = 1)
         {
             if (string.IsNullOrWhiteSpace(s))
                 return string.Empty;
 
-            int maxChars = batchSize > 4 ? 700 : 2500;
+            int maxChars = _options.BatchSize > 3 ? 2000 : 2300;
 
             var result = Regex.Replace(s, "<.*?>", "");
             result = Regex.Replace(result, @"https?://\S+", "");

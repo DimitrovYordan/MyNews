@@ -58,11 +58,15 @@ namespace MyNews.Api.Background
                     var rssService = scope.ServiceProvider.GetRequiredService<IRssService>();
 
                     var sources = await dbContext.Sources.ToListAsync(cancellationToken);
+                    int totalSources = sources.Count;
                     _logger.LogInformation("Found {Count} RSS sources", sources.Count);
+
+                    int srcIndex = 1;
 
                     foreach (var source in sources)
                     {
                         totalSourcesProcessed++;
+                        _logger.LogInformation("[RSS] Processing source {Index}/{Total}: {Url}", srcIndex, totalSources, source.Url);
 
                         try
                         {
@@ -179,6 +183,8 @@ namespace MyNews.Api.Background
 
                                         if (needTranslation.Any())
                                         {
+                                            _logger.LogInformation("[GPT] Running secondary translation pass for {Count} items", needTranslation.Count);
+
                                             foreach (var enriched in needTranslation)
                                             {
                                                 var missingLangs = enriched.Translations
@@ -297,6 +303,8 @@ namespace MyNews.Api.Background
                         {
                             _logger.LogError(ex, "Error while processing source {Url}", source.Url);
                         }
+
+                        srcIndex++;
                     }
 
                     var batchEnd = DateTime.UtcNow;
