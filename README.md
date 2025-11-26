@@ -90,8 +90,8 @@ This ensures users see high-quality, structured, and accurate content.
 - .NET SDK  
 - Node.js + Angular CLI  
 - MS SQL Server  
-- OpenAI API Key  
-
+- OpenAI API Key
+  
 ### Backend Setup
 ```bash
 cd backend
@@ -101,6 +101,7 @@ dotnet run
 
 ### Frontend Setup
 ```bash
-cd frontend
-npm install
-ng serve
+cd backend
+dotnet restore
+dotnet ef database update
+dotnet run
