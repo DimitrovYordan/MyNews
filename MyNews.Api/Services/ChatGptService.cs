@@ -1,14 +1,12 @@
 ﻿using Microsoft.Extensions.Options;
-
-using System.Text.Json;
-using System.Text.RegularExpressions;
-
 using MyNews.Api.DTOs;
 using MyNews.Api.Enums;
 using MyNews.Api.Interfaces;
 using MyNews.Api.Options;
-
 using OpenAI.Chat;
+using System;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace MyNews.Api.Services
 {
@@ -19,12 +17,13 @@ namespace MyNews.Api.Services
         private readonly string[] _targetLanguages;
         private readonly OpenAIOptions _options;
 
-        public ChatGptService(ChatClient chatClient, IOptions<LocalizationOptions> localizationOptions, ILogger<ChatGptService> logger, IOptions<OpenAIOptions> options)
+        public ChatGptService(ChatClient chatClient, IOptions<LocalizationOptions> localizationOptions,
+            IConfiguration configuration, ILogger<ChatGptService> logger, IOptions<OpenAIOptions> options)
         {
             _chatClient = chatClient;
             _logger = logger;
+            _targetLanguages = localizationOptions.Value.TargetLanguages ?? Array.Empty<string>();
             _options = options.Value;
-            _targetLanguages = localizationOptions.Value.TargetLanguages;
         }
 
         public async Task<List<EnrichedNewsDto>> EnrichBatchAsync(List<NewsForEnrichmentDto> items, CancellationToken cancellationToken = default, List<string>? overrideLanguages = null)
@@ -34,86 +33,171 @@ namespace MyNews.Api.Services
                 return results;
 
             var targetLanguages = (overrideLanguages ?? _targetLanguages.ToList())
+                .Where(x => !string.IsNullOrWhiteSpace(x))
                 .Select(x => x.ToLowerInvariant())
-                .Distinct()
                 .ToList();
+
             var chunks = SplitList(items, _options.ChunkSize);
 
             foreach (var chunk in chunks)
             {
                 var sectionTypes = string.Join(", ", Enum.GetNames(typeof(SectionType)));
-                var systemPrompt =
-                    $"You are an expert news editor.\n\n" +
-                    $"For each input object (Title + Content):\n" +
-                    $"1) Write a concise and informative Summary in 2 to 4 sentences.\n" +
-                    $"- Clearly explain the main point.\n" +
-                    $"- Avoid speculation and filler.\n" +
-                    $"2) Assign a Section from: {sectionTypes}\n" +
-                    $"3) Provide Translations ONLY for these languages: {string.Join(", ", targetLanguages)}.\n" +
-                    $"- Each translation must be an object with keys 'Title' and 'Summary'.\n\n" +
-                    $"Return a JSON array (same order as input) with objects containing exactly: Title, Summary, Section, Translations. " +
-                    $"Do NOT include commentary or code fences.";
+                var stablePrompt =
+                    $@"You are a strict JSON-only news enrichment assistant.
+                    Return ONLY a JSON array of objects (no commentary, no markdown, no code fences).
+                    The array must have the same item order as the input.
+                    Each object must contain exactly these keys: ""Title"", ""Summary"", ""Section"", ""Translations"".
+                    
+                    - Title: string
+                    - Summary: 2–4 concise sentences. If you cannot summarize, set ""Summary unavailable"".
+                    - Section: one of: {sectionTypes}
+                    - Translations: an object where keys are language codes (lowercase) and values are objects with keys:
+                        - Title: string
+                        - Summary: string
+                    
+                    LANGUAGE RULES:
+                    1. Detect the language of the input automatically.
+                    2. If the input is in **Bulgarian**, return only:
+                           ""en"" translation.
+                    3. If the input is in **English**, return:
+                           ""bg"" translation.
+                    4. If the input is in ANY other language:
+                           return **both** ""en"" and ""bg"" translations.
+                    5. NEVER return a translation into the same language as the input.
+                    6. If translation is impossible, return:
+                           Title: """"
+                           Summary: """"
+                    
+                    The JSON MUST NOT contain any unexpected keys.
+                    
+                    VALID OUTPUT STRUCTURE EXAMPLE (structure only, not content):
+                    [
+                      {{
+                        ""Title"": ""Example title"",
+                        ""Summary"": ""Example summary."",
+                        ""Section"": ""General"",
+                        ""Translations"": {{
+                            ""en"": {{ ""Title"": ""Example"", ""Summary"": ""English summary"" }}
+                        }}
+                      }}
+                    ]
+                    ";
 
                 var userLines = chunk.Select((c, idx) =>
-                    $"{idx + 1}. Title: {EscapeForPrompt(c.Title)}\nContent: {EscapeForPrompt(c.ContentSnippet)}"
+                    $"{idx + 1}. Title: {EscapeForPrompt(c.Title)}\nLink: {c.Link}\nContent: {EscapeForPrompt(c.ContentSnippet)}"
                 );
 
                 var messages = new List<ChatMessage>
                 {
-                    new SystemChatMessage(systemPrompt),
+                    new SystemChatMessage(stablePrompt),
                     new UserChatMessage(string.Join("\n\n", userLines))
                 };
 
+                _logger.LogInformation("[GPT] Sending chunk (count={Count}) Titles={Titles}", chunk.Count, string.Join(" | ", chunk.Select(c => c.Title)));
+                _logger.LogDebug("[GPT] Payload for chunk:\n{Payload}", string.Join("\n\n", userLines));
+
                 int attempts = 0;
                 const int maxAttempts = 3;
+                TimeSpan delay = TimeSpan.FromSeconds(1);
                 bool success = false;
 
-                while (attempts < maxAttempts && !success)
+                var parsedForChunk = new List<EnrichedNewsDto>();
+
+                while (attempts < maxAttempts && !success && !cancellationToken.IsCancellationRequested)
                 {
                     attempts++;
                     try
                     {
                         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                        cts.CancelAfter(TimeSpan.FromMinutes(_options.TimeoutSeconds));
+                        cts.CancelAfter(TimeSpan.FromMinutes(3));
 
                         var completion = await _chatClient.CompleteChatAsync(messages, cancellationToken: cts.Token);
                         var raw = completion.Value.Content.FirstOrDefault()?.Text ?? string.Empty;
 
-                        var match = Regex.Match(raw, @"\[[\s\S]*\]");
+                        _logger.LogInformation("[GPT] Raw response (attempt {Attempt}): {TruncatedRaw}", attempts, TruncateForLog(raw, 2000));
+                        _logger.LogDebug("[GPT] Full raw response (attempt {Attempt}):\n{Raw}", attempts, raw);
+
+                        var match = Regex.Match(raw, @"\[\s*\{[\s\S]*\}\s*\]", RegexOptions.Multiline);
                         if (!match.Success)
                         {
-                            _logger.LogWarning("GPT response didn't contain JSON array (attempt {Attempt}). Raw: {Raw}", attempts, raw);
-                            throw new Exception("Invalid JSON from GPT");
+                            _logger.LogWarning("[GPT] No JSON array-of-objects found in response (attempt {Attempt}). Raw starts: {Start}", attempts, TruncateForLog(raw, 200));
+                            throw new InvalidOperationException("GPT response missing valid JSON array-of-objects.");
                         }
 
-                        var json = JsonDocument.Parse(match.Value);
-                        foreach (var item in json.RootElement.EnumerateArray())
+                        var extracted = match.Value;
+                        _logger.LogDebug("[GPT] Extracted JSON for parsing (attempt {Attempt}): {JsonPreview}", attempts, TruncateForLog(extracted, 2000));
+
+                        JsonDocument jsonDoc;
+                        try
                         {
-                            results.Add(ParseEnrichedFromJsonElement(item, targetLanguages));
+                            jsonDoc = JsonDocument.Parse(extracted);
+                        }
+                        catch (Exception parseEx)
+                        {
+                            _logger.LogError(parseEx, "[GPT] JSON parse failed (attempt {Attempt}). Extracted JSON: {Extracted}", attempts, TruncateForLog(extracted, 2000));
+                            throw;
                         }
 
-                        if (results.Count < items.Count)
+                        var root = jsonDoc.RootElement;
+                        if (root.ValueKind != JsonValueKind.Array)
                         {
-                            while (results.Count % chunk.Count != 0)
+                            _logger.LogWarning("[GPT] Extracted JSON root is not array (attempt {Attempt}). RootKind={Kind}", attempts, root.ValueKind);
+                            throw new InvalidOperationException("Extracted JSON is not an array.");
+                        }
+
+                        int jsonIndex = 0;
+                        foreach (var item in root.EnumerateArray())
+                        {
+                            if (jsonIndex >= chunk.Count)
                             {
-                                var idx = results.Count % chunk.Count;
-                                results.Add(CreateFallbackSingle(chunk[idx].Title));
+                                _logger.LogWarning("[GPT] JSON returned more items than input chunk. Truncating extras.");
+                                break;
                             }
+
+                            if (item.ValueKind != JsonValueKind.Object)
+                            {
+                                _logger.LogWarning("[GPT] JSON element is not an object (index={Index}). ValueKind={Kind}. Using fallback for this position.", jsonIndex, item.ValueKind);
+                                parsedForChunk.Add(CreateFallbackSingle(chunk[jsonIndex].Title, targetLanguages));
+                                jsonIndex++;
+                                continue;
+                            }
+
+                            try
+                            {
+                                parsedForChunk.Add(ParseEnrichedFromJsonElement(item, targetLanguages));
+                            }
+                            catch (Exception exParseItem)
+                            {
+                                _logger.LogWarning(exParseItem, "[GPT] Failed to parse JSON element at index {Index}. Using fallback for this position. Raw element: {Elem}", jsonIndex, TruncateForLog(item.ToString(), 500));
+                                parsedForChunk.Add(CreateFallbackSingle(chunk[jsonIndex].Title, targetLanguages));
+                            }
+
+                            jsonIndex++;
                         }
 
+                        while (parsedForChunk.Count < chunk.Count)
+                        {
+                            var idx = parsedForChunk.Count;
+                            _logger.LogWarning("[GPT] Missing item for chunk position {Idx}. Adding fallback for title: {Title}", idx, chunk[idx].Title);
+                            parsedForChunk.Add(CreateFallbackSingle(chunk[idx].Title, targetLanguages));
+                        }
+
+                        results.AddRange(parsedForChunk);
                         success = true;
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogWarning(ex, "[GPT] Enrichment failed (attempt {Attempt}).", attempts);
+                        _logger.LogWarning(ex, "[GPT] Attempt {Attempt} failed for chunk (titles: {Titles})", attempts, string.Join(" | ", chunk.Select(c => c.Title)));
                         if (attempts >= maxAttempts)
                         {
-                            _logger.LogError(ex, "[GPT] Failed after {Attempts} attempts for this chunk. Adding fallback entries.", attempts);
-                            results.AddRange(CreateFallback(chunk.Select(c => c.Title).ToList()));
+                            _logger.LogError(ex, "[GPT] Failed for chunk after {Attempts} attempts. Adding fallback for entire chunk.", attempts);
+                            results.AddRange(CreateFallback(chunk.Select(c => c.Title).ToList(), targetLanguages));
                         }
                         else
                         {
-                            await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+                            _logger.LogInformation("[GPT] Will retry attempt {NextAttempt} after {Delay}ms", attempts + 1, (int)delay.TotalMilliseconds);
+                            await Task.Delay(delay, cancellationToken);
+                            delay = TimeSpan.FromMilliseconds(delay.TotalMilliseconds * 2 + new Random().Next(0, 200));
                         }
                     }
                 }
@@ -128,14 +212,14 @@ namespace MyNews.Api.Services
             if (targetLangs == null || targetLangs.Count == 0)
                 return translations;
 
-            string prompt = $"Translate this news title and summary into: {string.Join(", ", targetLangs)}.\n" +
+            string prompt = $"Translate the following news title and summary into the specified languages: {string.Join(", ", targetLangs)}.\n" +
                             $"Return valid JSON with one object per language, keys: 'Title', 'Summary'.\n" +
                             $"No commentary or markdown.\n\n" +
                             $"Title: {title}\nSummary: {summary}";
 
             var messages = new List<ChatMessage>
             {
-                new SystemChatMessage("You are a multilingual translation assistant."),
+                new SystemChatMessage("You are a multilingual translation assistant. Return only JSON."),
                 new UserChatMessage(prompt)
             };
 
@@ -143,19 +227,34 @@ namespace MyNews.Api.Services
             {
                 var completion = await _chatClient.CompleteChatAsync(messages, cancellationToken: cancellationToken);
                 var raw = completion.Value.Content.FirstOrDefault()?.Text ?? string.Empty;
+                _logger.LogInformation("[GPT-TRANSLATE] Raw response: {TruncatedRaw}", TruncateForLog(raw, 1000));
+                _logger.LogDebug("[GPT-TRANSLATE] Full raw response:\n{Raw}", raw);
+
                 var match = Regex.Match(raw, @"\{[\s\S]*\}");
-                if (!match.Success) 
+                if (!match.Success)
+                {
+                    _logger.LogWarning("[GPT-TRANSLATE] No JSON object found in response for title {Title}. Raw starts: {Start}", title, TruncateForLog(raw, 200));
                     return translations;
+                }
 
                 var json = JsonDocument.Parse(match.Value);
+                if (json.RootElement.ValueKind != JsonValueKind.Object)
+                {
+                    _logger.LogWarning("[GPT-TRANSLATE] Parsed root is not object for title {Title}. RootKind={Kind}", title, json.RootElement.ValueKind);
+                    return translations;
+                }
+
                 foreach (var lang in json.RootElement.EnumerateObject())
                 {
-                    var titleTr = lang.Value.TryGetProperty("Title", out var tt) ? tt.GetString() ?? string.Empty : string.Empty;
-                    var sumTr = lang.Value.TryGetProperty("Summary", out var ss) ? ss.GetString() ?? string.Empty : string.Empty;
+                    if (lang.Value.ValueKind != JsonValueKind.Object)
+                        continue;
 
-                    translations[lang.Name.ToUpper()] = new NewsTranslationDto
+                    var titleTr = lang.Value.TryGetProperty("Title", out var tt) && tt.ValueKind == JsonValueKind.String ? tt.GetString() ?? string.Empty : string.Empty;
+                    var sumTr = lang.Value.TryGetProperty("Summary", out var ss) && ss.ValueKind == JsonValueKind.String ? ss.GetString() ?? string.Empty : string.Empty;
+
+                    translations[lang.Name.ToUpperInvariant()] = new NewsTranslationDto
                     {
-                        LanguageCode = lang.Name.ToUpper(),
+                        LanguageCode = lang.Name.ToUpperInvariant(),
                         Title = titleTr,
                         Summary = sumTr
                     };
@@ -171,21 +270,39 @@ namespace MyNews.Api.Services
 
         private EnrichedNewsDto ParseEnrichedFromJsonElement(JsonElement item, List<string> targetLanguages)
         {
-            string title = item.TryGetProperty("Title", out var pTitle) ? pTitle.GetString() ?? string.Empty : string.Empty;
-            string summary = item.TryGetProperty("Summary", out var pSummary) ? pSummary.GetString() ?? string.Empty : string.Empty;
-            string sectionStr = item.TryGetProperty("Section", out var pSection) ? pSection.GetString() ?? string.Empty : string.Empty;
+            if (item.ValueKind != JsonValueKind.Object)
+                throw new InvalidOperationException("Expected JSON object.");
+
+            string title = string.Empty;
+            if (item.TryGetProperty("Title", out var pTitle) && pTitle.ValueKind == JsonValueKind.String)
+                title = pTitle.GetString() ?? string.Empty;
+
+            string summary = string.Empty;
+            if (item.TryGetProperty("Summary", out var pSummary) && pSummary.ValueKind == JsonValueKind.String)
+                summary = pSummary.GetString() ?? string.Empty;
+
+            string sectionStr = string.Empty;
+            if (item.TryGetProperty("Section", out var pSection) && pSection.ValueKind == JsonValueKind.String)
+                sectionStr = pSection.GetString() ?? string.Empty;
 
             if (!Enum.TryParse(sectionStr?.Trim(), out SectionType section))
                 section = SectionType.General;
 
-            var translations = new Dictionary<string, NewsTranslationDto>();
+            var translations = new Dictionary<string, NewsTranslationDto>(StringComparer.OrdinalIgnoreCase);
+
             if (item.TryGetProperty("Translations", out var translationsJson) && translationsJson.ValueKind == JsonValueKind.Object)
             {
                 foreach (var prop in translationsJson.EnumerateObject())
                 {
-                    var lang = prop.Name;
-                    var tTitle = prop.Value.TryGetProperty("Title", out var tt) ? tt.GetString() ?? string.Empty : string.Empty;
-                    var tSummary = prop.Value.TryGetProperty("Summary", out var ts) ? ts.GetString() ?? string.Empty : string.Empty;
+                    var lang = prop.Name.ToLowerInvariant();
+                    if (prop.Value.ValueKind != JsonValueKind.Object)
+                    {
+                        translations[lang] = new NewsTranslationDto { LanguageCode = lang, Title = string.Empty, Summary = string.Empty };
+                        continue;
+                    }
+
+                    var tTitle = prop.Value.TryGetProperty("Title", out var tt) && tt.ValueKind == JsonValueKind.String ? tt.GetString() ?? string.Empty : string.Empty;
+                    var tSummary = prop.Value.TryGetProperty("Summary", out var ts) && ts.ValueKind == JsonValueKind.String ? ts.GetString() ?? string.Empty : string.Empty;
 
                     translations[lang] = new NewsTranslationDto
                     {
@@ -198,23 +315,31 @@ namespace MyNews.Api.Services
             else
             {
                 foreach (var l in targetLanguages)
-                    translations[l] = new NewsTranslationDto { LanguageCode = l, Title = string.Empty, Summary = string.Empty };
+                    translations[l.ToLowerInvariant()] = new NewsTranslationDto { LanguageCode = l.ToLowerInvariant(), Title = string.Empty, Summary = string.Empty };
             }
 
             return new EnrichedNewsDto
             {
-                Title = title,
-                Summary = summary,
+                Title = string.IsNullOrWhiteSpace(title) ? "Title unavailable" : title,
+                Summary = string.IsNullOrWhiteSpace(summary) ? "Summary unavailable" : summary,
                 Section = section,
                 Translations = translations
             };
         }
 
-        private EnrichedNewsDto CreateFallbackSingle(string title)
+        private List<EnrichedNewsDto> CreateFallback(List<string> titles, List<string> targetLanguages)
         {
-            var translations = new Dictionary<string, NewsTranslationDto>();
-            foreach (var l in _targetLanguages)
-                translations[l] = new NewsTranslationDto { LanguageCode = l, Title = string.Empty, Summary = string.Empty };
+            if (titles == null || titles.Count == 0)
+                return new List<EnrichedNewsDto>();
+
+            return titles.Select(t => CreateFallbackSingle(t, targetLanguages)).ToList();
+        }
+
+        private EnrichedNewsDto CreateFallbackSingle(string title, List<string> targetLanguages)
+        {
+            var translations = new Dictionary<string, NewsTranslationDto>(StringComparer.OrdinalIgnoreCase);
+            foreach (var l in targetLanguages.Distinct(StringComparer.OrdinalIgnoreCase))
+                translations[l.ToLowerInvariant()] = new NewsTranslationDto { LanguageCode = l.ToLowerInvariant(), Title = string.Empty, Summary = string.Empty };
 
             return new EnrichedNewsDto
             {
@@ -230,33 +355,26 @@ namespace MyNews.Api.Services
             var result = new List<List<T>>();
             for (int i = 0; i < items.Count; i += size)
                 result.Add(items.GetRange(i, Math.Min(size, items.Count - i)));
-
             return result;
         }
 
-        private string EscapeForPrompt(string s, int batchSize = 1)
+        private static string EscapeForPrompt(string s)
         {
             if (string.IsNullOrWhiteSpace(s))
                 return string.Empty;
 
-            int maxChars = _options.BatchSize > 3 ? 2000 : 2300;
+            var cleaned = s.Replace("\r", " ").Replace("\n", " ").Trim();
+            if (cleaned.Length > 2000)
+                return cleaned.Substring(0, 2000);
 
-            var result = Regex.Replace(s, "<.*?>", "");
-            result = Regex.Replace(result, @"https?://\S+", "");
-            result = Regex.Replace(result, @"\s+", " ").Trim();
-
-            if (result.Length > maxChars)
-                result = result.Substring(0, maxChars).TrimEnd() + "...";
-
-            return result.Replace("\r", " ").Replace("\n", " ");
+            return cleaned;
         }
 
-        private List<EnrichedNewsDto> CreateFallback(List<string> titles)
+        private static string TruncateForLog(string s, int max)
         {
-            if (titles == null || titles.Count == 0)
-                return new List<EnrichedNewsDto>();
-
-            return titles.Select(t => CreateFallbackSingle(t)).ToList();
+            if (string.IsNullOrEmpty(s)) return string.Empty;
+            if (s.Length <= max) return s;
+            return s.Substring(0, max) + "...(truncated)";
         }
     }
 }

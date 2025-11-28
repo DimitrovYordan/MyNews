@@ -39,6 +39,9 @@ namespace MyNews.Api.Data
                 .HasForeignKey(p => p.UserId);
 
             modelBuilder.Entity<UserSectionPreference>()
+                .HasQueryFilter(p => !p.User.IsDeleted);
+
+            modelBuilder.Entity<UserSectionPreference>()
                 .Property(p => p.SectionType)
                 .HasConversion<int>();
 
@@ -54,6 +57,9 @@ namespace MyNews.Api.Data
                 .WithMany(u => u.UserSourcePreferences)
                 .HasForeignKey(p => p.UserId);
 
+            modelBuilder.Entity<UserSourcePreferences>()
+                .HasQueryFilter(p => !p.User.IsDeleted);
+
             modelBuilder.Entity<UserNewsRead>()
                 .HasKey(unr => new { unr.UserId, unr.NewsItemId });
 
@@ -61,6 +67,9 @@ namespace MyNews.Api.Data
                 .HasOne(unr => unr.User)
                 .WithMany(u => u.NewsReads)
                 .HasForeignKey(unr => unr.UserId);
+
+            modelBuilder.Entity<UserNewsRead>()
+                .HasQueryFilter(p => !p.User.IsDeleted);
 
             modelBuilder.Entity<UserNewsRead>()
                 .HasOne(unr => unr.NewsItem)
@@ -102,6 +111,9 @@ namespace MyNews.Api.Data
                 .HasOne(a => a.User)
                 .WithOne()
                 .HasForeignKey<UserActivity>(a => a.UserId);
+
+            modelBuilder.Entity<UserActivity>()
+                .HasQueryFilter(p => !p.User.IsDeleted);
 
             modelBuilder.Entity<Source>().HasData(
                 // ========================

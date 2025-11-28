@@ -18,22 +18,18 @@ namespace MyNews.Api.Background
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<RssBackgroundService> _logger;
         private readonly int _rssFetchIntervalHours;
-        private readonly OpenAIOptions _options;
         private readonly int _fetchArticleTimeoutSeconds = 10;
+        private readonly OpenAIOptions _options;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly string[] _globalTargetLanguages;
 
-        public RssBackgroundService(IServiceScopeFactory scopeFactory, 
-            ILogger<RssBackgroundService> logger, 
-            IOptions<BackgroundJobsOptions> bjOptions, 
-            IHttpClientFactory httpClientFactory, 
-            IOptions<LocalizationOptions> localizationOptions,
-            IOptions<OpenAIOptions> options)
+        public RssBackgroundService(IServiceScopeFactory scopeFactory, ILogger<RssBackgroundService> logger, IOptions<OpenAIOptions> options,
+            IOptions<BackgroundJobsOptions> bgjptions, IHttpClientFactory httpClientFactory, IOptions<LocalizationOptions> localizationOptions)
         {
-            _options = options.Value;
             _scopeFactory = scopeFactory;
+            _options = options.Value;
             _logger = logger;
-            _rssFetchIntervalHours = bjOptions.Value.RssFetchIntervalHours;
+            _rssFetchIntervalHours = bgjptions.Value.RssFetchIntervalHours;
             _httpClientFactory = httpClientFactory;
             _globalTargetLanguages = localizationOptions.Value.TargetLanguages
                 .Select(s => s?.Trim().ToLowerInvariant() ?? string.Empty)
@@ -43,24 +39,22 @@ namespace MyNews.Api.Background
 
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("=== RSS Job started at {Time} ===", DateTime.UtcNow);
+            _logger.LogInformation("RSS background service started at {Time}", DateTime.UtcNow);
 
             while (!cancellationToken.IsCancellationRequested)
             {
-                var batchStart = DateTime.UtcNow;
-                int totalSourcesProcessed = 0;
-                int totalNewsAdded = 0;
-
                 try
                 {
                     using var scope = _scopeFactory.CreateScope();
                     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                     var rssService = scope.ServiceProvider.GetRequiredService<IRssService>();
 
+                    int totalNewsAdded = 0;
+                    int totalSourcesProcessed = 0;
+                    var batchStart = DateTime.UtcNow;
+
                     var sources = await dbContext.Sources.ToListAsync(cancellationToken);
                     int totalSources = sources.Count;
-                    _logger.LogInformation("Found {Count} RSS sources", sources.Count);
-
                     int srcIndex = 1;
 
                     foreach (var source in sources)
@@ -88,10 +82,9 @@ namespace MyNews.Api.Background
                                     freshItems.Add(rssItem);
                             }
 
-                            _logger.LogInformation("[RSS] {Count} new items found for {Url}", freshItems.Count, source.Url);
-
                             if (!freshItems.Any())
                             {
+                                srcIndex++;
                                 continue;
                             }
 
@@ -127,8 +120,7 @@ namespace MyNews.Api.Background
                                                 }
                                                 catch (Exception exFetch)
                                                 {
-                                                    _logger.LogError(exFetch, "[NEWS FAIL] Could not fetch article: {Link}. Reason: {Message}",
-                                                        rssItem.Link, exFetch.Message);
+                                                    _logger.LogWarning(exFetch, "Failed to fetch article for {Link}", rssItem.Link);
                                                     snippet = string.Empty;
                                                 }
                                             }
@@ -165,11 +157,11 @@ namespace MyNews.Api.Background
                                             foreach (var enriched in enrichedResults)
                                             {
                                                 if (!enriched.Translations.ContainsKey("en"))
-                                                    enriched.Translations["en"] = new NewsTranslationDto 
-                                                    { 
-                                                        LanguageCode = "EN", 
-                                                        Title = enriched.Title, 
-                                                        Summary = enriched.Summary 
+                                                    enriched.Translations["en"] = new NewsTranslationDto
+                                                    {
+                                                        LanguageCode = "EN",
+                                                        Title = enriched.Title,
+                                                        Summary = enriched.Summary
                                                     };
 
                                                 enriched.Translations.Remove("bg");
@@ -219,7 +211,6 @@ namespace MyNews.Api.Background
                                                 }
                                             }
                                         }
-
                                         foreach (var (enriched, rssItem) in enrichedResults.Zip(batch))
                                         {
                                             var existingNews = await taskDb.NewsItems
@@ -233,6 +224,7 @@ namespace MyNews.Api.Background
                                             if (existingNews != null)
                                             {
                                                 newsItem = existingNews;
+                                                _logger.LogInformation("[UPSERT] Existing news found: {Title}", enriched.Title);
                                             }
                                             else
                                             {
@@ -250,6 +242,7 @@ namespace MyNews.Api.Background
 
                                                 taskDb.NewsItems.Add(newsItem);
                                                 Interlocked.Increment(ref totalNewsAdded);
+                                                _logger.LogInformation("[INSERT] Added new news item: {Title}", enriched.Title);
                                             }
 
                                             foreach (var kv in enriched.Translations)
@@ -264,6 +257,7 @@ namespace MyNews.Api.Background
                                                 {
                                                     existingTranslation.Title = tDto.Title ?? existingTranslation.Title;
                                                     existingTranslation.Summary = tDto.Summary ?? existingTranslation.Summary;
+                                                    _logger.LogInformation("[UPSERT] Updated translation {Lang} for {Title}", lang, enriched.Title);
                                                 }
                                                 else
                                                 {
@@ -278,15 +272,17 @@ namespace MyNews.Api.Background
                                                     };
 
                                                     taskDb.NewsTranslations.Add(newTranslation);
+                                                    _logger.LogInformation("[UPSERT] Added translation {Lang} for {Title}", lang, enriched.Title);
                                                 }
                                             }
-
                                             await SaveWithRetryAsync(taskDb, enriched.Title, cancellationToken);
                                         }
+
+                                        _logger.LogInformation("[RSS] Batch saved ({Count}) for source {Url}", enrichedResults.Count, source.Url);
                                     }
                                     catch (Exception ex)
                                     {
-                                        _logger.LogError(ex, "[RSS] Batch FAILED for {Url}. Reason: {Message}", source.Url, ex.Message);
+                                        _logger.LogError(ex, "[RSS] Error while processing batch for {Url}", source.Url);
                                     }
                                     finally
                                     {
@@ -315,11 +311,6 @@ namespace MyNews.Api.Background
                 {
                     _logger.LogError(exOuter, "Error while processing RSS feeds.");
                 }
-
-                _logger.LogInformation(
-                    "=== RSS Job finished at {Time}. Total sources: {Sources}. Total news added: {News}. Duration: {Duration}s ===",
-                    DateTime.UtcNow, totalSourcesProcessed, totalNewsAdded, (DateTime.UtcNow - batchStart).TotalSeconds);
-
                 await Task.Delay(TimeSpan.FromHours(_rssFetchIntervalHours), cancellationToken);
             }
         }
@@ -345,7 +336,7 @@ namespace MyNews.Api.Background
 
         private async Task<string> FetchAndExtractArticleAsync(string url, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrWhiteSpace(url)) 
+            if (string.IsNullOrWhiteSpace(url))
                 return string.Empty;
 
             var client = _httpClientFactory.CreateClient();
@@ -414,7 +405,7 @@ namespace MyNews.Api.Background
 
         private static string TruncateToSentenceBoundary(string text, int maxChars)
         {
-            if (string.IsNullOrWhiteSpace(text) || text.Length <= maxChars) 
+            if (string.IsNullOrWhiteSpace(text) || text.Length <= maxChars)
                 return text?.Trim() ?? string.Empty;
 
             var substr = text.Substring(0, maxChars);

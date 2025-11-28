@@ -4,17 +4,17 @@
     {
         public string ApiKey { get; set; } = string.Empty;
 
-        public string Model { get; set; } = "gpt-5-mini";
+        public string Model { get; set; } = "gpt-5-nano";
 
         public int MaxTokens { get; set; } = 900;
 
-        public int BatchSize { get; set; } = 6;
+        public int BatchSize { get; set; } = 3;
 
-        public int ChunkSize { get; set; } = 6;
+        public int ChunkSize { get; set; } = 3;
 
-        public int MaxContentChars { get; set; } = 2000;
+        public int MaxContentChars { get; set; } = 2500;
 
-        public int Concurrency { get; set; } = 5;
+        public int Concurrency { get; set; } = 4;
 
         public int TimeoutSeconds { get; set; } = 180;
     }
