@@ -1,12 +1,14 @@
 ﻿using Microsoft.Extensions.Options;
+
+using System.Text.Json;
+using System.Text.RegularExpressions;
+
 using MyNews.Api.DTOs;
 using MyNews.Api.Enums;
 using MyNews.Api.Interfaces;
 using MyNews.Api.Options;
+
 using OpenAI.Chat;
-using System;
-using System.Text.Json;
-using System.Text.RegularExpressions;
 
 namespace MyNews.Api.Services
 {
@@ -48,23 +50,23 @@ namespace MyNews.Api.Services
                     The array must have the same item order as the input.
                     Each object must contain exactly these keys: ""Title"", ""Summary"", ""Section"", ""Translations"".
                     
-                    - Title: string
-                    - Summary: 2–4 concise sentences. If you cannot summarize, set ""Summary unavailable"".
+                    FIELD RULES:
                     - Section: one of: {sectionTypes}
                     - Translations: an object where keys are language codes (lowercase) and values are objects with keys:
-                        - Title: string
-                        - Summary: string
+                        - Title: translated title
+                        - Summary: translated summary
                     
                     LANGUAGE RULES:
                     1. Detect the language of the input automatically.
-                    2. If the input is in **Bulgarian**, return only:
+                    2. The ""Title"" and ""Summary"" fields must ALWAYS return the original text (no translation).
+                    3. If the input is in **Bulgarian**, return only:
                            ""en"" translation.
-                    3. If the input is in **English**, return:
+                    4. If the input is in **English**, return:
                            ""bg"" translation.
-                    4. If the input is in ANY other language:
+                    5. If the input is in ANY other language:
                            return **both** ""en"" and ""bg"" translations.
-                    5. NEVER return a translation into the same language as the input.
-                    6. If translation is impossible, return:
+                    6. NEVER return a translation into the same language as the original.
+                    7. If translation is impossible, return:
                            Title: """"
                            Summary: """"
                     
@@ -73,15 +75,14 @@ namespace MyNews.Api.Services
                     VALID OUTPUT STRUCTURE EXAMPLE (structure only, not content):
                     [
                       {{
-                        ""Title"": ""Example title"",
-                        ""Summary"": ""Example summary."",
+                        ""Title"": ""Original title"",
+                        ""Summary"": ""Original summary text."",
                         ""Section"": ""General"",
                         ""Translations"": {{
-                            ""en"": {{ ""Title"": ""Example"", ""Summary"": ""English summary"" }}
+                            ""en"": {{ ""Title"": ""Translated title"", ""Summary"": ""Translated summary"" }}
                         }}
                       }}
-                    ]
-                    ";
+                    ]";
 
                 var userLines = chunk.Select((c, idx) =>
                     $"{idx + 1}. Title: {EscapeForPrompt(c.Title)}\nLink: {c.Link}\nContent: {EscapeForPrompt(c.ContentSnippet)}"
