@@ -43,7 +43,7 @@ namespace MyNews.Api.Services
 
                         try
                         {
-                            if (feedItem.Summary != null && !string.IsNullOrWhiteSpace(feedItem.Summary.Text)) 
+                            if (feedItem.Summary != null && !string.IsNullOrWhiteSpace(feedItem.Summary.Text))
                             {
                                 description = System.Net.WebUtility.HtmlDecode(feedItem.Summary.Text).Trim();
                             }

@@ -4,6 +4,6 @@
     {
         public int CleanupIntervalDays { get; set; } = 2;
 
-        public int RssFetchIntervalHours { get; set; } = 7;
+        public int RssFetchIntervalHours { get; set; } = 6;
     }
 }
