@@ -53,7 +53,7 @@ namespace MyNews.Api.Background
                     int totalSourcesProcessed = 0;
                     var batchStart = DateTime.UtcNow;
 
-                    var sources = await dbContext.Sources.ToListAsync(cancellationToken);
+                    var sources = await dbContext.Sources.Skip(15).ToListAsync(cancellationToken);
                     int totalSources = sources.Count;
                     int srcIndex = 1;
 
