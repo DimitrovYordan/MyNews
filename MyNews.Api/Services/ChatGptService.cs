@@ -71,7 +71,7 @@ namespace MyNews.Api.Services
                             ""Summary"": ""Original summary..."",
                             ""Section"": ""Politics"",
                             ""Translations"": {{
-                                ""{overrideLanguages}"": {{ ""Title"": ""..."", ""Summary"": ""..."" }}
+                                ""en"": {{ ""Title"": ""..."", ""Summary"": ""..."" }}
                             }}
                           }}
                         ]";
