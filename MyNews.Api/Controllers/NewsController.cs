@@ -1,10 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
-using System.Security.Claims;
-
+using MyNews.Api.DTOs;
 using MyNews.Api.Enums;
 using MyNews.Api.Interfaces;
+using System.Security.Claims;
 
 namespace MyNews.Api.Controllers
 {
@@ -92,6 +91,31 @@ namespace MyNews.Api.Controllers
             var result = await _newsService.GetNewsBySectionsAsync(sectionIds, userId);
 
             return Ok(result);
+        }
+
+        [HttpPost("filter")]
+        public async Task<IActionResult> GetNewsByFilter([FromBody] NewsFilterRequest request)
+        {
+            var userId = GetUserId();
+            if (userId == null)
+                return Unauthorized();
+
+            var selectedSourceIds = request.SourceIds.Any()
+                ? request.SourceIds
+                : (await _userPreferencesService.GetSelectedSourcesAsync(userId.Value)).ToList();
+
+            var selectedSectionIds = request.SectionIds.Any()
+                ? request.SectionIds
+                : (await _userPreferencesService.GetSelectedSectionsAsync(userId.Value))
+                    .Select(s => (int)s)
+                    .ToList();
+
+            var news = await _newsService.GetNewsBySectionsAndSourcesAsync(
+                selectedSectionIds,
+                selectedSourceIds,
+                userId.Value);
+
+            return Ok(news);
         }
 
         /// <summary>
