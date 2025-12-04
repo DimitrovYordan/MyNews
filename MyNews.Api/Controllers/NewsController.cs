@@ -36,46 +36,46 @@ namespace MyNews.Api.Controllers
         /// Retrieves a list of news items filtered by sections and sources.
         /// If no filters are provided, the user's preferences are used.
         /// </summary>
-        [HttpGet]
-        public async Task<IActionResult> GetNews([FromQuery] List<int> sectionIds, [FromQuery] List<int> sourceIds)
-        {
-            var userId = GetUserId();
-            if (userId == null)
-                return Unauthorized();
+        //[HttpGet]
+        //public async Task<IActionResult> GetNews([FromQuery] List<int> sectionIds, [FromQuery] List<int> sourceIds)
+        //{
+        //    var userId = GetUserId();
+        //    if (userId == null)
+        //        return Unauthorized();
 
-            var selectedSourceIds = (sourceIds != null && sourceIds.Any())
-                ? sourceIds
-                : (await _userPreferencesService.GetSelectedSourcesAsync(userId.Value))
-                    .Select(s => (int)s)
-                    .ToList();
+        //    var selectedSourceIds = (sourceIds != null && sourceIds.Any())
+        //        ? sourceIds
+        //        : (await _userPreferencesService.GetSelectedSourcesAsync(userId.Value))
+        //            .Select(s => (int)s)
+        //            .ToList();
 
-            var selectedSectionIds = (sectionIds != null && sectionIds.Any())
-                ? sectionIds
-                : (await _userPreferencesService.GetSelectedSectionsAsync(userId.Value))
-                    .Select(s => (int)s)
-                    .ToList();
+        //    var selectedSectionIds = (sectionIds != null && sectionIds.Any())
+        //        ? sectionIds
+        //        : (await _userPreferencesService.GetSelectedSectionsAsync(userId.Value))
+        //            .Select(s => (int)s)
+        //            .ToList();
 
-            var news = await _newsService.GetNewsBySectionsAndSourcesAsync(selectedSectionIds, selectedSourceIds, userId.Value);
+        //    var news = await _newsService.GetNewsBySectionsAndSourcesAsync(selectedSectionIds, selectedSourceIds, userId.Value);
 
-            var result = news.Select(n => new 
-            {
-                n.Id,
-                SectionId = (int)n.Section,
-                SectionName = n.Section.ToString(),
-                n.Title,
-                n.Description,
-                n.Summary,
-                n.PublishedAt,
-                n.Link,
-                n.SourceName,
-                n.SourceUrl,
-                n.IsNew,
-                n.IsRead,
-                n.Translations
-            });
+        //    var result = news.Select(n => new 
+        //    {
+        //        n.Id,
+        //        SectionId = (int)n.Section,
+        //        SectionName = n.Section.ToString(),
+        //        n.Title,
+        //        n.Description,
+        //        n.Summary,
+        //        n.PublishedAt,
+        //        n.Link,
+        //        n.SourceName,
+        //        n.SourceUrl,
+        //        n.IsNew,
+        //        n.IsRead,
+        //        n.Translations
+        //    });
 
-            return Ok(result);
-        }
+        //    return Ok(result);
+        //}
 
         /// <summary>
         /// Retrieves news grouped by sections for a given user.
