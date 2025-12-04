@@ -33,51 +33,6 @@ namespace MyNews.Api.Controllers
         }
 
         /// <summary>
-        /// Retrieves a list of news items filtered by sections and sources.
-        /// If no filters are provided, the user's preferences are used.
-        /// </summary>
-        //[HttpGet]
-        //public async Task<IActionResult> GetNews([FromQuery] List<int> sectionIds, [FromQuery] List<int> sourceIds)
-        //{
-        //    var userId = GetUserId();
-        //    if (userId == null)
-        //        return Unauthorized();
-
-        //    var selectedSourceIds = (sourceIds != null && sourceIds.Any())
-        //        ? sourceIds
-        //        : (await _userPreferencesService.GetSelectedSourcesAsync(userId.Value))
-        //            .Select(s => (int)s)
-        //            .ToList();
-
-        //    var selectedSectionIds = (sectionIds != null && sectionIds.Any())
-        //        ? sectionIds
-        //        : (await _userPreferencesService.GetSelectedSectionsAsync(userId.Value))
-        //            .Select(s => (int)s)
-        //            .ToList();
-
-        //    var news = await _newsService.GetNewsBySectionsAndSourcesAsync(selectedSectionIds, selectedSourceIds, userId.Value);
-
-        //    var result = news.Select(n => new 
-        //    {
-        //        n.Id,
-        //        SectionId = (int)n.Section,
-        //        SectionName = n.Section.ToString(),
-        //        n.Title,
-        //        n.Description,
-        //        n.Summary,
-        //        n.PublishedAt,
-        //        n.Link,
-        //        n.SourceName,
-        //        n.SourceUrl,
-        //        n.IsNew,
-        //        n.IsRead,
-        //        n.Translations
-        //    });
-
-        //    return Ok(result);
-        //}
-
-        /// <summary>
         /// Retrieves news grouped by sections for a given user.
         /// </summary>
         [HttpPost("by-sections")]
@@ -93,6 +48,17 @@ namespace MyNews.Api.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// Retrieves news items filtered by the specified sections and sources for the authenticated user.
+        /// </summary>
+        /// <param name="request">
+        /// A <see cref="NewsFilterRequest"/> object containing the list of section IDs and source IDs
+        /// to filter the news. If either list is empty, the user's selected sections or sources are used instead.
+        /// </param>
+        /// <returns>
+        /// An <see cref="IActionResult"/> containing the filtered list of news items.
+        /// Returns <see cref="UnauthorizedResult"/> if the user is not authenticated.
+        /// </returns>
         [HttpPost("filter")]
         public async Task<IActionResult> GetNewsByFilter([FromBody] NewsFilterRequest request)
         {
@@ -102,7 +68,9 @@ namespace MyNews.Api.Controllers
 
             var selectedSourceIds = request.SourceIds.Any()
                 ? request.SourceIds
-                : (await _userPreferencesService.GetSelectedSourcesAsync(userId.Value)).ToList();
+                : (await _userPreferencesService.GetSelectedSourcesAsync(userId.Value))
+                .Select(s => (int)s)
+                .ToList();
 
             var selectedSectionIds = request.SectionIds.Any()
                 ? request.SectionIds
@@ -115,7 +83,24 @@ namespace MyNews.Api.Controllers
                 selectedSourceIds,
                 userId.Value);
 
-            return Ok(news);
+            var result = news.Select(n => new
+            {
+                n.Id,
+                SectionId = (int)n.Section,
+                SectionName = n.Section.ToString(),
+                n.Title,
+                n.Description,
+                n.Summary,
+                n.PublishedAt,
+                n.Link,
+                n.SourceName,
+                n.SourceUrl,
+                n.IsNew,
+                n.IsRead,
+                n.Translations
+            });
+
+            return Ok(result);
         }
 
         /// <summary>
