@@ -13,13 +13,8 @@ export class NewsService {
     constructor(private http: HttpClient) { }
 
     getNews(sectionIds: number[], sourceIds: number[]): Observable<NewsItem[]> {
-        const params = new HttpParams({
-            fromObject: {
-                sectionIds: sectionIds.map(x => x.toString()),
-                sourceIds: sourceIds.map(x => x.toString())
-            }
-        });
-        
-        return this.http.get<NewsItem[]>(`${environment.apiUrl}/api/news`, { params });
+        const body = { sectionIds, sourceIds };
+
+        return this.http.post<NewsItem[]>(`${environment.apiUrl}/api/news/filter`, body);
     }
 }
