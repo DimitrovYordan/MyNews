@@ -22,8 +22,9 @@ namespace MyNews.Api.Background
         private readonly int _fetchArticleTimeoutSeconds = 10;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly string[] _globalTargetLanguages;
+        private string lastTitle = string.Empty;
 
-        public RssBackgroundService(IServiceScopeFactory scopeFactory, ILogger<RssBackgroundService> logger, IOptions<BackgroundJobsOptions> bjOptions, 
+        public RssBackgroundService(IServiceScopeFactory scopeFactory, ILogger<RssBackgroundService> logger, IOptions<BackgroundJobsOptions> bjOptions,
             IHttpClientFactory httpClientFactory, IOptions<LocalizationOptions> localizationOptions, IOptions<OpenAIOptions> aiOptions)
         {
             _scopeFactory = scopeFactory;
@@ -54,6 +55,7 @@ namespace MyNews.Api.Background
                     var batchStart = DateTime.UtcNow;
 
                     var sources = await dbContext.Sources.ToListAsync(cancellationToken);
+                    var semaphore = new SemaphoreSlim(_aiOptions.Concurrency);
                     int totalSources = sources.Count;
                     int srcIndex = 1;
 
@@ -89,7 +91,6 @@ namespace MyNews.Api.Background
                             }
 
                             var batches = SplitList(freshItems, _aiOptions.BatchSize);
-                            using var semaphore = new SemaphoreSlim(_aiOptions.Concurrency);
                             var batchTasks = new List<Task>();
 
                             foreach (var batch in batches)
@@ -246,8 +247,9 @@ namespace MyNews.Api.Background
                                                 }
                                             }
 
-                                            await SaveWithRetryAsync(taskDb, enriched.Title, cancellationToken);
+                                            lastTitle = enriched.Title;
                                         }
+                                        await SaveWithRetryAsync(taskDb, lastTitle, cancellationToken);
 
                                         _logger.LogInformation("[RSS] Batch saved ({Count}) for source {Url}", enrichedResults.Count, source.Url);
                                     }
