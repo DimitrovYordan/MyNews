@@ -9,6 +9,7 @@ using MyNews.Api.Interfaces;
 using MyNews.Api.Options;
 
 using OpenAI.Chat;
+using FastText.NetWrapper;
 
 namespace MyNews.Api.Services
 {
@@ -33,6 +34,8 @@ namespace MyNews.Api.Services
             if (items == null || items.Count == 0)
                 return results;
 
+            var detectLang = DetectLanguage(items[0].Title);
+
             var targetLanguages = (overrideLanguages ?? _targetLanguages.ToList()).Select(x => x.ToLowerInvariant()).ToList();
 
             var chunks = SplitList(items, _options.ChunkSize);
@@ -50,31 +53,28 @@ namespace MyNews.Api.Services
                         - ""Title""              (original title, unchanged)
                         - ""Summary""            (summary in the original language, concise and informative in 2 to 4 sentences.)
                         - ""Section""            (one of: {sectionTypes})
-                        - ""Translations""       (object with translated versions)                        
-                        If translation is impossible, return empty strings.
+                        - ""Translations""       (object with translated versions)
 
                         LANGUAGE DETECTION RULE:
-                        - Detect the original language as: ""bg"", ""en"", or ""other"".
+                        - ORIGINAL_LANGUAGE = ""{detectLang}""
                         
                         LANGUAGE RULES:
-                        - If original language = ""bg"": include ONLY the ""en"" translation.
-                        - If original language = ""en"": include ONLY the ""bg"" translation.
-                        - If original language = ""other"": include BOTH ""en"" and ""bg"" translations.
+                        - If ORIGINAL_LANGUAGE = ""bg"": include ONLY ""en""
+                        - If ORIGINAL_LANGUAGE = ""en"": include ONLY ""bg""
+                        - If ORIGINAL_LANGUAGE = ""other"": 
+                            YOU MUST ALWAYS provide real translations for both ""en"" and ""bg"".
+                            Never return empty strings for these languages unless the text is literally non-translateable.
                         - NEVER include a key matching the original language.
-                        - NEVER include empty translation objects.
-                        - NEVER translate into the same language as the original.
+
+                        TRANSLATION OBJECT RULES:
+                        - ""Translations"" must ALWAYS contain all required target languages.
+                        - Each target language must contain:
+                            {{ ""Title"": ""..."", ""Summary"": ""..."" }}
                         
-                        Example structure (not content):
-                        [
-                          {{
-                            ""Title"": ""Original title..."",
-                            ""Summary"": ""Original summary..."",
-                            ""Section"": ""Politics"",
-                            ""Translations"": {{
-                                ""en"": {{ ""Title"": ""..."", ""Summary"": ""..."" }}
-                            }}
-                          }}
-                        ]";
+                        FORMAT RULES:
+                        - NEVER wrap the JSON in code fences.
+                        - NEVER add comments.
+                        - NEVER output anything except the JSON array.";
 
                 var userLines = chunk.Select((c, idx) =>
                     $"{idx + 1}. Title: {EscapeForPrompt(c.Title)}\nContent: {EscapeForPrompt(c.ContentSnippet)}"
@@ -279,6 +279,27 @@ namespace MyNews.Api.Services
                 return new List<EnrichedNewsDto>();
 
             return titles.Select(t => CreateFallbackSingle(t)).ToList();
+        }
+
+        private string DetectLanguage(string text)
+        {
+            var path = Directory.GetCurrentDirectory();
+            var modelPath = Path.Combine(path, "Data", "lid.176.bin");
+            using (var fastText = new FastTextWrapper())
+            {
+                fastText.LoadModel(modelPath);
+
+                var predictions = fastText.PredictMultiple(text, 1);
+
+                if (predictions.Any())
+                {
+                    var label = predictions.First().Label;
+
+                    return label.Replace("__label__", "");
+                }
+            }
+
+            return "other";
         }
     }
 }
