@@ -283,8 +283,8 @@ namespace MyNews.Api.Services
 
         private string DetectLanguage(string text)
         {
-            var path = Directory.GetCurrentDirectory();
-            var modelPath = Path.Combine(path, "Data", "lid.176.bin");
+            var path = AppContext.BaseDirectory;
+            var modelPath = Path.Combine(path, "DetectLanguage", "lid.176.bin");
             using (var fastText = new FastTextWrapper())
             {
                 fastText.LoadModel(modelPath);
