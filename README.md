@@ -1,3 +1,5 @@
+https://www.shortglobenews.com/
+
 # 🌍 Global News Aggregation Platform
 
 A full-stack application built with **C# (.NET)**, **Angular**, and **MS SQL Server** designed for collecting, organizing, 
