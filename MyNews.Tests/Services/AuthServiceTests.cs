@@ -33,13 +33,13 @@ namespace MyNews.Tests.Services
         {
             // Arrange
             using var context = new AppDbContext(_dbOptions);
-            var jwtMock = new Mock<IJwtService>();
             var emailMock = new Mock<IEmailService>();
-
+            var activityMock = new Mock<IUserActivityService>();
+            var jwtMock = new Mock<IJwtService>();
             jwtMock.Setup(j => j.GenerateToken(It.IsAny<Guid>(), It.IsAny<string>()))
                    .Returns("mock-token");
 
-            var service = new AuthService(context, jwtMock.Object, emailMock.Object);
+            var service = new AuthService(context, jwtMock.Object, emailMock.Object, activityMock.Object);
 
             var dto = new RegisterDto
             {
@@ -82,8 +82,8 @@ namespace MyNews.Tests.Services
 
             var jwtMock = new Mock<IJwtService>();
             var emailMock = new Mock<IEmailService>();
-
-            var service = new AuthService(context, jwtMock.Object, emailMock.Object);
+            var activityMock = new Mock<IUserActivityService>();
+            var service = new AuthService(context, jwtMock.Object, emailMock.Object, activityMock.Object);
 
             var dto = new RegisterDto
             {
@@ -120,7 +120,8 @@ namespace MyNews.Tests.Services
             jwtMock.Setup(j => j.GenerateToken(user.Id, user.Email)).Returns("valid-token");
 
             var emailMock = new Mock<IEmailService>();
-            var service = new AuthService(context, jwtMock.Object, emailMock.Object);
+            var activityMock = new Mock<IUserActivityService>();
+            var service = new AuthService(context, jwtMock.Object, emailMock.Object, activityMock.Object);
 
             var dto = new LoginDto { Email = "login@user.com", Password = "secret123" };
 
@@ -152,7 +153,8 @@ namespace MyNews.Tests.Services
 
             var jwtMock = new Mock<IJwtService>();
             var emailMock = new Mock<IEmailService>();
-            var service = new AuthService(context, jwtMock.Object, emailMock.Object);
+            var activityMock = new Mock<IUserActivityService>();
+            var service = new AuthService(context, jwtMock.Object, emailMock.Object, activityMock.Object);
 
             var dto = new LoginDto { Email = "invalid@user.com", Password = "wrong-pass" };
 
@@ -181,11 +183,12 @@ namespace MyNews.Tests.Services
             await context.SaveChangesAsync();
 
             var jwtMock = new Mock<IJwtService>();
+            var activityMock = new Mock<IUserActivityService>();
             var emailMock = new Mock<IEmailService>();
             emailMock.Setup(e => e.SendPasswordResetEmailAsync(user.Email, user.FirstName, It.IsAny<string>()))
                      .Returns(Task.CompletedTask);
 
-            var service = new AuthService(context, jwtMock.Object, emailMock.Object);
+            var service = new AuthService(context, jwtMock.Object, emailMock.Object, activityMock.Object);
 
             // Act
             var result = await service.ForgotPasswordAsync(user.Email);
@@ -207,8 +210,9 @@ namespace MyNews.Tests.Services
             // Arrange
             using var context = new AppDbContext(_dbOptions);
             var jwtMock = new Mock<IJwtService>();
+            var activityMock = new Mock<IUserActivityService>();
             var emailMock = new Mock<IEmailService>();
-            var service = new AuthService(context, jwtMock.Object, emailMock.Object);
+            var service = new AuthService(context, jwtMock.Object, emailMock.Object, activityMock.Object);
 
             // Act
             var result = await service.ForgotPasswordAsync("unknown@user.com");
@@ -238,7 +242,8 @@ namespace MyNews.Tests.Services
 
             var jwtMock = new Mock<IJwtService>();
             var emailMock = new Mock<IEmailService>();
-            var service = new AuthService(context, jwtMock.Object, emailMock.Object);
+            var activityMock = new Mock<IUserActivityService>();
+            var service = new AuthService(context, jwtMock.Object, emailMock.Object, activityMock.Object);
 
             // Act
             var result = await service.ResetPasswordAsync("valid-token", "newpassword123");
@@ -273,7 +278,8 @@ namespace MyNews.Tests.Services
 
             var jwtMock = new Mock<IJwtService>();
             var emailMock = new Mock<IEmailService>();
-            var service = new AuthService(context, jwtMock.Object, emailMock.Object);
+            var activityMock = new Mock<IUserActivityService>();
+            var service = new AuthService(context, jwtMock.Object, emailMock.Object, activityMock.Object);
 
             // Act
             var result = await service.ResetPasswordAsync("expired-token", "newpassword123");
@@ -292,7 +298,8 @@ namespace MyNews.Tests.Services
             using var context = new AppDbContext(_dbOptions);
             var jwtMock = new Mock<IJwtService>();
             var emailMock = new Mock<IEmailService>();
-            var service = new AuthService(context, jwtMock.Object, emailMock.Object);
+            var activityMock = new Mock<IUserActivityService>();
+            var service = new AuthService(context, jwtMock.Object, emailMock.Object, activityMock.Object);
 
             // Act
             var result = await service.ResetPasswordAsync("not-found", "newpass");

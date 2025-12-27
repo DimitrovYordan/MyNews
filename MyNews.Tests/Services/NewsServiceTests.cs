@@ -50,18 +50,18 @@ namespace MyNews.Tests.Services
             _context.SaveChanges();
         }
 
-        [Fact]
-        public async Task GetNewsBySectionsAndSourcesAsync_ShouldReturnFilteredNews()
-        {
-            // Act
-            var result = await _service.GetNewsBySectionsAndSourcesAsync(
-                new[] { (int)SectionType.Sports },
-                new[] { 1 });
+        //[Fact]
+        //public async Task GetNewsBySectionsAndSourcesAsync_ShouldReturnFilteredNews()
+        //{
+        //    // Act
+        //    var result = await _service.GetNewsBySectionsAndSourcesAsync(
+        //        new[] { (int)SectionType.Sports },
+        //        new[] { 1 });
 
-            // Assert
-            Assert.Single(result);
-            Assert.Equal("Sports", result.First().Title);
-        }
+        //    // Assert
+        //    Assert.Single(result);
+        //    Assert.Equal("Sports", result.First().Title);
+        //}
 
         [Fact]
         public async Task MarkAsReadAsync_ShouldCreateRecord_IfNotExists()

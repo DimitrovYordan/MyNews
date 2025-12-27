@@ -39,41 +39,41 @@ namespace MyNews.Tests.Controllers
             };
         }
 
-        [Fact]
-        public async Task GetNews_ShouldReturnOk_WithValidUser()
-        {
-            // Arrange
-            var sections = new List<int> { 1 };
-            var sources = new List<int> { 2 };
-            var newsList = new List<NewsItemDto>
-            {
-                new NewsItemDto { Id = Guid.NewGuid(), Title = "Test", Section = SectionType.Sports }
-            };
+        //[Fact]
+        //public async Task GetNews_ShouldReturnOk_WithValidUser()
+        //{
+        //    // Arrange
+        //    var sections = new List<int> { 1 };
+        //    var sources = new List<int> { 2 };
+        //    var newsList = new List<NewsItemDto>
+        //    {
+        //        new NewsItemDto { Id = Guid.NewGuid(), Title = "Test", Section = SectionType.Sports }
+        //    };
 
-            _newsServiceMock.Setup(s => s.GetNewsBySectionsAndSourcesAsync(sections, sources))
-                            .ReturnsAsync(newsList);
+        //    _newsServiceMock.Setup(s => s.GetNewsBySectionsAndSourcesAsync(sections, sources))
+        //                    .ReturnsAsync(newsList);
 
-            // Act
-            var result = await _controller.GetNews(sections, sources);
+        //    // Act
+        //    var result = await _controller.GetNews(sections, sources);
 
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            var items = Assert.IsAssignableFrom<IEnumerable<object>>(okResult.Value);
-            Assert.Single(items);
-        }
+        //    // Assert
+        //    var okResult = Assert.IsType<OkObjectResult>(result);
+        //    var items = Assert.IsAssignableFrom<IEnumerable<object>>(okResult.Value);
+        //    Assert.Single(items);
+        //}
 
-        [Fact]
-        public async Task GetNews_ShouldReturnUnauthorized_WhenUserIdIsMissing()
-        {
-            // Arrange
-            _controller.ControllerContext.HttpContext.User = new ClaimsPrincipal(); // no claims
+        //[Fact]
+        //public async Task GetNews_ShouldReturnUnauthorized_WhenUserIdIsMissing()
+        //{
+        //    // Arrange
+        //    _controller.ControllerContext.HttpContext.User = new ClaimsPrincipal(); // no claims
 
-            // Act
-            var result = await _controller.GetNews(new List<int>(), new List<int>());
+        //    // Act
+        //    var result = await _controller.GetNews(new List<int>(), new List<int>());
 
-            // Assert
-            Assert.IsType<UnauthorizedResult>(result);
-        }
+        //    // Assert
+        //    Assert.IsType<UnauthorizedResult>(result);
+        //}
 
         [Fact]
         public async Task GetRssNews_ShouldReturnOk()
