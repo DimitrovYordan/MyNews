@@ -1,6 +1,9 @@
 {
   "WELCOME_TITLE": "Welcome to Short Globe News!",
   "WELCOME_TEXT": "Follow the latest news in different categories.",
+  "WELCOME_ABOUT_TITLE": "About page",
+  "WELCOME_ABOUT_TEXT": "Short Globe News is a smart aggregator of news from around the world. The platform collects and analyzes content from multiple sources and organizes it into sections to get the most important information in one place. You choose which media and topics to follow, being free to rearrange the sections according to your interests. The system automatically updates the news every 6 hours. Unread news is clearly separated from read news and is marked with a green dot for easy recognition. For added convenience, the number of unread news is also displayed next to each source. For each article, a short, clear and objective summary is generated with the help of artificial intelligence, which allows you to quickly understand the essence of the news before moving on to its full text.",
+  "CONTACT_FORM_MESSAGE": "You can send any opinions, suggestions, questions.",
 
   "BUTTON_LOGIN": "Login",
   "BUTTON_SIGNUP": "Register",
@@ -18,6 +21,7 @@
   "BUTTON_DELETE_ACCOUNT": "Delete account",
   "BUTTON_RESET_EMAIL": "Send email",
   "BUTTON_FORGOT_PASSWORD": "Forgot Password",
+  "BUTTON_ABOUT": "About",
 
   "MESSAGE_TITLE": "Title:",
   "MESSAGE_MESSAGE": "Message:",
@@ -42,10 +46,6 @@
   "PASSWORD": "Password",
   "REPEAT_PASSWORD": "Repeat password",
 
-  "ERROR_FIRST_NAME_REQUIRED": "First name is required",
-  "ERROR_LAST_NAME_REQUIRED": "Last name is required",
-  "ERROR_COUNTRY_REQUIRED": "Country is required",
-  "ERROR_CITY_REQUIRED": "City is required",
   "ERROR_EMAIL_REQUIRED": "Email is required",
   "ERROR_TAKEN_EMAIL": "This email is already registered",
   "ERROR_VALID_EMAIL": "Please enter a valid email address",

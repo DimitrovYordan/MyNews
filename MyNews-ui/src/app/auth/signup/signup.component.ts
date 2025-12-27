@@ -33,10 +33,10 @@ export class SignupComponent {
     private http: HttpClient
   ) {
     this.signupForm = this.fb.group({
-      firstName: ['', Validators.required],
-      lastName: ['', Validators.required],
-      country: ['', Validators.required],
-      city: ['', Validators.required],
+      firstName: [''],
+      lastName: [''],
+      country: [''],
+      city: [''],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6), Validators.pattern(/^(?=.*[0-9])(?=.*[^a-zA-Z0-9]).*$/)]],
       repeatPassword: ['', Validators.required]

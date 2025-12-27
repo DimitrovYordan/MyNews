@@ -4,25 +4,9 @@
   <form [formGroup]="signupForm" (ngSubmit)="submitSignup()">
 
     <div class="form-group">
-      <label>{{'FIRST_NAME' | translate}}</label>
-      <input type="text" formControlName="firstName" />
-      @if (signupForm.get('firstName')?.touched && signupForm.get('firstName')?.invalid) {
-      <small class="error">{{'ERROR_FIRST_NAME_REQUIRED' | translate}}</small>
-      }
-    </div>
-
-    <div class="form-group">
-      <label>{{'LAST_NAME' | translate}}</label>
-      <input type="text" formControlName="lastName" />
-      @if (signupForm.get('lastName')?.touched && signupForm.get('lastName')?.invalid) {
-      <small class="error">{{'ERROR_LAST_NAME_REQUIRED' | translate}}</small>
-      }
-    </div>
-
-    <app-location-selector [formGroup]="signupForm"></app-location-selector>
-
-    <div class="form-group">
-      <label>{{'EMAIL' | translate}}</label>
+      <label>{{'EMAIL' | translate}}
+        <span class="required">(Required)</span>
+      </label>
       <input type="email" formControlName="email" />
       @if (emailErrors) {
       <small class="error">{{ emailErrors | translate}}</small>
@@ -30,7 +14,9 @@
     </div>
 
     <div class="form-group password-group">
-      <label>{{'PASSWORD' | translate}}</label>
+      <label>{{'PASSWORD' | translate}}
+        <span class="required">(Required)</span>
+      </label>
       <div class="password-wrapper">
         <input [type]="showPassword ? 'text' : 'password'" formControlName="password" />
         <i class="bi" [ngClass]="showPassword ? 'bi-eye-slash' : 'bi-eye'" (click)="showPassword = !showPassword">
@@ -42,7 +28,9 @@
     </div>
 
     <div class="form-group password-group">
-      <label>{{'REPEAT_PASSWORD' | translate}}</label>
+      <label>{{'REPEAT_PASSWORD' | translate}}
+        <span class="required">(Required)</span>
+      </label>
       <div class="password-wrapper">
         <input [type]="showRepeatPassword ? 'text' : 'password'" formControlName="repeatPassword" />
         <i class="bi" [ngClass]="showRepeatPassword ? 'bi-eye-slash' : 'bi-eye'"
@@ -60,6 +48,18 @@
       {{ errorMessage | translate}}
     </div>
     }
+
+    <div class="form-group">
+      <label>{{'FIRST_NAME' | translate}}</label>
+      <input type="text" formControlName="firstName" />
+    </div>
+
+    <div class="form-group">
+      <label>{{'LAST_NAME' | translate}}</label>
+      <input type="text" formControlName="lastName" />
+    </div>
+
+    <app-location-selector [formGroup]="signupForm"></app-location-selector>
 
     <button type="submit" [disabled]="loading" class="submit-btn">
       {{'BUTTON_SIGNUP' | translate}}

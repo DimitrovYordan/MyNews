@@ -11,6 +11,7 @@ import { SettingsComponent } from './auth/settings/settings.component';
 import { ForgotPasswordComponent } from './auth/forgot-password/forgot-password.component';
 import { ContactComponent } from './components/contact/contact.component';
 import { SourceSelectComponent } from './components/source-select/source-select.component';
+import { AboutComponent } from './components/about/about.component';
 
 export const appRoutes: Routes = [
   { path: '', component: HomeComponent, canActivate: [AuthGuard] },
@@ -24,5 +25,6 @@ export const appRoutes: Routes = [
   { path: 'news', component: NewsListComponent, canActivate: [AuthGuard] },
   { path: 'settings', component: SettingsComponent, canActivate: [AuthGuard] },
   { path: 'contact', component: ContactComponent, canActivate: [AuthGuard] },
+  { path: 'about', component: AboutComponent, canActivate: [AuthGuard] },
   { path: '**', redirectTo: '', pathMatch: 'full' }
 ];

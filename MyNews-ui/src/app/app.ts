@@ -69,7 +69,7 @@ export class App implements OnInit {
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: NavigationEnd) => {
-      const hiddenRoutes = ['/settings', '/news', '/contact', '/sections', '/sources'];
+      const hiddenRoutes = ['/settings', '/news', '/contact', '/sections', '/sources', '/about'];
       this.showWelcomeText = !hiddenRoutes.includes(event.urlAfterRedirects);
 
       this.authService.closeMenu();
@@ -146,6 +146,11 @@ export class App implements OnInit {
 
   goToContact() {
     this.router.navigate(['/contact']);
+    this.isMenuOpen = false;
+  }
+
+  goToAbout() {
+    this.router.navigate(['/about']);
     this.isMenuOpen = false;
   }
 

@@ -24,7 +24,6 @@ export class ContactComponent {
     modalType: 'success' | 'error' = 'success';
 
     constructor(
-        // private http: HttpClient,
         private fb: FormBuilder,
         private contactService: ContactService,
         private authService: AuthService

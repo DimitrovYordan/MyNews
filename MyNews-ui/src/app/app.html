@@ -8,6 +8,11 @@
                 <button (click)="openSignup()">{{ 'BUTTON_SIGNUP' | translate }}</button>
             </ng-container>
             } @else {
+            <div class="desktop-nav-actions">
+                <button (click)="goToNews()">{{ 'BUTTON_NEWS' | translate }}</button>
+                <button (click)="goToSections()">{{ 'BUTTON_SECTIONS' | translate }}</button>
+                <button (click)="goToSources()">{{ 'BUTTON_SOURCES' | translate }}</button>
+            </div>
             <div class="user-menu" (click)="$event.stopPropagation(); toggleMenu()" [class.open]="isMenuOpen">
                 <button class="user-avatar">{{ getInitials() }}</button>
                 @if(isMenuOpen) {
@@ -41,6 +46,11 @@
     </main>
 
     <footer class="footer">
-        <p [innerHTML]="'FOOTER_TEXT' | translate"></p>
+        <p class="footer-text" [innerHTML]="'FOOTER_TEXT' | translate"></p>
+
+        <div class="footer-actions">
+            <button (click)="goToContact()">{{ 'BUTTON_CONTACT' | translate }}</button>
+            <button (click)="goToAbout()">{{ 'BUTTON_ABOUT' | translate }}</button>
+        </div>
     </footer>
 </div>
