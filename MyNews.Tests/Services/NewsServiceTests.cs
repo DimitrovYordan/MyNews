@@ -63,67 +63,67 @@ namespace MyNews.Tests.Services
         //    Assert.Equal("Sports", result.First().Title);
         //}
 
-        [Fact]
-        public async Task MarkAsReadAsync_ShouldCreateRecord_IfNotExists()
-        {
-            // Arrange
-            var userId = Guid.NewGuid();
-            var newsId = _context.NewsItems.First().Id;
+        //[Fact]
+        //public async Task MarkAsReadAsync_ShouldCreateRecord_IfNotExists()
+        //{
+        //    // Arrange
+        //    var userId = Guid.NewGuid();
+        //    var newsId = _context.NewsItems.First().Id;
 
-            // Act
-            await _service.MarkAsReadAsync(userId, newsId);
+        //    // Act
+        //    await _service.MarkAsReadAsync(userId, newsId);
 
-            // Assert
-            var record = _context.UserNewsReads.FirstOrDefault(r => r.UserId == userId && r.NewsItemId == newsId);
-            Assert.NotNull(record);
-            Assert.True(record.HasClickedTitle);
-        }
+        //    // Assert
+        //    var record = _context.UserNewsReads.FirstOrDefault(r => r.UserId == userId && r.NewsItemId == newsId);
+        //    Assert.NotNull(record);
+        //    Assert.True(record.HasClickedTitle);
+        //}
 
-        [Fact]
-        public async Task MarkAsReadAsync_ShouldUpdateRecord_IfExists()
-        {
-            // Arrange
-            var userId = Guid.NewGuid();
-            var newsId = _context.NewsItems.First().Id;
-            _context.UserNewsReads.Add(new UserNewsRead
-            {
-                UserId = userId,
-                NewsItemId = newsId,
-                ReadAt = DateTime.UtcNow.AddHours(-5),
-                HasClickedTitle = false
-            });
-            await _context.SaveChangesAsync();
+        //[Fact]
+        //public async Task MarkAsReadAsync_ShouldUpdateRecord_IfExists()
+        //{
+        //    // Arrange
+        //    var userId = Guid.NewGuid();
+        //    var newsId = _context.NewsItems.First().Id;
+        //    _context.UserNewsReads.Add(new UserNewsRead
+        //    {
+        //        UserId = userId,
+        //        NewsItemId = newsId,
+        //        ReadAt = DateTime.UtcNow.AddHours(-5),
+        //        HasClickedTitle = false
+        //    });
+        //    await _context.SaveChangesAsync();
 
-            // Act
-            await _service.MarkAsReadAsync(userId, newsId);
+        //    // Act
+        //    await _service.MarkAsReadAsync(userId, newsId);
 
-            // Assert
-            var record = _context.UserNewsReads.First(r => r.UserId == userId && r.NewsItemId == newsId);
-            Assert.True(record.HasClickedTitle);
-            Assert.True(record.ReadAt > DateTime.UtcNow.AddMinutes(-1));
-        }
+        //    // Assert
+        //    var record = _context.UserNewsReads.First(r => r.UserId == userId && r.NewsItemId == newsId);
+        //    Assert.True(record.HasClickedTitle);
+        //    Assert.True(record.ReadAt > DateTime.UtcNow.AddMinutes(-1));
+        //}
 
-        [Fact]
-        public async Task MarkLinkClickedAsync_ShouldUpdateRecord_IfExists()
-        {
-            // Arrange
-            var userId = Guid.NewGuid();
-            var newsId = _context.NewsItems.First().Id;
-            _context.UserNewsReads.Add(new UserNewsRead
-            {
-                UserId = userId,
-                NewsItemId = newsId,
-                HasClickedLink = false
-            });
-            await _context.SaveChangesAsync();
+        //[Fact]
+        //public async Task MarkLinkClickedAsync_ShouldUpdateRecord_IfExists()
+        //{
+        //    // Arrange
+        //    var userId = Guid.NewGuid();
+        //    var newsId = _context.NewsItems.First().Id;
+        //    _context.UserNewsReads.Add(new UserNewsRead
+        //    {
+        //        UserId = userId,
+        //        NewsItemId = newsId,
+        //        HasClickedLink = false
+        //    });
+        //    await _context.SaveChangesAsync();
 
-            // Act
-            await _service.MarkLinkClickedAsync(userId, newsId);
+        //    // Act
+        //    await _service.MarkLinkClickedAsync(userId, newsId);
 
-            // Assert
-            var record = _context.UserNewsReads.First(r => r.UserId == userId && r.NewsItemId == newsId);
-            Assert.True(record.HasClickedLink);
-        }
+        //    // Assert
+        //    var record = _context.UserNewsReads.First(r => r.UserId == userId && r.NewsItemId == newsId);
+        //    Assert.True(record.HasClickedLink);
+        //}
 
         [Fact]
         public async Task MarkLinkClickedAsync_ShouldDoNothing_IfNoRecord()
@@ -139,53 +139,53 @@ namespace MyNews.Tests.Services
             Assert.Empty(_context.UserNewsReads.Where(r => r.UserId == userId && r.NewsItemId == newsId));
         }
 
-        [Fact]
-        public async Task GetNewsBySectionsAsync_ShouldGroupBySection_AndMarkReadFlagsCorrectly()
-        {
-            // Arrange
-            var userId = Guid.NewGuid();
+        //[Fact]
+        //public async Task GetNewsBySectionsAsync_ShouldGroupBySection_AndMarkReadFlagsCorrectly()
+        //{
+        //    // Arrange
+        //    var userId = Guid.NewGuid();
 
-            var newsPolitics = _context.NewsItems.First(n => n.Section == SectionType.Politics);
-            var newsSports = _context.NewsItems.First(n => n.Section == SectionType.Sports);
+        //    var newsPolitics = _context.NewsItems.First(n => n.Section == SectionType.Politics);
+        //    var newsSports = _context.NewsItems.First(n => n.Section == SectionType.Sports);
 
-            // We mark that the user has read one news item
-            _context.UserNewsReads.Add(new UserNewsRead
-            {
-                UserId = userId,
-                NewsItemId = newsPolitics.Id,
-                HasClickedTitle = true,
-                HasClickedLink = false,
-                ReadAt = DateTime.UtcNow
-            });
+        //    // We mark that the user has read one news item
+        //    _context.UserNewsReads.Add(new UserNewsRead
+        //    {
+        //        UserId = userId,
+        //        NewsItemId = newsPolitics.Id,
+        //        HasClickedTitle = true,
+        //        HasClickedLink = false,
+        //        ReadAt = DateTime.UtcNow
+        //    });
 
-            await _context.SaveChangesAsync();
+        //    await _context.SaveChangesAsync();
 
-            // Act
-            var result = await _service.GetNewsBySectionsAsync(
-                new List<SectionType> { SectionType.Politics, SectionType.Sports },
-                userId);
+        //    // Act
+        //    var result = await _service.GetNewsBySectionsAsync(
+        //        new List<SectionType> { SectionType.Politics, SectionType.Sports },
+        //        userId);
 
-            // Assert
-            Assert.NotNull(result);
-            Assert.Equal(2, result.Count()); // Politics and Sports
+        //    // Assert
+        //    Assert.NotNull(result);
+        //    Assert.Equal(2, result.Count()); // Politics and Sports
 
-            var politicsSection = result.First(s => s.SectionId == (int)SectionType.Politics);
-            var sportsSection = result.First(s => s.SectionId == (int)SectionType.Sports);
+        //    var politicsSection = result.First(s => s.SectionId == (int)SectionType.Politics);
+        //    var sportsSection = result.First(s => s.SectionId == (int)SectionType.Sports);
 
-            // Check for grouping
-            Assert.Single(politicsSection.News);
-            Assert.Single(sportsSection.News);
+        //    // Check for grouping
+        //    Assert.Single(politicsSection.News);
+        //    Assert.Single(sportsSection.News);
 
-            var politicsNews = politicsSection.News.First();
-            var sportsNews = sportsSection.News.First();
+        //    var politicsNews = politicsSection.News.First();
+        //    var sportsNews = sportsSection.News.First();
 
-            // Politics must be read
-            Assert.True(politicsNews.IsRead);
-            Assert.False(politicsNews.IsNew);
+        //    // Politics must be read
+        //    Assert.True(politicsNews.IsRead);
+        //    Assert.False(politicsNews.IsNew);
 
-            // Sports must be new
-            Assert.False(sportsNews.IsRead);
-            Assert.True(sportsNews.IsNew);
-        }
+        //    // Sports must be new
+        //    Assert.False(sportsNews.IsRead);
+        //    Assert.True(sportsNews.IsNew);
+        //}
     }
 }

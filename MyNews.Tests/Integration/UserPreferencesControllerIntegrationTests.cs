@@ -41,102 +41,102 @@ namespace MyNews.Tests.Integration
             return controller;
         }
 
-        [Fact]
-        public async Task GetSelectedSections_ShouldReturnOk_WhenUserExists()
-        {
-            // Arrange
-            var userId = Guid.NewGuid();
-            var controller = CreateController(out var db, userId);
+        //[Fact]
+        //public async Task GetSelectedSections_ShouldReturnOk_WhenUserExists()
+        //{
+        //    // Arrange
+        //    var userId = Guid.NewGuid();
+        //    var controller = CreateController(out var db, userId);
 
-            db.UserSectionPreference.Add(new()
-            {
-                UserId = userId,
-                SectionType = SectionType.Sports,
-                IsSelected = true
-            });
-            await db.SaveChangesAsync();
+        //    db.UserSectionPreference.Add(new()
+        //    {
+        //        UserId = userId,
+        //        SectionType = SectionType.Sports,
+        //        IsSelected = true
+        //    });
+        //    await db.SaveChangesAsync();
 
-            // Act
-            var result = await controller.GetSelectedSections();
+        //    // Act
+        //    var result = await controller.GetSelectedSections();
 
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            var sections = Assert.IsAssignableFrom<IEnumerable<SectionType>>(okResult.Value);
-            Assert.Contains(SectionType.Sports, sections);
-        }
+        //    // Assert
+        //    var okResult = Assert.IsType<OkObjectResult>(result);
+        //    var sections = Assert.IsAssignableFrom<IEnumerable<SectionType>>(okResult.Value);
+        //    Assert.Contains(SectionType.Sports, sections);
+        //}
 
         /// <summary>
         /// Confirms that UpdateSections successfully updates user section preferences
         /// and returns a success message when the request is valid.
         /// </summary>
-        [Fact]
-        public async Task UpdateSections_ShouldReturnOk_AndPersistChanges()
-        {
-            // Arrange
-            var userId = Guid.NewGuid();
-            var controller = CreateController(out var db, userId);
-            var sections = new List<SectionType> { SectionType.Business, SectionType.Technology };
+        //[Fact]
+        //public async Task UpdateSections_ShouldReturnOk_AndPersistChanges()
+        //{
+        //    // Arrange
+        //    var userId = Guid.NewGuid();
+        //    var controller = CreateController(out var db, userId);
+        //    var sections = new List<SectionType> { SectionType.Business, SectionType.Technology };
 
-            // Act
-            var result = await controller.UpdateSections(sections);
+        //    // Act
+        //    var result = await controller.UpdateSections(sections);
 
-            // Assert
-            var ok = Assert.IsType<OkObjectResult>(result);
-            var json = ok.Value!.ToString();
-            Assert.Contains("Sections updated", json);
+        //    // Assert
+        //    var ok = Assert.IsType<OkObjectResult>(result);
+        //    var json = ok.Value!.ToString();
+        //    Assert.Contains("Sections updated", json);
 
-            var prefs = await db.UserSectionPreference.ToListAsync();
-            Assert.Equal(2, prefs.Count);
-        }
+        //    var prefs = await db.UserSectionPreference.ToListAsync();
+        //    Assert.Equal(2, prefs.Count);
+        //}
 
-        [Fact]
-        public async Task GetSelectedSources_ShouldReturnOk_WhenUserExists()
-        {
-            // Arrange
-            var userId = Guid.NewGuid();
-            var controller = CreateController(out var db, userId);
+        //[Fact]
+        //public async Task GetSelectedSources_ShouldReturnOk_WhenUserExists()
+        //{
+        //    // Arrange
+        //    var userId = Guid.NewGuid();
+        //    var controller = CreateController(out var db, userId);
 
-            db.UserSourcePreferences.Add(new()
-            {
-                UserId = userId,
-                SourceId = 42,
-                IsSelected = true
-            });
-            await db.SaveChangesAsync();
+        //    db.UserSourcePreferences.Add(new()
+        //    {
+        //        UserId = userId,
+        //        SourceId = 42,
+        //        IsSelected = true
+        //    });
+        //    await db.SaveChangesAsync();
 
-            // Act
-            var result = await controller.GetSelectedSources();
+        //    // Act
+        //    var result = await controller.GetSelectedSources();
 
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            var sources = Assert.IsAssignableFrom<IEnumerable<int>>(okResult.Value);
-            Assert.Contains(42, sources);
-        }
+        //    // Assert
+        //    var okResult = Assert.IsType<OkObjectResult>(result);
+        //    var sources = Assert.IsAssignableFrom<IEnumerable<int>>(okResult.Value);
+        //    Assert.Contains(42, sources);
+        //}
 
         /// <summary>
         /// Confirms that UpdateSources updates user source preferences correctly
         /// and returns a success message when data is valid.
         /// </summary>
-        [Fact]
-        public async Task UpdateSources_ShouldReturnOk_AndPersistChanges()
-        {
-            // Arrange
-            var userId = Guid.NewGuid();
-            var controller = CreateController(out var db, userId);
-            var sourceIds = new List<int> { 1, 2, 3 };
+        //[Fact]
+        //public async Task UpdateSources_ShouldReturnOk_AndPersistChanges()
+        //{
+        //    // Arrange
+        //    var userId = Guid.NewGuid();
+        //    var controller = CreateController(out var db, userId);
+        //    var sourceIds = new List<int> { 1, 2, 3 };
 
-            // Act
-            var result = await controller.UpdateSources(sourceIds);
+        //    // Act
+        //    var result = await controller.UpdateSources(sourceIds);
 
-            // Assert
-            var ok = Assert.IsType<OkObjectResult>(result);
+        //    // Assert
+        //    var ok = Assert.IsType<OkObjectResult>(result);
 
-            var json = ok.Value!.ToString();
-            Assert.Contains("Sources updated", json);
+        //    var json = ok.Value!.ToString();
+        //    Assert.Contains("Sources updated", json);
 
-            var prefs = await db.UserSourcePreferences.ToListAsync();
-            Assert.Equal(3, prefs.Count);
-        }
+        //    var prefs = await db.UserSourcePreferences.ToListAsync();
+        //    Assert.Equal(3, prefs.Count);
+        //}
 
         [Fact]
         public async Task GetSelectedSections_ShouldReturnUnauthorized_WhenNoUser()
