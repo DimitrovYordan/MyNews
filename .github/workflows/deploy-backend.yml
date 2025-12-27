@@ -38,7 +38,6 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASS }}
           port: 22
-          shell: powershell
           script_stop: true
           script: |
             $target = "C:\inetpub\api"
