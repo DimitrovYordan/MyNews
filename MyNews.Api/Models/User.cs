@@ -10,16 +10,14 @@ namespace MyNews.Api.Models
         [Key]
         public Guid Id { get; set; } = Guid.NewGuid();
 
-        [Required, MaxLength(20)]
+        [MaxLength(20)]
         public string FirstName { get; set; } = string.Empty;
 
-        [Required, MaxLength(20)]
+        [MaxLength(20)]
         public string LastName { get; set; } = string.Empty;
 
-        [Required, MaxLength(50)]
         public string Country { get; set; } = string.Empty;
 
-        [Required, MaxLength(50)]
         public string City { get; set; } = string.Empty;
 
         [Required, EmailAddress]

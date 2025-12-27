@@ -1,4 +1,6 @@
-﻿using System.ServiceModel.Syndication;
+﻿using System.Net;
+using System.ServiceModel.Syndication;
+using System.Text.RegularExpressions;
 using System.Xml;
 
 using MyNews.Api.DTOs;
@@ -26,7 +28,8 @@ namespace MyNews.Api.Services
             {
                 try
                 {
-                    var response = await _httpClient.GetStringAsync(source.Url);
+                    var raw = await _httpClient.GetStringAsync(source.Url);
+                    var response = SanitizeRss(raw);
 
                     var settings = new XmlReaderSettings
                     {
@@ -90,7 +93,10 @@ namespace MyNews.Api.Services
                         var newsDto = new NewsItemDto
                         {
                             Title = feedItem.Title.Text,
-                            Link = feedItem.Links.FirstOrDefault()?.Uri.ToString() ?? string.Empty,
+                            Link = feedItem.Links
+                                           .Select(l => l.Uri?.ToString())
+                                           .FirstOrDefault(u => Uri.IsWellFormedUriString(u, UriKind.Absolute))
+                                           ?? string.Empty,
                             PublishedAt = feedItem.PublishDate.UtcDateTime,
                             SourceName = source.Name,
                             SourceUrl = source.Url,
@@ -121,6 +127,36 @@ namespace MyNews.Api.Services
         private static string StripHtml(string input)
         {
             return System.Text.RegularExpressions.Regex.Replace(input, "<.*?>", string.Empty);
+        }
+
+        private string SanitizeRss(string xml)
+        {
+            // decode html entities
+            xml = WebUtility.HtmlDecode(xml);
+
+            // fix invalid href/src attributes
+            xml = Regex.Replace(xml,
+                @"(href|src)\s*=\s*[""']([^""']+)[""']",
+                m =>
+                {
+                    var url = m.Groups[2].Value.Trim();
+
+                    if (!Uri.IsWellFormedUriString(url, UriKind.Absolute))
+                    {
+                        try
+                        {
+                            url = Uri.EscapeUriString(url);
+                        }
+                        catch
+                        {
+                            return ""; // drop invalid attribute completely
+                        }
+                    }
+
+                    return $"{m.Groups[1].Value}=\"{url}\"";
+                });
+
+            return xml;
         }
     }
 }
