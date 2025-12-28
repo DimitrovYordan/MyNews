@@ -149,8 +149,7 @@ namespace MyNews.Api.Services
                         }
                         catch
                         {
-                            // drop invalid attribute completely
-                            return "";
+                            return ""; // drop invalid attribute completely 
                         }
                     }
 
