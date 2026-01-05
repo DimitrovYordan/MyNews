@@ -1,4 +1,4 @@
-https://www.shortglobenews.com/
+This is a direct link to the working site: https://www.shortglobenews.com/
 
 # 🌍 Global News Aggregation Platform
 
