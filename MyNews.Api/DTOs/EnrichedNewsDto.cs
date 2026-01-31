@@ -10,6 +10,6 @@ namespace MyNews.Api.DTOs
 
         public SectionType Section { get; set; } = SectionType.General;
 
-        public Dictionary<string, NewsTranslationDto> Translations { get; set; } = new();
+        public string SourceLanguage { get; set; } = "other";
     }
 }

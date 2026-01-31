@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 
 using System.Text.Json;
-using System.Text.RegularExpressions;
 
 using MyNews.Api.DTOs;
 using MyNews.Api.Enums;
@@ -16,13 +15,15 @@ namespace MyNews.Api.Services
     public class ChatGptService : IChatGptService
     {
         private readonly ChatClient _chatClient;
+        private readonly NllbTranslationClient _nllbClient;
         private readonly ILogger<ChatGptService> _logger;
         private readonly string[] _targetLanguages;
         private readonly OpenAIOptions _options;
 
-        public ChatGptService(ChatClient chatClient, IOptions<LocalizationOptions> localizationOptions, IConfiguration configuration, ILogger<ChatGptService> logger, IOptions<OpenAIOptions> options)
+        public ChatGptService(ChatClient chatClient, NllbTranslationClient nllbClient, IOptions<LocalizationOptions> localizationOptions, IConfiguration configuration, ILogger<ChatGptService> logger, IOptions<OpenAIOptions> options)
         {
             _chatClient = chatClient;
+            _nllbClient = nllbClient;
             _logger = logger;
             _targetLanguages = localizationOptions.Value.TargetLanguages;
             _options = options.Value;
@@ -53,24 +54,7 @@ namespace MyNews.Api.Services
                         - ""Title""              (original title, unchanged)
                         - ""Summary""            (summary in the original language, concise and informative in 2 to 4 sentences.)
                         - ""Section""            (one of: {sectionTypes})
-                        - ""Translations""       (object with translated versions)
 
-                        LANGUAGE DETECTION RULE:
-                        - ORIGINAL_LANGUAGE = ""{detectLang}""
-                        
-                        LANGUAGE RULES:
-                        - If ORIGINAL_LANGUAGE = ""bg"": include ONLY ""en""
-                        - If ORIGINAL_LANGUAGE = ""en"": include ONLY ""bg""
-                        - If ORIGINAL_LANGUAGE = ""other"": 
-                            YOU MUST ALWAYS provide real translations for both ""en"" and ""bg"".
-                            Never return empty strings for these languages unless the text is literally non-translateable.
-                        - NEVER include a key matching the original language.
-
-                        TRANSLATION OBJECT RULES:
-                        - ""Translations"" must ALWAYS contain all required target languages.
-                        - Each target language must contain:
-                            {{ ""Title"": ""..."", ""Summary"": ""..."" }}
-                        
                         FORMAT RULES:
                         - NEVER wrap the JSON in code fences.
                         - NEVER add comments.
@@ -106,7 +90,7 @@ namespace MyNews.Api.Services
                         var json = JsonDocument.Parse(cleanedJson);
                         foreach (var item in json.RootElement.EnumerateArray())
                         {
-                            results.Add(ParseEnrichedFromJsonElement(item, targetLanguages));
+                            results.Add(ParseEnrichedFromJsonElement(item));
                         }
 
                         if (results.Count < items.Count)
@@ -140,55 +124,7 @@ namespace MyNews.Api.Services
             return results;
         }
 
-        public async Task<Dictionary<string, NewsTranslationDto>> TranslateTitlesAndSummariesAsync(string title, string summary, List<string> targetLangs, CancellationToken cancellationToken)
-        {
-            var translations = new Dictionary<string, NewsTranslationDto>();
-            if (targetLangs == null || targetLangs.Count == 0)
-                return translations;
-
-            string prompt = $"Translate the following news title and summary into the specified languages: {string.Join(", ", targetLangs)}.\n" +
-                            $"Return valid JSON with one object per language, keys: 'Title', 'Summary'.\n" +
-                            $"No commentary or markdown.\n\n" +
-                            $"Title: {title}\nSummary: {summary}";
-
-            var messages = new List<ChatMessage>
-            {
-                new SystemChatMessage("You are a multilingual translation assistant."),
-                new UserChatMessage(prompt)
-            };
-
-            try
-            {
-                var completion = await _chatClient.CompleteChatAsync(messages, cancellationToken: cancellationToken);
-                var raw = completion.Value.Content.FirstOrDefault()?.Text ?? string.Empty;
-                _logger.LogInformation("[TranslateTitlesAndSummariesAsync - AI RESPONSE RAW] {Raw}", raw);
-                var match = Regex.Match(raw, @"\{[\s\S]*\}");
-                if (!match.Success) 
-                    return translations;
-
-                var json = JsonDocument.Parse(match.Value);
-                foreach (var lang in json.RootElement.EnumerateObject())
-                {
-                    var titleTr = lang.Value.TryGetProperty("Title", out var tt) ? tt.GetString() ?? string.Empty : string.Empty;
-                    var sumTr = lang.Value.TryGetProperty("Summary", out var ss) ? ss.GetString() ?? string.Empty : string.Empty;
-
-                    translations[lang.Name.ToUpper()] = new NewsTranslationDto
-                    {
-                        LanguageCode = lang.Name.ToUpper(),
-                        Title = titleTr,
-                        Summary = sumTr
-                    };
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Translation GPT call failed for {Title}", title);
-            }
-
-            return translations;
-        }
-
-        private EnrichedNewsDto ParseEnrichedFromJsonElement(JsonElement item, List<string> targetLanguages)
+        private EnrichedNewsDto ParseEnrichedFromJsonElement(JsonElement item)
         {
             string title = item.TryGetProperty("Title", out var pTitle) ? pTitle.GetString() ?? string.Empty : string.Empty;
             string summary = item.TryGetProperty("Summary", out var pSummary) ? pSummary.GetString() ?? string.Empty : string.Empty;
@@ -197,47 +133,12 @@ namespace MyNews.Api.Services
             if (!Enum.TryParse(sectionStr?.Trim(), out SectionType section))
                 section = SectionType.General;
 
-            var translations = new Dictionary<string, NewsTranslationDto>();
-            if (item.TryGetProperty("Translations", out var translationsJson) && translationsJson.ValueKind == JsonValueKind.Object)
-            {
-                foreach (var prop in translationsJson.EnumerateObject())
-                {
-                    var lang = prop.Name;
-                    if (prop.Value.ValueKind == JsonValueKind.Object)
-                    {
-                        var tTitle = prop.Value.TryGetProperty("Title", out var tt) ? tt.GetString() ?? string.Empty : string.Empty;
-                        var tSummary = prop.Value.TryGetProperty("Summary", out var ts) ? ts.GetString() ?? string.Empty : string.Empty;
-
-                        translations[lang] = new NewsTranslationDto
-                        {
-                            LanguageCode = lang,
-                            Title = tTitle,
-                            Summary = tSummary
-                        };
-                    }
-                    else
-                    {
-                        translations[lang] = new NewsTranslationDto
-                        {
-                            LanguageCode = lang,
-                            Title = string.Empty,
-                            Summary = string.Empty
-                        };
-                    }
-                }
-            }
-            else
-            {
-                foreach (var l in targetLanguages)
-                    translations[l] = new NewsTranslationDto { LanguageCode = l, Title = string.Empty, Summary = string.Empty };
-            }
-
             return new EnrichedNewsDto
             {
                 Title = title,
                 Summary = summary,
                 Section = section,
-                Translations = translations
+                SourceLanguage = DetectLanguage(title)
             };
         }
 
@@ -251,8 +152,7 @@ namespace MyNews.Api.Services
             {
                 Title = title,
                 Summary = "Summary unavailable",
-                Section = SectionType.General,
-                Translations = translations
+                Section = SectionType.General
             };
         }
 
@@ -284,7 +184,14 @@ namespace MyNews.Api.Services
         private string DetectLanguage(string text)
         {
             var path = AppContext.BaseDirectory;
-            var modelPath = Path.Combine(path, "DetectLanguage", "lid.176.bin");
+            var modelPath = Path.Combine(AppContext.BaseDirectory, "DetectLanguage", "lid.176.bin");
+            if (!File.Exists(modelPath))
+            {
+                _logger.LogError("FastText model not found at {Path}!", modelPath);
+                
+                return text.Any(c => (c >= 'а' && c <= 'я') || (c >= 'А' && c <= 'Я')) ? "bg" : "en";
+            }
+
             using (var fastText = new FastTextWrapper())
             {
                 fastText.LoadModel(modelPath);
@@ -300,6 +207,11 @@ namespace MyNews.Api.Services
             }
 
             return "other";
+        }
+
+        public async Task<Dictionary<string, NewsTranslationDto>> TranslateWithNllbAsync(string title, string summary, string sourceLang, List<string> targetLangs, CancellationToken cancellationToken)
+        {
+            return await _nllbClient.TranslateAsync(title, summary, sourceLang, targetLangs, cancellationToken);
         }
     }
 }

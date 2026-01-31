@@ -1,5 +1,4 @@
-﻿using System.Net;
-using System.ServiceModel.Syndication;
+﻿using System.ServiceModel.Syndication;
 using System.Text.RegularExpressions;
 using System.Xml;
 
@@ -33,7 +32,10 @@ namespace MyNews.Api.Services
 
                     var settings = new XmlReaderSettings
                     {
-                        DtdProcessing = DtdProcessing.Ignore
+                        DtdProcessing = DtdProcessing.Parse,
+                        IgnoreComments = true,
+                        IgnoreWhitespace = true,
+                        CheckCharacters = false
                     };
 
                     using var stringReader = new StringReader(response);
@@ -131,10 +133,6 @@ namespace MyNews.Api.Services
 
         private string SanitizeRss(string xml)
         {
-            // decode html entities
-            xml = WebUtility.HtmlDecode(xml);
-
-            // fix invalid href/src attributes
             xml = Regex.Replace(xml,
                 @"(href|src)\s*=\s*[""']([^""']+)[""']",
                 m =>
@@ -149,7 +147,6 @@ namespace MyNews.Api.Services
                         }
                         catch
                         {
-                            // drop invalid attribute completely 
                             return ""; 
                         }
                     }

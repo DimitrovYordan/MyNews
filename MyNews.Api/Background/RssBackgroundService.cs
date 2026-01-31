@@ -54,8 +54,8 @@ namespace MyNews.Api.Background
                     int totalSourcesProcessed = 0;
                     var batchStart = DateTime.UtcNow;
 
-                    var sources = await dbContext.Sources.ToListAsync(cancellationToken);
-                    var semaphore = new SemaphoreSlim(_aiOptions.Concurrency);
+                    var sources = await dbContext.Sources.Where(s => s.Id == 193).ToListAsync(cancellationToken);
+                    var semaphore = new SemaphoreSlim(_aiOptions.ConcurrencyLimit);
                     int totalSources = sources.Count;
                     int srcIndex = 1;
 
@@ -143,50 +143,6 @@ namespace MyNews.Api.Background
                                         List<string> targetLanguages = _globalTargetLanguages.ToList();
 
                                         var enrichedResults = await taskChat.EnrichBatchAsync(inputs, cancellationToken, targetLanguages);
-                                        var needTranslation = enrichedResults
-                                            .Where(e => e.Summary != "Summary unavailable" &&
-                                                        e.Translations.Values.Any(t => string.IsNullOrWhiteSpace(t.Summary)))
-                                            .ToList();
-
-                                        if (needTranslation.Any())
-                                        {
-                                            _logger.LogInformation("[GPT] Running secondary translation pass for {Count} items", needTranslation.Count);
-
-                                            foreach (var enriched in needTranslation)
-                                            {
-                                                var missingLangs = enriched.Translations
-                                                    .Where(t => string.IsNullOrWhiteSpace(t.Value.Summary))
-                                                    .Select(t => t.Key.ToUpper())
-                                                    .ToList();
-
-                                                if (!missingLangs.Any())
-                                                    continue;
-
-                                                try
-                                                {
-                                                    var translations = await taskChat.TranslateTitlesAndSummariesAsync(
-                                                        enriched.Title,
-                                                        enriched.Summary == "Summary unavailable" ? enriched.Title : enriched.Summary,
-                                                        missingLangs,
-                                                        cancellationToken);
-
-                                                    foreach (var lang in translations.Keys)
-                                                    {
-                                                        enriched.Translations[lang] = new NewsTranslationDto
-                                                        {
-                                                            LanguageCode = lang,
-                                                            Title = translations[lang].Title ?? enriched.Title,
-                                                            Summary = translations[lang].Summary ?? enriched.Summary
-                                                        };
-                                                    }
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    _logger.LogWarning(ex, "Translation retry failed for {Title}", enriched.Title);
-                                                }
-                                            }
-                                        }
-
                                         foreach (var (enriched, rssItem) in enrichedResults.Zip(batch))
                                         {
                                             var existingNews = await taskDb.NewsItems
@@ -196,59 +152,79 @@ namespace MyNews.Api.Background
                                                     (n.Link == rssItem.Link || n.Title == rssItem.Title),
                                                     cancellationToken);
 
-                                            NewsItem newsItem;
-                                            if (existingNews != null)
+                                            NewsItem newsItem = existingNews ?? new NewsItem
                                             {
-                                                newsItem = existingNews;
+                                                Id = Guid.NewGuid(),
+                                                Section = enriched.Section,
+                                                Title = enriched.Title,
+                                                Summary = enriched.Summary,
+                                                Link = rssItem.Link,
+                                                PublishedAt = rssItem.PublishedAt,
+                                                FetchedAt = DateTime.UtcNow,
+                                                SourceId = source.Id
+                                            };
+
+                                            if (existingNews == null)
+                                            {
+                                                taskDb.NewsItems.Add(newsItem);
+                                            }
+
+                                            var srcLang = enriched.SourceLanguage.ToLowerInvariant();
+                                            var targetLangs = new List<string>();
+
+                                            if (srcLang == "en")
+                                            {
+                                                targetLangs.Add("bul_Cyrl");
+                                            }
+                                            else if (srcLang == "bg")
+                                            {
+                                                targetLangs.Add("eng_Latn");
                                             }
                                             else
                                             {
-                                                newsItem = new NewsItem
-                                                {
-                                                    Id = Guid.NewGuid(),
-                                                    Section = enriched.Section,
-                                                    Title = enriched.Title,
-                                                    Summary = enriched.Summary,
-                                                    Link = rssItem.Link,
-                                                    PublishedAt = rssItem.PublishedAt,
-                                                    FetchedAt = DateTime.UtcNow,
-                                                    SourceId = source.Id
-                                                };
-
-                                                taskDb.NewsItems.Add(newsItem);
-                                                Interlocked.Increment(ref totalNewsAdded);
+                                                targetLangs.Add("bul_Cyrl");
+                                                targetLangs.Add("eng_Latn");
                                             }
 
-                                            foreach (var kv in enriched.Translations)
+                                            if (newsItem.Translations == null)
                                             {
-                                                var lang = kv.Key.ToUpperInvariant();
-                                                var tDto = kv.Value ?? new NewsTranslationDto { LanguageCode = lang, Title = enriched.Title, Summary = enriched.Summary };
+                                                newsItem.Translations = new List<NewsTranslation>();
+                                            }
 
-                                                var existingTranslation = newsItem.Translations?
-                                                    .FirstOrDefault(t => t.LanguageCode == lang);
+                                            var nllbTranslations = await taskChat.TranslateWithNllbAsync(
+                                                enriched.Title,
+                                                enriched.Summary,
+                                                MapToNllbCode(srcLang),
+                                                targetLangs,
+                                                cancellationToken
+                                            );
+                                            
+                                            foreach (var kv in nllbTranslations)
+                                            {
+                                                var langCode = NormalizeDbLang(kv.Key);
+                                                var tDto = kv.Value;
+                                                
+                                                var existingTranslation = newsItem.Translations?.FirstOrDefault(t => t.LanguageCode.ToLower() == langCode);
                                                 if (existingTranslation != null)
                                                 {
-                                                    existingTranslation.Title = tDto.Title ?? existingTranslation.Title;
-                                                    existingTranslation.Summary = tDto.Summary ?? existingTranslation.Summary;
+                                                    existingTranslation.Title = tDto.Title;
+                                                    existingTranslation.Summary = tDto.Summary;
                                                 }
                                                 else
                                                 {
-                                                    var newTranslation = new NewsTranslation
+                                                    newsItem.Translations.Add(new NewsTranslation
                                                     {
                                                         Id = Guid.NewGuid(),
                                                         NewsItemId = newsItem.Id,
-                                                        LanguageCode = lang,
-                                                        Title = tDto.Title ?? string.Empty,
-                                                        Summary = tDto.Summary ?? string.Empty,
-                                                        Section = enriched.Section
-                                                    };
-
-                                                    taskDb.NewsTranslations.Add(newTranslation);
+                                                        LanguageCode = langCode,
+                                                        Title = tDto.Title,
+                                                        Summary = tDto.Summary,
+                                                        Section = newsItem.Section
+                                                    });
                                                 }
                                             }
-
-                                            lastTitle = enriched.Title;
                                         }
+
                                         await SaveWithRetryAsync(taskDb, lastTitle, cancellationToken);
 
                                         _logger.LogInformation("[RSS] Batch saved ({Count}) for source {Url}", enrichedResults.Count, source.Url);
@@ -424,6 +400,36 @@ namespace MyNews.Api.Background
             }
 
             _logger.LogError("Failed to save '{Title}' after {MaxRetries} retries.", title, maxRetries);
+        }
+
+        private string MapToNllbCode(string isoCode)
+        {
+            return isoCode switch
+            {
+                "bg" => "bul_Cyrl",
+                "en" => "eng_Latn",
+                "de" => "deu_Latn",
+                "fr" => "fra_Latn",
+                "es" => "spa_Latn",
+                "ru" => "rus_Cyrl",
+                _ => isoCode + "_Latn"
+            };
+        }
+
+        private static string NormalizeDbLang(string nllbCode)
+        {
+            if (string.IsNullOrWhiteSpace(nllbCode))
+                return "EN";
+
+            var code = nllbCode.Split('_')[0].ToLower();
+            return code switch
+            {
+                "eng" => "EN",
+                "bul" => "BG",
+                "deu" => "DE",
+                "fra" => "FR",
+                _ => code.ToUpper()
+            };
         }
     }
 }

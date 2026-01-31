@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MyNews.Api.Data;
 
@@ -11,9 +12,11 @@ using MyNews.Api.Data;
 namespace MyNews.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260106090826_AddSourceLanguageToNews")]
+    partial class AddSourceLanguageToNews
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -94,7 +97,7 @@ namespace MyNews.Api.Migrations
                     b.HasIndex("NewsItemId", "LanguageCode")
                         .IsUnique();
 
-                    b.ToTable("NewsTranslations", (string)null);
+                    b.ToTable("NewsTranslations");
                 });
 
             modelBuilder.Entity("MyNews.Api.Models.Source", b =>
@@ -1750,7 +1753,7 @@ namespace MyNews.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("MyNews.Api.Models.UserActivity", b =>
@@ -1766,7 +1769,7 @@ namespace MyNews.Api.Migrations
 
                     b.HasKey("UserId");
 
-                    b.ToTable("UserActivities", (string)null);
+                    b.ToTable("UserActivities");
                 });
 
             modelBuilder.Entity("MyNews.Api.Models.UserNewsRead", b =>
@@ -1790,7 +1793,7 @@ namespace MyNews.Api.Migrations
 
                     b.HasIndex("NewsItemId");
 
-                    b.ToTable("UserNewsReads", (string)null);
+                    b.ToTable("UserNewsReads");
                 });
 
             modelBuilder.Entity("MyNews.Api.Models.UserSectionPreference", b =>
@@ -1814,7 +1817,7 @@ namespace MyNews.Api.Migrations
 
                     b.HasKey("UserId", "SectionType");
 
-                    b.ToTable("UserSectionPreference", (string)null);
+                    b.ToTable("UserSectionPreference");
                 });
 
             modelBuilder.Entity("MyNews.Api.Models.UserSourcePreferences", b =>
@@ -1833,7 +1836,7 @@ namespace MyNews.Api.Migrations
 
                     b.HasKey("UserId", "SourceId");
 
-                    b.ToTable("UserSourcePreferences", (string)null);
+                    b.ToTable("UserSourcePreferences");
                 });
 
             modelBuilder.Entity("MyNews.Api.Models.NewsItem", b =>

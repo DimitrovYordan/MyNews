@@ -6,6 +6,6 @@ namespace MyNews.Api.Interfaces
     {
         Task<List<EnrichedNewsDto>> EnrichBatchAsync(List<NewsForEnrichmentDto> items, CancellationToken cancellationToken = default, List<string>? overrideLanguages = null);
 
-        Task<Dictionary<string, NewsTranslationDto>> TranslateTitlesAndSummariesAsync(string title, string summary, List<string> targetLangs, CancellationToken cancellationToken);
+        Task<Dictionary<string, NewsTranslationDto>> TranslateWithNllbAsync(string title, string summary, string sourceLang, List<string> targetLangs, CancellationToken cancellationToken);
     }
 }

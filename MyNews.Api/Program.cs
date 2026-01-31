@@ -56,6 +56,13 @@ builder.Services.AddScoped<IUserPreferencesService, UserPreferencesService>();
 builder.Services.AddScoped<IChatGptService, ChatGptService>();
 builder.Services.AddScoped<IUserActivityService, UserActivityService>();
 
+builder.Services.AddHttpClient<NllbTranslationClient>(client =>
+{
+    var nllbUrl = builder.Configuration.GetValue<string>("NllbServiceUrl")
+                  ?? "http://127.0.0.1:7777";
+
+    client.BaseAddress = new Uri(nllbUrl.EndsWith('/') ? nllbUrl : nllbUrl + "/");
+});
 builder.Services.AddHttpClient<IRssService, RssService>();
 
 if (builder.Environment.IsProduction())

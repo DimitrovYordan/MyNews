@@ -100,10 +100,6 @@ namespace MyNews.Api.Data
                 .Property(n => n.Section)
                 .HasConversion<int>();
 
-            modelBuilder.Entity<NewsItem>()
-                .HasIndex(n => new { n.Title, n.SourceId })
-                .IsUnique();
-
             modelBuilder.Entity<UserActivity>()
                 .HasKey(a => a.UserId);
 
