@@ -57,6 +57,6 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASS }}
           port: 22
-          local_path: ./publish/*
-          remote_path: C:/inetpub/api
-          sftpArgs: "-o StrictHostKeyChecking=no"
+          source: "./publish/*"
+          target: "C:/inetpub/api"
+          overwrite: true
