@@ -54,7 +54,7 @@ namespace MyNews.Api.Background
                     int totalSourcesProcessed = 0;
                     var batchStart = DateTime.UtcNow;
 
-                    var sources = await dbContext.Sources.Where(s => s.Id == 193).ToListAsync(cancellationToken);
+                    var sources = await dbContext.Sources.ToListAsync(cancellationToken);
                     var semaphore = new SemaphoreSlim(_aiOptions.ConcurrencyLimit);
                     int totalSources = sources.Count;
                     int srcIndex = 1;
