@@ -51,9 +51,9 @@ jobs:
               Write-Host "✅ Remote directory cleaned."
 
       - name: Upload new files to VPS via SCP
-        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+        uses: appleboy/scp-action@master
         with:
-          server: ${{ secrets.VPS_HOST }}
+          host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASS }}
           port: 22
