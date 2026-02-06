@@ -46,7 +46,6 @@ namespace MyNews.Api.Background
             {
                 try
                 {
-                    // test
                     using var scope = _scopeFactory.CreateScope();
                     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                     var rssService = scope.ServiceProvider.GetRequiredService<IRssService>();
