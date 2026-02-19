@@ -30,7 +30,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        ? => ?.CommandTimeout(120)
+        o => o.CommandTimeout(120)
         ));
 
 // Configure options
