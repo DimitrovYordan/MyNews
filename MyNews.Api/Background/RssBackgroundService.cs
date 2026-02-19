@@ -54,7 +54,7 @@ namespace MyNews.Api.Background
                     int totalSourcesProcessed = 0;
                     var batchStart = DateTime.UtcNow;
 
-                    var sources = await dbContext.Sources.ToListAsync(cancellationToken);
+                    var sources = await dbContext.Sources.AsNoTracking().ToListAsync(cancellationToken);
                     var semaphore = new SemaphoreSlim(_aiOptions.ConcurrencyLimit);
                     int totalSources = sources.Count;
                     int srcIndex = 1;
@@ -74,9 +74,18 @@ namespace MyNews.Api.Background
                                 if (rssItem.PublishedAt < DateTime.UtcNow.AddDays(-2))
                                     continue;
 
-                                bool existsInDb = await dbContext.NewsItems
-                                    .AnyAsync(n => n.SourceId == source.Id &&
-                                                  (n.Title == rssItem.Title || n.Link == rssItem.Link), cancellationToken);
+                                bool existsInDb;
+                                using (var existsScope = _scopeFactory.CreateScope())
+                                {
+                                    var existsDb = existsScope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+                                    existsInDb = await existsDb.NewsItems
+                                        .AsNoTracking()
+                                        .AnyAsync(n =>
+                                            n.SourceId == source.Id &&
+                                            (n.Title == rssItem.Title || n.Link == rssItem.Link),
+                                            cancellationToken);
+                                }
 
                                 bool existsInBatch = freshItems.Any(n => n.Link == rssItem.Link && n.SourceUrl == source.Url);
 
