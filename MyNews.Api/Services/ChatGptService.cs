@@ -19,14 +19,22 @@ namespace MyNews.Api.Services
         private readonly ILogger<ChatGptService> _logger;
         private readonly string[] _targetLanguages;
         private readonly OpenAIOptions _options;
+        private readonly FastTextLanguageDetector _languageDetector;
 
-        public ChatGptService(ChatClient chatClient, NllbTranslationClient nllbClient, IOptions<LocalizationOptions> localizationOptions, IConfiguration configuration, ILogger<ChatGptService> logger, IOptions<OpenAIOptions> options)
+        public ChatGptService(ChatClient chatClient,
+                              NllbTranslationClient nllbClient,
+                              IOptions<LocalizationOptions> localizationOptions,
+                              IConfiguration configuration,
+                              ILogger<ChatGptService> logger,
+                              IOptions<OpenAIOptions> options,
+                              FastTextLanguageDetector languageDetector)
         {
             _chatClient = chatClient;
             _nllbClient = nllbClient;
             _logger = logger;
             _targetLanguages = localizationOptions.Value.TargetLanguages;
             _options = options.Value;
+            _languageDetector = languageDetector;
         }
 
         public async Task<List<EnrichedNewsDto>> EnrichBatchAsync(List<NewsForEnrichmentDto> items, CancellationToken cancellationToken = default, List<string>? overrideLanguages = null)
@@ -183,30 +191,18 @@ namespace MyNews.Api.Services
 
         private string DetectLanguage(string text)
         {
-            var path = AppContext.BaseDirectory;
-            var modelPath = Path.Combine(AppContext.BaseDirectory, "DetectLanguage", "lid.176.bin");
-            if (!File.Exists(modelPath))
+            try
             {
-                _logger.LogError("FastText model not found at {Path}!", modelPath);
-                
-                return text.Any(c => (c >= 'а' && c <= 'я') || (c >= 'А' && c <= 'Я')) ? "bg" : "en";
+                return _languageDetector.Detect(text);
             }
-
-            using (var fastText = new FastTextWrapper())
+            catch (Exception ex)
             {
-                fastText.LoadModel(modelPath);
+                _logger.LogWarning(ex, "Language detection failed. Using fallback heuristic.");
 
-                var predictions = fastText.PredictMultiple(text, 1);
-
-                if (predictions.Any())
-                {
-                    var label = predictions.First().Label;
-
-                    return label.Replace("__label__", "");
-                }
+                return text.Any(c => (c >= 'а' && c <= 'я') || (c >= 'А' && c <= 'Я'))
+                    ? "bg"
+                    : "en";
             }
-
-            return "other";
         }
 
         public async Task<Dictionary<string, NewsTranslationDto>> TranslateWithNllbAsync(string title, string summary, string sourceLang, List<string> targetLangs, CancellationToken cancellationToken)

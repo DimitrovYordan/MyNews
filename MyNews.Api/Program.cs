@@ -57,6 +57,7 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IUserPreferencesService, UserPreferencesService>();
 builder.Services.AddScoped<IChatGptService, ChatGptService>();
+builder.Services.AddSingleton<FastTextLanguageDetector>();
 builder.Services.AddScoped<IUserActivityService, UserActivityService>();
 
 builder.Services.AddHttpClient<NllbTranslationClient>(client =>
