@@ -159,7 +159,7 @@ namespace MyNews.Api.Background
                                                 .FirstOrDefaultAsync(n =>
                                                     n.SourceId == source.Id &&
                                                     (n.Link == rssItem.Link || n.Title == rssItem.Title),
-                                                    cancellationToken);
+                                                    CancellationToken.None);
 
                                             NewsItem newsItem = existingNews ?? new NewsItem
                                             {
@@ -234,7 +234,7 @@ namespace MyNews.Api.Background
                                             }
                                         }
 
-                                        await SaveWithRetryAsync(taskDb, lastTitle, cancellationToken);
+                                        await SaveWithRetryAsync(taskDb, lastTitle, CancellationToken.None);
 
                                         _logger.LogInformation("[RSS] Batch saved ({Count}) for source {Url}", enrichedResults.Count, source.Url);
                                     }
