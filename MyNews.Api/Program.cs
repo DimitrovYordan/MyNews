@@ -66,6 +66,7 @@ builder.Services.AddHttpClient<NllbTranslationClient>(client =>
                   ?? "http://127.0.0.1:7777";
 
     client.BaseAddress = new Uri(nllbUrl.EndsWith('/') ? nllbUrl : nllbUrl + "/");
+    client.Timeout = TimeSpan.FromMinutes(5);
 });
 builder.Services.AddHttpClient<IRssService, RssService>();
 

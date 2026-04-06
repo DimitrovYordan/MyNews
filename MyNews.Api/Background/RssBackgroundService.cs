@@ -152,6 +152,7 @@ namespace MyNews.Api.Background
                                         List<string> targetLanguages = _globalTargetLanguages.ToList();
 
                                         var enrichedResults = await taskChat.EnrichBatchAsync(inputs, cancellationToken, targetLanguages);
+
                                         foreach (var (enriched, rssItem) in enrichedResults.Zip(batch))
                                         {
                                             var existingNews = await taskDb.NewsItems
@@ -200,14 +201,21 @@ namespace MyNews.Api.Background
                                                 newsItem.Translations = new List<NewsTranslation>();
                                             }
 
-                                            var nllbTranslations = await taskChat.TranslateWithNllbAsync(
-                                                enriched.Title,
-                                                enriched.Summary,
-                                                MapToNllbCode(srcLang),
-                                                targetLangs,
-                                                cancellationToken
-                                            );
-                                            
+                                            var translationTasks = targetLangs.Select(lang =>
+                                                taskChat.TranslateWithNllbAsync(
+                                                    enriched.Title,
+                                                    enriched.Summary,
+                                                    MapToNllbCode(srcLang),
+                                                    new List<string> { lang },
+                                                    cancellationToken)
+                                            ).ToList();
+
+                                            var translationsResults = await Task.WhenAll(translationTasks);
+
+                                            var nllbTranslations = translationsResults
+                                                .SelectMany(dict => dict)
+                                                .ToDictionary(kv => kv.Key, kv => kv.Value);
+
                                             foreach (var kv in nllbTranslations)
                                             {
                                                 var langCode = NormalizeDbLang(kv.Key);
