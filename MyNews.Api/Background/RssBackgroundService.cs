@@ -69,28 +69,39 @@ namespace MyNews.Api.Background
                             var rssItems = await rssService.FetchAndProcessRssFeedAsync(new[] { source });
 
                             var freshItems = new List<NewsItemDto>();
-                            foreach (var rssItem in rssItems)
+                            var potentialItems = rssItems
+                                .Where(i => i.PublishedAt >= DateTime.UtcNow.AddDays(-2) && !string.IsNullOrEmpty(i.Link))
+                                .ToList();
+
+                            var rssLinks = potentialItems.Select(i => i.Link).ToList();
+
+                            List<string> existingLinksInDb;
+                            using (var linksInDB = _scopeFactory.CreateScope())
                             {
-                                if (rssItem.PublishedAt < DateTime.UtcNow.AddDays(-2))
-                                    continue;
+                                var db = linksInDB.ServiceProvider.GetRequiredService<AppDbContext>();
 
-                                bool existsInDb;
-                                using (var existsScope = _scopeFactory.CreateScope())
-                                {
-                                    var existsDb = existsScope.ServiceProvider.GetRequiredService<AppDbContext>();
+                                existingLinksInDb = await db.NewsItems
+                                    .AsNoTracking()
+                                    .Where(n => n.SourceId == source.Id && rssLinks.Contains(n.Link))
+                                    .Select(n => n.Link)
+                                    .ToListAsync(cancellationToken);
+                            }
 
-                                    existsInDb = await existsDb.NewsItems
-                                        .AsNoTracking()
-                                        .AnyAsync(n =>
-                                            n.SourceId == source.Id &&
-                                            (n.Title == rssItem.Title || n.Link == rssItem.Link),
-                                            cancellationToken);
-                                }
+                            foreach (var rssItem in potentialItems)
+                            {
+                                var cleanLink = rssItem.Link.Length > 450 ? rssItem.Link.Substring(0, 450) : rssItem.Link;
 
-                                bool existsInBatch = freshItems.Any(n => n.Link == rssItem.Link && n.SourceUrl == source.Url);
+                                bool existsInDb = existingLinksInDb.Contains(cleanLink);
+                                bool existsInBatch = freshItems.Any(n => n.Link == cleanLink && n.SourceUrl == source.Url);
 
                                 if (!existsInDb && !existsInBatch)
+                                {
+                                    rssItem.Link = cleanLink;
+                                    rssItem.Title = SanitizeText(rssItem.Title, 500);
+                                    rssItem.Summary = SanitizeText(rssItem.Summary, 4000);
+
                                     freshItems.Add(rssItem);
+                                }
                             }
 
                             if (!freshItems.Any())
@@ -155,29 +166,20 @@ namespace MyNews.Api.Background
 
                                         foreach (var (enriched, rssItem) in enrichedResults.Zip(batch))
                                         {
-                                            var existingNews = await taskDb.NewsItems
-                                                .Include(n => n.Translations)
-                                                .FirstOrDefaultAsync(n =>
-                                                    n.SourceId == source.Id &&
-                                                    (n.Link == rssItem.Link || n.Title == rssItem.Title),
-                                                    CancellationToken.None);
-
-                                            NewsItem newsItem = existingNews ?? new NewsItem
+                                            NewsItem newsItem = new NewsItem
                                             {
                                                 Id = Guid.NewGuid(),
                                                 Section = enriched.Section,
-                                                Title = enriched.Title,
-                                                Summary = enriched.Summary,
-                                                Link = rssItem.Link,
+                                                Title = SanitizeText(enriched.Title, 500),
+                                                Summary = SanitizeText(enriched.Summary, 4000),
+                                                Link = SanitizeText(rssItem.Link, 450),
                                                 PublishedAt = rssItem.PublishedAt,
                                                 FetchedAt = DateTime.UtcNow,
-                                                SourceId = source.Id
+                                                SourceId = source.Id,
+                                                Translations = new List<NewsTranslation>()
                                             };
 
-                                            if (existingNews == null)
-                                            {
-                                                taskDb.NewsItems.Add(newsItem);
-                                            }
+                                            taskDb.NewsItems.Add(newsItem);
 
                                             var srcLang = enriched.SourceLanguage.ToLowerInvariant();
                                             var targetLangs = new List<string>();
@@ -220,7 +222,7 @@ namespace MyNews.Api.Background
                                             {
                                                 var langCode = NormalizeDbLang(kv.Key);
                                                 var tDto = kv.Value;
-                                                
+
                                                 var existingTranslation = newsItem.Translations?.FirstOrDefault(t => t.LanguageCode.ToLower() == langCode);
                                                 if (existingTranslation != null)
                                                 {
@@ -242,9 +244,16 @@ namespace MyNews.Api.Background
                                             }
                                         }
 
-                                        await SaveWithRetryAsync(taskDb, lastTitle, CancellationToken.None);
+                                        try
+                                        {
+                                            await taskDb.SaveChangesAsync(cancellationToken);
+                                            _logger.LogInformation("[RSS] Batch saved ({Count}) for source {Url}", enrichedResults.Count, source.Url);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            _logger.LogError(ex, "Individual save failed for {Title}");
+                                        }
 
-                                        _logger.LogInformation("[RSS] Batch saved ({Count}) for source {Url}", enrichedResults.Count, source.Url);
                                     }
                                     catch (Exception ex)
                                     {
@@ -447,6 +456,19 @@ namespace MyNews.Api.Background
                 "fra" => "FR",
                 _ => code.ToUpper()
             };
+        }
+
+        private string SanitizeText(string text, int maxLength = 450)
+        {
+            if (string.IsNullOrEmpty(text)) return string.Empty;
+
+            var decoded = System.Net.WebUtility.HtmlDecode(text);
+
+            var clean = Regex.Replace(decoded, @"[^\u0020-\u007E\u0400-\u04FF\u2010-\u2015\s]", "");
+
+            clean = new string(clean.Where(c => !char.IsControl(c)).ToArray()).Trim();
+
+            return clean.Length > maxLength ? clean.Substring(0, maxLength) : clean;
         }
     }
 }
