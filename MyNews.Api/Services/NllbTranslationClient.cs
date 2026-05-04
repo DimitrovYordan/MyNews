@@ -49,15 +49,16 @@ namespace MyNews.Api.Services
 
                 var json = await response.Content.ReadAsStringAsync(cancellationToken);
                 _logger.LogInformation("[NLLB RESPONSE RAW] {Json}", json.Length > 1000 ? json.Substring(0, 1000) + "..." : json);
+
                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                var data = JsonSerializer.Deserialize<JsonElement>(json, options);
-                var root = data.GetProperty("translations");
+                var data = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json, options);
 
                 var result = new Dictionary<string, NewsTranslationDto>();
 
-                foreach (var lang in root.EnumerateObject())
+                foreach (var kvp in data)
                 {
-                    var arr = lang.Value;
+                    var langCode = kvp.Key;
+                    var arr = kvp.Value;
 
                     if (arr.ValueKind == JsonValueKind.Array && arr.GetArrayLength() > 0)
                     {
@@ -66,11 +67,24 @@ namespace MyNews.Api.Services
                         var titleTr = first.TryGetProperty("Title", out var tt) ? tt.GetString() : title;
                         var sumTr = first.TryGetProperty("Summary", out var ss) ? ss.GetString() : summary;
 
-                        result[lang.Name] = new NewsTranslationDto
+                        result[langCode] = new NewsTranslationDto
                         {
-                            LanguageCode = lang.Name,
+                            LanguageCode = langCode,
                             Title = titleTr ?? title,
                             Summary = sumTr ?? summary
+                        };
+                    }
+                }
+
+                if (!result.Any())
+                {
+                    foreach (var target in targetLangs)
+                    {
+                        result[target] = new NewsTranslationDto
+                        {
+                            LanguageCode = target,
+                            Title = title,
+                            Summary = summary
                         };
                     }
                 }
@@ -85,8 +99,9 @@ namespace MyNews.Api.Services
                     sourceLang,
                     string.Join(",", targetLangs)
                 );
-                return targetLangs.ToDictionary(l => l.ToUpperInvariant(),
-                                               l => new NewsTranslationDto { LanguageCode = l.ToUpperInvariant(), Title = title, Summary = summary });
+
+                return targetLangs.ToDictionary(l => l,
+                    l => new NewsTranslationDto { LanguageCode = l, Title = title, Summary = summary });
             }
         }
     }

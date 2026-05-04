@@ -248,6 +248,7 @@ namespace MyNews.Api.Background
                                         {
                                             await taskDb.SaveChangesAsync(cancellationToken);
                                             _logger.LogInformation("[RSS] Batch saved ({Count}) for source {Url}", enrichedResults.Count, source.Url);
+                                            totalNewsAdded += enrichedResults.Count;
                                         }
                                         catch (Exception ex)
                                         {
