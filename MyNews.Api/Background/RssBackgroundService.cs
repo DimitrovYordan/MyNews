@@ -203,44 +203,63 @@ namespace MyNews.Api.Background
                                                 newsItem.Translations = new List<NewsTranslation>();
                                             }
 
-                                            var translationTasks = targetLangs.Select(lang =>
-                                                taskChat.TranslateWithNllbAsync(
-                                                    enriched.Title,
-                                                    enriched.Summary,
-                                                    MapToNllbCode(srcLang),
-                                                    new List<string> { lang },
-                                                    cancellationToken)
-                                            ).ToList();
-
-                                            var translationsResults = await Task.WhenAll(translationTasks);
-
-                                            var nllbTranslations = translationsResults
-                                                .SelectMany(dict => dict)
-                                                .ToDictionary(kv => kv.Key, kv => kv.Value);
-
-                                            foreach (var kv in nllbTranslations)
+                                            try
                                             {
-                                                var langCode = NormalizeDbLang(kv.Key);
-                                                var tDto = kv.Value;
-
-                                                var existingTranslation = newsItem.Translations?.FirstOrDefault(t => t.LanguageCode.ToLower() == langCode);
-                                                if (existingTranslation != null)
+                                                var translationTasks = targetLangs.Select(async lang =>
                                                 {
-                                                    existingTranslation.Title = tDto.Title;
-                                                    existingTranslation.Summary = tDto.Summary;
-                                                }
-                                                else
-                                                {
-                                                    newsItem.Translations.Add(new NewsTranslation
+                                                    try
                                                     {
-                                                        Id = Guid.NewGuid(),
-                                                        NewsItemId = newsItem.Id,
-                                                        LanguageCode = langCode,
-                                                        Title = tDto.Title,
-                                                        Summary = tDto.Summary,
-                                                        Section = newsItem.Section
-                                                    });
+                                                        return await taskChat.TranslateWithNllbAsync(
+                                                            enriched.Title,
+                                                            enriched.Summary,
+                                                            MapToNllbCode(srcLang),
+                                                            new List<string> { lang },
+                                                            cancellationToken);
+                                                    }
+                                                    catch (Exception ex)
+                                                    {
+                                                        _logger.LogError(ex, "[NLLB] Translation failed for lang {Lang} and title {Title}", lang, enriched.Title);
+                                                        return new Dictionary<string, NewsTranslationDto>();
+                                                    }
+                                                }).ToList();
+
+                                                var translationsResults = await Task.WhenAll(translationTasks);
+
+                                                var nllbTranslations = translationsResults
+                                                    .SelectMany(dict => dict)
+                                                    .ToDictionary(kv => kv.Key, kv => kv.Value);
+
+                                                foreach (var kv in nllbTranslations)
+                                                {
+                                                    var langCode = NormalizeDbLang(kv.Key);
+                                                    var tDto = kv.Value;
+
+                                                    if (string.IsNullOrEmpty(tDto.Title)) 
+                                                        continue;
+
+                                                    var existingTranslation = newsItem.Translations?.FirstOrDefault(t => t.LanguageCode.ToLower() == langCode);
+                                                    if (existingTranslation != null)
+                                                    {
+                                                        existingTranslation.Title = tDto.Title;
+                                                        existingTranslation.Summary = tDto.Summary;
+                                                    }
+                                                    else
+                                                    {
+                                                        newsItem.Translations.Add(new NewsTranslation
+                                                        {
+                                                            Id = Guid.NewGuid(),
+                                                            NewsItemId = newsItem.Id,
+                                                            LanguageCode = langCode,
+                                                            Title = tDto.Title,
+                                                            Summary = tDto.Summary,
+                                                            Section = newsItem.Section
+                                                        });
+                                                    }
                                                 }
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                _logger.LogError(ex, "Failed to process translations for {Title}. Saving original only.", enriched.Title);
                                             }
                                         }
 
