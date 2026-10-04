@@ -31,25 +31,16 @@ jobs:
       - name: Publish
         run: dotnet publish MyNews.Api/MyNews.Api.csproj --configuration Release --output ./publish --no-build
 
-      - name: Clean remote directory (Windows)
+      - name: Stop IIS & Clean Remote Directory
         uses: appleboy/ssh-action@v1.1.0
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASS }}
           port: 22
-          script_stop: true
           script: |
-            powershell -Command '
-              $target = "C:\inetpub\api"
-              Write-Host "Cleaning $target..."
-              if (Test-Path $target) {
-                Remove-Item "$target\*" -Recurse -Force -ErrorAction SilentlyContinue
-              } else {
-                New-Item -ItemType Directory -Force -Path $target | Out-Null
-              }
-              Write-Host "✅ Remote directory cleaned."
-            '
+            powershell -Command "Stop-WebAppPool -Name 'MyNewsApi' -ErrorAction SilentlyContinue"
+            powershell -Command "if (Test-Path 'C:\inetpub\api') { Remove-Item 'C:\inetpub\api\*' -Recurse -Force -ErrorAction SilentlyContinue } else { New-Item -ItemType Directory -Force -Path 'C:\inetpub\api' }"
 
       - name: Upload new files to VPS via SCP
         uses: appleboy/scp-action@v0.1.7
@@ -62,3 +53,14 @@ jobs:
           target: "C:/inetpub/api"
           strip_prefix: publish
           overwrite: true
+
+      - name: Start IIS App Pool
+        uses: appleboy/ssh-action@v1.1.0
+        if: always()
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASS }}
+          port: 22
+          script: |
+            powershell -Command "Start-WebAppPool -Name 'MyNewsApi' -ErrorAction SilentlyContinue"
