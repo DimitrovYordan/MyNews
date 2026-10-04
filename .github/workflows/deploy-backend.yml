@@ -36,14 +36,18 @@ jobs:
           cd publish
           zip -r ../deploy.zip .
 
-      - name: Upload artifact to GitHub
-        uses: actions/upload-artifact@v4
+      - name: Transfer zip to VPS via native SCP
+        uses: appleboy/scp-action@v0.1.7
         with:
-          name: deploy-package
-          path: deploy.zip
-          retention-days: 1
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASS }}
+          port: 22
+          source: "deploy.zip"
+          target: "C:/inetpub"
+          overwrite: true
 
-      - name: Deploy to VPS via PowerShell over SSH
+      - name: Extract files and Restart IIS on VPS
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -57,7 +61,8 @@ jobs:
               iisreset /stop
 
               $target = 'C:\inetpub\api'
-              
+              $zipFile = 'C:\inetpub\deploy.zip'
+
               Write-Host '2. Cleaning target folder...'
               if (Test-Path $target) {
                 Remove-Item '$target\*' -Recurse -Force -ErrorAction SilentlyContinue
@@ -65,8 +70,15 @@ jobs:
                 New-Item -ItemType Directory -Force -Path $target | Out-Null
               }
 
-              Write-Host '3. Deploying files...'
-              if (Test-Path 'C:\inetpub\deploy.zip') { Remove-Item 'C:\inetpub\deploy.zip' -Force }
+              Write-Host '3. Unzipping new version...'
+              if (Test-Path $zipFile) {
+                Expand-Archive -Path $zipFile -DestinationPath $target -Force
+                Remove-Item $zipFile -Force
+                Write-Host '✅ Files extracted successfully.'
+              } else {
+                Write-Error '❌ Zip file was not found on VPS!'
+                exit 1
+              }
 
               Write-Host '4. Starting IIS...'
               iisreset /start
