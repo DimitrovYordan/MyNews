@@ -36,16 +36,16 @@ jobs:
           cd publish
           zip -r ../deploy.zip .
 
-      - name: Upload Zip via SCP
-        uses: appleboy/scp-action@v0.1.7
+      - name: Deploy to Windows VPS via SFTP
+        uses: ewerlund/windows-sftp-deploy@v2.0.0
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASS }}
           port: 22
-          source: "deploy.zip"
-          target: "C:/inetpub/"
-          overwrite: true
+          scp-sftp: sftp
+          local-path: ./deploy.zip
+          remote-path: C:/inetpub/deploy.zip
 
       - name: Extract Zip and Restart IIS
         uses: appleboy/ssh-action@v1.1.0
@@ -55,21 +55,8 @@ jobs:
           password: ${{ secrets.VPS_PASS }}
           port: 22
           script: |
-            powershell -Command "
-              Import-Module WebAdministration -ErrorAction SilentlyContinue;
-              Stop-WebAppPool -Name 'DefaultAppPool' -ErrorAction SilentlyContinue;
-              
-              $target = 'C:\inetpub\api';
-              $zip = 'C:\inetpub\deploy.zip';
-              
-              if (Test-Path $target) {
-                Remove-Item '$target\*' -Recurse -Force -ErrorAction SilentlyContinue
-              } else {
-                New-Item -ItemType Directory -Force -Path $target
-              }
-              
-              Expand-Archive -Path $zip -DestinationPath $target -Force;
-              Remove-Item $zip -Force -ErrorAction SilentlyContinue;
-              
-              Start-WebAppPool -Name 'DefaultAppPool' -ErrorAction SilentlyContinue;
-            "
+            powershell -Command "Import-Module WebAdministration -ErrorAction SilentlyContinue; Stop-WebAppPool -Name 'DefaultAppPool' -ErrorAction SilentlyContinue"
+            powershell -Command "if (Test-Path 'C:\inetpub\api') { Remove-Item 'C:\inetpub\api\*' -Recurse -Force -ErrorAction SilentlyContinue } else { New-Item -ItemType Directory -Force -Path 'C:\inetpub\api' }"
+            powershell -Command "Expand-Archive -Path 'C:\inetpub\deploy.zip' -DestinationPath 'C:\inetpub\api' -Force"
+            powershell -Command "Remove-Item 'C:\inetpub\deploy.zip' -Force -ErrorAction SilentlyContinue"
+            powershell -Command "Import-Module WebAdministration -ErrorAction SilentlyContinue; Start-WebAppPool -Name 'DefaultAppPool' -ErrorAction SilentlyContinue"
