@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '9.0.x'
 
@@ -31,55 +31,32 @@ jobs:
       - name: Publish
         run: dotnet publish MyNews.Api/MyNews.Api.csproj --configuration Release --output ./publish --no-build
 
-      - name: Compress publish folder
-        run: |
-          cd publish
-          zip -r ../deploy.zip .
-          cd ..
-
-      - name: Upload Zip to VPS via Native SCP
-        run: |
-          sshpass -p "${{ secrets.VPS_PASS }}" scp -o StrictHostKeyChecking=no deploy.zip ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:C:/inetpub/deploy.zip
-
-      - name: Stop IIS, Extract Zip and Restart
-        uses: appleboy/ssh-action@v1.2.0
+      - name: Clean remote directory (Windows)
+        uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASS }}
           port: 22
+          shell: powershell
           script_stop: true
           script: |
-            powershell -Command "
-              $ErrorActionPreference = 'Continue'
+            $target = "C:\inetpub\api"
+            Write-Host "Cleaning $target..."
+            if (Test-Path $target) {
+              Remove-Item "$target\*" -Recurse -Force
+            } else {
+              New-Item -ItemType Directory -Force -Path $target | Out-Null
+            }
+            Write-Host "✅ Remote directory cleaned."
 
-              Write-Host '1. Stopping IIS and worker processes...'
-              iisreset /stop
-              Get-Process w3wp -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
-
-              $target = 'C:\inetpub\api'
-              $zipFile = 'C:\inetpub\deploy.zip'
-
-              Write-Host '2. Cleaning target folder...'
-              if (Test-Path $target) {
-                Remove-Item '$target\*' -Recurse -Force -ErrorAction SilentlyContinue
-              } else {
-                New-Item -ItemType Directory -Force -Path $target | Out-Null
-              }
-
-              Write-Host '3. Extracting deploy.zip...'
-              if (Test-Path $zipFile) {
-                Expand-Archive -Path $zipFile -DestinationPath $target -Force
-                Remove-Item $zipFile -Force -ErrorAction SilentlyContinue
-                Write-Host '✅ Files extracted successfully.'
-              } else {
-                Write-Error '❌ Zip file was not found on VPS!'
-                exit 1
-              }
-
-              Write-Host '4. Starting IIS...'
-              iisreset /start
-
-              Write-Host '✅ IIS restarted. New DLL timestamp:'
-              Get-ChildItem -Path '$target\MyNews.Api.dll' | Select-Object LastWriteTime, Length
-            "
+      - name: Upload new files to VPS via SCP
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+        with:
+          server: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASS }}
+          port: 22
+          local_path: ./publish/*
+          remote_path: /api
+          sftpArgs: "-o StrictHostKeyChecking=no"
