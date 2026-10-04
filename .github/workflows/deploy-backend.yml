@@ -31,7 +31,19 @@ jobs:
       - name: Publish
         run: dotnet publish MyNews.Api/MyNews.Api.csproj --configuration Release --output ./publish --no-build
 
-      - name: Stop IIS & Clean remote directory
+      - name: Compress publish folder
+        run: |
+          cd publish
+          zip -r ../deploy.zip .
+
+      - name: Upload artifact to GitHub
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-package
+          path: deploy.zip
+          retention-days: 1
+
+      - name: Deploy to VPS via PowerShell over SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -41,39 +53,22 @@ jobs:
           script_stop: true
           script: |
             powershell -Command "
+              Write-Host '1. Stopping IIS...'
               iisreset /stop
-              
+
               $target = 'C:\inetpub\api'
+              
+              Write-Host '2. Cleaning target folder...'
               if (Test-Path $target) {
                 Remove-Item '$target\*' -Recurse -Force -ErrorAction SilentlyContinue
               } else {
                 New-Item -ItemType Directory -Force -Path $target | Out-Null
               }
-              Write-Host '✅ Remote directory cleaned.'
-            "
 
-      - name: Upload publish files via SCP
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          password: ${{ secrets.VPS_PASS }}
-          port: 22
-          source: "publish/*"
-          target: "C:/inetpub/api"
-          strip_components: 1
-          overwrite: true
+              Write-Host '3. Deploying files...'
+              if (Test-Path 'C:\inetpub\deploy.zip') { Remove-Item 'C:\inetpub\deploy.zip' -Force }
 
-      - name: Start IIS
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          password: ${{ secrets.VPS_PASS }}
-          port: 22
-          script_stop: true
-          script: |
-            powershell -Command "
+              Write-Host '4. Starting IIS...'
               iisreset /start
               Write-Host '✅ IIS restarted successfully.'
             "
