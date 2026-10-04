@@ -1,4 +1,4 @@
-name: Deploy .NET Backend to Windows VPS (Debug Mode)
+name: Deploy .NET Backend to Windows VPS
 
 on:
   push:
@@ -31,72 +31,77 @@ jobs:
       - name: Publish
         run: dotnet publish MyNews.Api/MyNews.Api.csproj --configuration Release --output ./publish --no-build
 
-      - name: Compress publish folder
+      - name: Compress publish folder & Encode Base64
         run: |
           cd publish
           zip -r ../deploy.zip .
-          echo "Zip file created successfully."
-          ls -lh ../deploy.zip
+          cd ..
+          base64 -w 0 deploy.zip > deploy.b64
+          echo "Zip created and converted to Base64 text."
 
-      - name: STEP 1 - Upload Zip via SCP
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          password: ${{ secrets.VPS_PASS }}
-          port: 22
-          source: "deploy.zip"
-          target: "C:/inetpub"
-          overwrite: true
-
-      - name: STEP 2 - Debug & Deploy on VPS
+      - name: Deploy & Extract on Windows VPS via SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASS }}
           port: 22
-          script_stop: false
+          script_stop: true
           script: |
             powershell -Command "
-              $ErrorActionPreference = 'Continue'
-              
-              Write-Host '--- CHECKING ZIP FILE ---'
-              if (Test-Path 'C:\inetpub\deploy.zip') {
-                $file = Get-Item 'C:\inetpub\deploy.zip'
-                Write-Host ('Found deploy.zip, Size: {0} MB' -f [math]::Round($file.Length / 1MB, 2))
-              } else {
-                Write-Host '❌ ERROR: C:\inetpub\deploy.zip does not exist!'
-                exit 1
-              }
+              $ErrorActionPreference = 'Stop'
 
-              Write-Host '--- STOPPING IIS ---'
+              Write-Host '1. Stopping IIS...'
               iisreset /stop
-              if ($LASTEXITCODE -ne 0) { Write-Host 'iisreset /stop completed with warnings or non-zero exit code.' }
 
-              Write-Host '--- CLEANING TARGET FOLDER ---'
               $target = 'C:\inetpub\api'
+              $zipFile = 'C:\inetpub\deploy.zip'
+
+              Write-Host '2. Cleaning target directory...'
               if (Test-Path $target) {
-                Get-ChildItem -Path $target -Recurse | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
-                Write-Host 'Target folder cleaned.'
+                Remove-Item '$target\*' -Recurse -Force -ErrorAction SilentlyContinue
               } else {
                 New-Item -ItemType Directory -Force -Path $target | Out-Null
-                Write-Host 'Created target folder.'
               }
 
-              Write-Host '--- UNZIPPING ARCHIVE ---'
-              try {
-                Expand-Archive -Path 'C:\inetpub\deploy.zip' -DestinationPath $target -Force
-                Write-Host '✅ Successfully unzipped files to C:\inetpub\api'
-              } catch {
-                Write-Host ('❌ Extract failed: ' + $_.Exception.Message)
-                exit 1
-              }
+              Write-Host '3. Receiving encoded deployment package...'
+            "
 
-              Write-Host '--- REMOVING ZIP ARCHIVE ---'
-              Remove-Item 'C:\inetpub\deploy.zip' -Force -ErrorAction SilentlyContinue
+      - name: Upload B64 Chunk & Extract
+        run: |
+          # Препращаме Base64 файла на части през SSH директно във файл на VPS
+          sshpass -p "${{ secrets.VPS_PASS }}" ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "powershell -Command \"[System.IO.File]::WriteAllText('C:\\inetpub\\deploy.b64', '')\""
+          sshpass -p "${{ secrets.VPS_PASS }}" scp -o StrictHostKeyChecking=no deploy.b64 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:C:/inetpub/deploy.b64
 
-              Write-Host '--- STARTING IIS ---'
+      - name: Unzip and Restart IIS
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASS }}
+          port: 22
+          script_stop: true
+          script: |
+            powershell -Command "
+              $ErrorActionPreference = 'Stop'
+
+              $target = 'C:\inetpub\api'
+              $b64File = 'C:\inetpub\deploy.b64'
+              $zipFile = 'C:\inetpub\deploy.zip'
+
+              Write-Host '1. Decoding zip file on VPS...'
+              $b64Content = [System.IO.File]::ReadAllText($b64File)
+              $bytes = [System.Convert]::FromBase64String($b64Content)
+              [System.IO.File]::WriteAllBytes($zipFile, $bytes)
+
+              Write-Host '2. Unzipping files to target directory...'
+              Expand-Archive -Path $zipFile -DestinationPath $target -Force
+
+              Write-Host '3. Cleaning up temporary files...'
+              Remove-Item $b64File -Force -ErrorAction SilentlyContinue
+              Remove-Item $zipFile -Force -ErrorAction SilentlyContinue
+
+              Write-Host '4. Starting IIS...'
               iisreset /start
-              Write-Host '✅ IIS restarted successfully.'
+              Write-Host '✅ Deployment completed successfully!'
             "
