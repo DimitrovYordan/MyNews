@@ -1,4 +1,4 @@
-name: Deploy .NET Backend to Windows VPS
+name: Deploy .NET Backend to Windows VPS (Debug Mode)
 
 on:
   push:
@@ -15,10 +15,10 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v4
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4.3.0
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
 
@@ -35,8 +35,10 @@ jobs:
         run: |
           cd publish
           zip -r ../deploy.zip .
+          echo "Zip file created successfully."
+          ls -lh ../deploy.zip
 
-      - name: Transfer zip to VPS via native SCP
+      - name: STEP 1 - Upload Zip via SCP
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -47,40 +49,54 @@ jobs:
           target: "C:/inetpub"
           overwrite: true
 
-      - name: Extract files and Restart IIS on VPS
+      - name: STEP 2 - Debug & Deploy on VPS
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASS }}
           port: 22
-          script_stop: true
+          script_stop: false
           script: |
             powershell -Command "
-              Write-Host '1. Stopping IIS...'
-              iisreset /stop
-
-              $target = 'C:\inetpub\api'
-              $zipFile = 'C:\inetpub\deploy.zip'
-
-              Write-Host '2. Cleaning target folder...'
-              if (Test-Path $target) {
-                Remove-Item '$target\*' -Recurse -Force -ErrorAction SilentlyContinue
+              $ErrorActionPreference = 'Continue'
+              
+              Write-Host '--- CHECKING ZIP FILE ---'
+              if (Test-Path 'C:\inetpub\deploy.zip') {
+                $file = Get-Item 'C:\inetpub\deploy.zip'
+                Write-Host ('Found deploy.zip, Size: {0} MB' -f [math]::Round($file.Length / 1MB, 2))
               } else {
-                New-Item -ItemType Directory -Force -Path $target | Out-Null
-              }
-
-              Write-Host '3. Unzipping new version...'
-              if (Test-Path $zipFile) {
-                Expand-Archive -Path $zipFile -DestinationPath $target -Force
-                Remove-Item $zipFile -Force
-                Write-Host '✅ Files extracted successfully.'
-              } else {
-                Write-Error '❌ Zip file was not found on VPS!'
+                Write-Host '❌ ERROR: C:\inetpub\deploy.zip does not exist!'
                 exit 1
               }
 
-              Write-Host '4. Starting IIS...'
+              Write-Host '--- STOPPING IIS ---'
+              iisreset /stop
+              if ($LASTEXITCODE -ne 0) { Write-Host 'iisreset /stop completed with warnings or non-zero exit code.' }
+
+              Write-Host '--- CLEANING TARGET FOLDER ---'
+              $target = 'C:\inetpub\api'
+              if (Test-Path $target) {
+                Get-ChildItem -Path $target -Recurse | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
+                Write-Host 'Target folder cleaned.'
+              } else {
+                New-Item -ItemType Directory -Force -Path $target | Out-Null
+                Write-Host 'Created target folder.'
+              }
+
+              Write-Host '--- UNZIPPING ARCHIVE ---'
+              try {
+                Expand-Archive -Path 'C:\inetpub\deploy.zip' -DestinationPath $target -Force
+                Write-Host '✅ Successfully unzipped files to C:\inetpub\api'
+              } catch {
+                Write-Host ('❌ Extract failed: ' + $_.Exception.Message)
+                exit 1
+              }
+
+              Write-Host '--- REMOVING ZIP ARCHIVE ---'
+              Remove-Item 'C:\inetpub\deploy.zip' -Force -ErrorAction SilentlyContinue
+
+              Write-Host '--- STARTING IIS ---'
               iisreset /start
               Write-Host '✅ IIS restarted successfully.'
             "
