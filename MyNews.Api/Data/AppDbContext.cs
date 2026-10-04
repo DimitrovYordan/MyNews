@@ -144,9 +144,9 @@ namespace MyNews.Api.Data
                 new Source { Id = 26, Name = "Wired", Url = "https://www.wired.com/feed/rss" },
                 new Source { Id = 27, Name = "Mashable", Url = "http://feeds.mashable.com/Mashable" },
                 new Source { Id = 28, Name = "Business Insider", Url = "https://www.businessinsider.com/rss" },
-                new Source { Id = 30, Name = "Politico", Url = "https://www.politico.com/rss/politicopicks.xml" },
-                new Source { Id = 31, Name = "The Verge", Url = "https://www.theverge.com/rss/index.xml" },
-                new Source { Id = 32, Name = "TechCrunch", Url = "http://feeds.feedburner.com/TechCrunch/" },
+                //new Source { Id = 30, Name = "Politico", Url = "https://www.politico.com/rss/politicopicks.xml" },
+                //new Source { Id = 31, Name = "The Verge", Url = "https://www.theverge.com/rss/index.xml" },
+                //new Source { Id = 32, Name = "TechCrunch", Url = "http://feeds.feedburner.com/TechCrunch/" },
 
                 // ========================
                 // Japan
