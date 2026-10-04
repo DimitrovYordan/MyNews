@@ -15,10 +15,10 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v4.3.0
         with:
           dotnet-version: '9.0.x'
 
@@ -32,7 +32,7 @@ jobs:
         run: dotnet publish MyNews.Api/MyNews.Api.csproj --configuration Release --output ./publish --no-build
 
       - name: Stop IIS & Clean remote directory
-        uses: appleboy/ssh-action@v1.1.0
+        uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
@@ -41,8 +41,7 @@ jobs:
           script_stop: true
           script: |
             powershell -Command "
-              Import-Module WebAdministration -ErrorAction SilentlyContinue
-              Stop-WebAppPool -Name 'DefaultAppPool' -ErrorAction SilentlyContinue
+              iisreset /stop
               
               $target = 'C:\inetpub\api'
               if (Test-Path $target) {
@@ -66,7 +65,7 @@ jobs:
           overwrite: true
 
       - name: Start IIS
-        uses: appleboy/ssh-action@v1.1.0
+        uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
@@ -75,7 +74,6 @@ jobs:
           script_stop: true
           script: |
             powershell -Command "
-              Import-Module WebAdministration -ErrorAction SilentlyContinue
-              Start-WebAppPool -Name 'DefaultAppPool' -ErrorAction SilentlyContinue
-              Write-Host '✅ IIS App Pool restarted successfully.'
+              iisreset /start
+              Write-Host '✅ IIS restarted successfully.'
             "
