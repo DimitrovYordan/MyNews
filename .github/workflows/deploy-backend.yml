@@ -31,36 +31,45 @@ jobs:
       - name: Publish
         run: dotnet publish MyNews.Api/MyNews.Api.csproj --configuration Release --output ./publish --no-build
 
-      - name: Stop IIS & Clean Remote Directory
-        uses: appleboy/ssh-action@v1.1.0
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          password: ${{ secrets.VPS_PASS }}
-          port: 22
-          script: |
-            powershell -Command "Import-Module WebAdministration -ErrorAction SilentlyContinue; Stop-WebAppPool -Name 'DefaultAppPool' -ErrorAction SilentlyContinue"
-            powershell -Command "if (Test-Path 'C:\inetpub\api') { Remove-Item 'C:\inetpub\api\*' -Recurse -Force -ErrorAction SilentlyContinue } else { New-Item -ItemType Directory -Force -Path 'C:\inetpub\api' }"
+      - name: Zip publish directory
+        run: |
+          cd publish
+          zip -r ../deploy.zip .
 
-      - name: Upload new files to VPS via SCP
+      - name: Upload Zip via SCP
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASS }}
           port: 22
-          source: "publish/*"
-          target: "C:/inetpub/api"
-          strip_components: 1
+          source: "deploy.zip"
+          target: "C:/inetpub/"
           overwrite: true
 
-      - name: Start IIS App Pool
+      - name: Extract Zip and Restart IIS
         uses: appleboy/ssh-action@v1.1.0
-        if: always()
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASS }}
           port: 22
           script: |
-            powershell -Command "Import-Module WebAdministration -ErrorAction SilentlyContinue; Start-WebAppPool -Name 'DefaultAppPool' -ErrorAction SilentlyContinue"
+            powershell -Command "
+              Import-Module WebAdministration -ErrorAction SilentlyContinue;
+              Stop-WebAppPool -Name 'DefaultAppPool' -ErrorAction SilentlyContinue;
+              
+              $target = 'C:\inetpub\api';
+              $zip = 'C:\inetpub\deploy.zip';
+              
+              if (Test-Path $target) {
+                Remove-Item '$target\*' -Recurse -Force -ErrorAction SilentlyContinue
+              } else {
+                New-Item -ItemType Directory -Force -Path $target
+              }
+              
+              Expand-Archive -Path $zip -DestinationPath $target -Force;
+              Remove-Item $zip -Force -ErrorAction SilentlyContinue;
+              
+              Start-WebAppPool -Name 'DefaultAppPool' -ErrorAction SilentlyContinue;
+            "
