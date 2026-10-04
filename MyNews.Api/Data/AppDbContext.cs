@@ -126,8 +126,8 @@ namespace MyNews.Api.Data
                 new Source { Id = 11, Name = "Vesti", Url = "https://www.vesti.bg/rss" },
                 new Source { Id = 12, Name = "Dnes", Url = "https://www.dnes.bg/rss/news" },
                 new Source { Id = 13, Name = "Blitz", Url = "https://www.blitz.bg/rss" },
-                new Source { Id = 14, Name = "Standart", Url = "https://www.standartnews.com/rss" },
-                new Source { Id = 15, Name = "Banker", Url = "https://banker.bg/feed/" },
+                //new Source { Id = 14, Name = "Standart", Url = "https://www.standartnews.com/rss" },
+                //new Source { Id = 15, Name = "Banker", Url = "https://banker.bg/feed/" },
 
                 // ========================
                 // Global / English
