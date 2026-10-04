@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '9.0.x'
 
@@ -31,32 +31,32 @@ jobs:
       - name: Publish
         run: dotnet publish MyNews.Api/MyNews.Api.csproj --configuration Release --output ./publish --no-build
 
-      - name: Zip publish directory
-        run: |
-          cd publish
-          zip -r ../deploy.zip .
-
-      - name: Deploy to Windows VPS via SFTP
-        uses: ewerlund/windows-sftp-deploy@v2.0.0
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          password: ${{ secrets.VPS_PASS }}
-          port: 22
-          scp-sftp: sftp
-          local-path: ./deploy.zip
-          remote-path: C:/inetpub/deploy.zip
-
-      - name: Extract Zip and Restart IIS
+      - name: Clean remote directory (Windows)
         uses: appleboy/ssh-action@v1.1.0
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASS }}
           port: 22
+          script_stop: true
           script: |
-            powershell -Command "Import-Module WebAdministration -ErrorAction SilentlyContinue; Stop-WebAppPool -Name 'DefaultAppPool' -ErrorAction SilentlyContinue"
-            powershell -Command "if (Test-Path 'C:\inetpub\api') { Remove-Item 'C:\inetpub\api\*' -Recurse -Force -ErrorAction SilentlyContinue } else { New-Item -ItemType Directory -Force -Path 'C:\inetpub\api' }"
-            powershell -Command "Expand-Archive -Path 'C:\inetpub\deploy.zip' -DestinationPath 'C:\inetpub\api' -Force"
-            powershell -Command "Remove-Item 'C:\inetpub\deploy.zip' -Force -ErrorAction SilentlyContinue"
-            powershell -Command "Import-Module WebAdministration -ErrorAction SilentlyContinue; Start-WebAppPool -Name 'DefaultAppPool' -ErrorAction SilentlyContinue"
+            powershell -Command "
+              $target = "C:\inetpub\api"
+              Write-Host "Cleaning $target..."
+              if (Test-Path $target) {
+                Remove-Item "$target\*" -Recurse -Force
+              } else {
+                New-Item -ItemType Directory -Force -Path $target | Out-Null
+              }
+              Write-Host "✅ Remote directory cleaned."
+
+      - name: Upload new files to VPS via SCP
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASS }}
+          port: 22
+          source: "./publish/*"
+          target: "C:/inetpub/api"
+          overwrite: true
