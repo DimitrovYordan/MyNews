@@ -25,13 +25,10 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore MyNews.Api/MyNews.Api.csproj
 
-      - name: Build
-        run: dotnet build MyNews.Api/MyNews.Api.csproj --configuration Release --no-restore
-
-      - name: Clean Publish & Build
+      - name: Clean & Publish
         run: dotnet publish MyNews.Api/MyNews.Api.csproj --configuration Release --output ./publish
 
-      - name: Clean remote directory (Windows)
+      - name: Stop IIS & Clean remote directory (Windows)
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -41,12 +38,12 @@ jobs:
           script_stop: true
           script: |
             powershell -Command "
-              Write-Host 'Stopping IIS to unlock DLL files...'
+              Write-Host '1. Stopping IIS to unlock DLL files...'
               iisreset /stop
               Get-Process w3wp -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 
               $target = 'C:\inetpub\api'
-              Write-Host 'Cleaning $target...'
+              Write-Host '2. Cleaning target folder...'
               if (Test-Path $target) {
                 Get-ChildItem -Path $target -Recurse | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
               } else {
@@ -55,16 +52,9 @@ jobs:
               Write-Host '✅ Remote directory cleaned.'
             "
 
-      - name: Upload new files to VPS via SFTP
-        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
-        with:
-          server: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          password: ${{ secrets.VPS_PASS }}
-          port: 22
-          local_path: ./publish/*
-          remote_path: /inetpub/api
-          sftpArgs: "-o StrictHostKeyChecking=no"
+      - name: Direct SCP Upload (Uncompressed Files)
+        run: |
+          sshpass -p "${{ secrets.VPS_PASS }}" scp -r -o StrictHostKeyChecking=no ./publish/* ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:C:/inetpub/api/
 
       - name: Start IIS on VPS
         uses: appleboy/ssh-action@v1.2.0
@@ -76,6 +66,9 @@ jobs:
           script_stop: true
           script: |
             powershell -Command "
+              Write-Host 'Starting IIS...'
               iisreset /start
-              Write-Host '✅ IIS restarted successfully.'
+
+              Write-Host '✅ IIS restarted successfully. DLL Details:'
+              Get-ChildItem -Path 'C:\inetpub\api\MyNews.Api.dll' | Select-Object LastWriteTime, Length
             "
