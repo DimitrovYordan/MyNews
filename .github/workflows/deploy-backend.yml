@@ -39,7 +39,7 @@ jobs:
           password: ${{ secrets.VPS_PASS }}
           port: 22
           script: |
-            powershell -Command "Stop-WebAppPool -Name 'MyNewsApi' -ErrorAction SilentlyContinue"
+            powershell -Command "Stop-DefaultAppPool -Name 'MyNewsApi' -ErrorAction SilentlyContinue"
             powershell -Command "if (Test-Path 'C:\inetpub\api') { Remove-Item 'C:\inetpub\api\*' -Recurse -Force -ErrorAction SilentlyContinue } else { New-Item -ItemType Directory -Force -Path 'C:\inetpub\api' }"
 
       - name: Upload new files to VPS via SCP
@@ -63,4 +63,4 @@ jobs:
           password: ${{ secrets.VPS_PASS }}
           port: 22
           script: |
-            powershell -Command "Start-WebAppPool -Name 'MyNewsApi' -ErrorAction SilentlyContinue"
+            powershell -Command "Start-DefaultAppPool -Name 'MyNewsApi' -ErrorAction SilentlyContinue"
