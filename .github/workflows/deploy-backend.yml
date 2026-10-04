@@ -28,7 +28,7 @@ jobs:
       - name: Clean & Publish
         run: dotnet publish MyNews.Api/MyNews.Api.csproj --configuration Release --output ./publish
 
-      - name: Stop IIS & Clean remote directory (Windows)
+      - name: Stop IIS, Kill Processes & Prepare Directories
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -38,9 +38,10 @@ jobs:
           script_stop: true
           script: |
             powershell -Command "
-              Write-Host '1. Stopping IIS to unlock DLL files...'
+              Write-Host '1. Stopping IIS & Killing all .NET backend processes...'
               iisreset /stop
-              Get-Process w3wp -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+              Get-Process w3wp, dotnet, MyNews.Api -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+              Start-Sleep -Seconds 3
 
               $target = 'C:\inetpub\api'
               Write-Host '2. Cleaning target folder...'
@@ -49,10 +50,16 @@ jobs:
               } else {
                 New-Item -ItemType Directory -Force -Path $target | Out-Null
               }
-              Write-Host '✅ Remote directory cleaned.'
+
+              Write-Host '3. Re-creating required subdirectories for uncompressed SCP transfer...'
+              New-Item -ItemType Directory -Force -Path '$target\runtimes\win-x64\native' | Out-Null
+              New-Item -ItemType Directory -Force -Path '$target\runtimes\win\lib\net6.0' | Out-Null
+              New-Item -ItemType Directory -Force -Path '$target\wwwroot' | Out-Null
+
+              Write-Host '✅ Server is prepared for raw SCP file transfer.'
             "
 
-      - name: Direct SCP Upload (Uncompressed Files)
+      - name: Direct SCP Upload
         run: |
           sshpass -p "${{ secrets.VPS_PASS }}" scp -r -o StrictHostKeyChecking=no ./publish/* ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:C:/inetpub/api/
 
@@ -66,9 +73,9 @@ jobs:
           script_stop: true
           script: |
             powershell -Command "
-              Write-Host 'Starting IIS...'
+              Write-Host '1. Starting IIS...'
               iisreset /start
 
-              Write-Host '✅ IIS restarted successfully. DLL Details:'
+              Write-Host '✅ IIS restarted. New DLL timestamp:'
               Get-ChildItem -Path 'C:\inetpub\api\MyNews.Api.dll' | Select-Object LastWriteTime, Length
             "
