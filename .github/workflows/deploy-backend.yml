@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '9.0.x'
 
@@ -31,16 +31,8 @@ jobs:
       - name: Publish
         run: dotnet publish MyNews.Api/MyNews.Api.csproj --configuration Release --output ./publish --no-build
 
-      - name: Compress publish folder & Encode Base64
-        run: |
-          cd publish
-          zip -r ../deploy.zip .
-          cd ..
-          base64 -w 0 deploy.zip > deploy.b64
-          echo "Zip created and converted to Base64 text."
-
-      - name: Deploy & Extract on Windows VPS via SSH
-        uses: appleboy/ssh-action@v1.2.0
+      - name: Clean remote directory (Windows)
+        uses: appleboy/ssh-action@v1.1.0
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
@@ -49,59 +41,22 @@ jobs:
           script_stop: true
           script: |
             powershell -Command "
-              $ErrorActionPreference = 'Stop'
-
-              Write-Host '1. Stopping IIS...'
-              iisreset /stop
-
-              $target = 'C:\inetpub\api'
-              $zipFile = 'C:\inetpub\deploy.zip'
-
-              Write-Host '2. Cleaning target directory...'
+              $target = "C:\inetpub\api"
+              Write-Host "Cleaning $target..."
               if (Test-Path $target) {
-                Remove-Item '$target\*' -Recurse -Force -ErrorAction SilentlyContinue
+                Remove-Item "$target\*" -Recurse -Force
               } else {
                 New-Item -ItemType Directory -Force -Path $target | Out-Null
               }
+              Write-Host "✅ Remote directory cleaned."
 
-              Write-Host '3. Receiving encoded deployment package...'
-            "
-
-      - name: Upload B64 Chunk & Extract
-        run: |
-          # Препращаме Base64 файла на части през SSH директно във файл на VPS
-          sshpass -p "${{ secrets.VPS_PASS }}" ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "powershell -Command \"[System.IO.File]::WriteAllText('C:\\inetpub\\deploy.b64', '')\""
-          sshpass -p "${{ secrets.VPS_PASS }}" scp -o StrictHostKeyChecking=no deploy.b64 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:C:/inetpub/deploy.b64
-
-      - name: Unzip and Restart IIS
-        uses: appleboy/ssh-action@v1.2.0
+      - name: Upload new files to VPS via SCP
+        uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASS }}
           port: 22
-          script_stop: true
-          script: |
-            powershell -Command "
-              $ErrorActionPreference = 'Stop'
-
-              $target = 'C:\inetpub\api'
-              $b64File = 'C:\inetpub\deploy.b64'
-              $zipFile = 'C:\inetpub\deploy.zip'
-
-              Write-Host '1. Decoding zip file on VPS...'
-              $b64Content = [System.IO.File]::ReadAllText($b64File)
-              $bytes = [System.Convert]::FromBase64String($b64Content)
-              [System.IO.File]::WriteAllBytes($zipFile, $bytes)
-
-              Write-Host '2. Unzipping files to target directory...'
-              Expand-Archive -Path $zipFile -DestinationPath $target -Force
-
-              Write-Host '3. Cleaning up temporary files...'
-              Remove-Item $b64File -Force -ErrorAction SilentlyContinue
-              Remove-Item $zipFile -Force -ErrorAction SilentlyContinue
-
-              Write-Host '4. Starting IIS...'
-              iisreset /start
-              Write-Host '✅ Deployment completed successfully!'
-            "
+          source: "./publish/*"
+          target: "C:/inetpub/api"
+          overwrite: true
